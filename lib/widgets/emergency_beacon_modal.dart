@@ -93,3 +93,4 @@ class _EmergencyBeaconModalState extends State<EmergencyBeaconModal> {
     );
   }
 }
+

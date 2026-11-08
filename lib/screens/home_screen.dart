@@ -342,8 +342,7 @@ class HomeScreen extends StatelessWidget {
                                   children: [
                                     TileLayer(
                                       urlTemplate:
-                                          'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
-                                      subdomains: const ['a', 'b', 'c', 'd'],
+                                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                                       userAgentPackageName:
                                           'com.smartcity.app',
                                     ),

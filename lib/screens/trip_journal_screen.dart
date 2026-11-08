@@ -675,10 +675,9 @@ class _TripJournalScreenState extends State<TripJournalScreen> {
                           children: [
                             TileLayer(
                               urlTemplate:
-                                  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                              subdomains: const ['a', 'b', 'c', 'd'],
+                                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                               userAgentPackageName:
-                                  'com.hasenalbanna.ceylonexplorer',
+                                  'com.smartcity.app',
                             ),
                             MarkerLayer(
                               markers: [
@@ -864,9 +863,8 @@ class _StoryDetailPage extends StatelessWidget {
               children: [
                 TileLayer(
                   urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-                  subdomains: const ['a', 'b', 'c', 'd'],
-                  userAgentPackageName: 'com.hasenalbanna.ceylonexplorer',
+                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.smartcity.app',
                 ),
                 MarkerLayer(
                   markers: [
