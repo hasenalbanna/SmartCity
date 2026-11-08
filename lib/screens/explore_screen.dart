@@ -6,6 +6,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/ai_insights_section.dart';
+import '../widgets/app_top_utilities.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
@@ -161,6 +162,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
+          const AppTopUtilities(),
           // Search Bar
           TextField(
             onChanged: (val) => setState(() => _searchQuery = val),

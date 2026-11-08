@@ -15,6 +15,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/ai_insights_section.dart';
+import '../widgets/app_top_utilities.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
@@ -86,6 +87,7 @@ class HomeScreen extends StatelessWidget {
           96,
         ),
         children: [
+          const AppTopUtilities(),
           // 1. Header: 3-Line Left-Side Toggle Bar Button + Greeting + Pro Plan Pill + Theme Toggle
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,

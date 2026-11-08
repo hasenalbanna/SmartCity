@@ -276,7 +276,115 @@ class _MapScreenState extends State<MapScreen> {
 }
 
 // ============================================================================
-// 2. TRAVEL & CIVIC SCHEDULE CALENDAR SCREEN
+// MINIMAL BLACK & WHITE PRIMITIVES FOR TOP UTILITY PAGES
+// (Chat, Calendar, World Clock & Notifications)
+// ============================================================================
+class _MinimalMonochromeScaffold extends StatelessWidget {
+  final String title;
+  final List<Widget>? actions;
+  final Widget body;
+
+  const _MinimalMonochromeScaffold({
+    required this.title,
+    this.actions,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: ThemeData.light().copyWith(
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: const ColorScheme.light(
+          primary: Colors.black,
+          onPrimary: Colors.white,
+          surface: Colors.white,
+          onSurface: Colors.black,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          title: Text(
+            title,
+            style: AppTypography.title.copyWith(color: Colors.black),
+          ),
+          actions: actions,
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(1),
+            child: Container(height: 1, color: Colors.black12),
+          ),
+        ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: body,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MinimalBlackButton extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback onPressed;
+  final bool outlined;
+
+  const _MinimalBlackButton({
+    required this.label,
+    this.icon,
+    required this.onPressed,
+    this.outlined = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: AppRadius.mdBorder,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg,
+          vertical: AppSpace.md,
+        ),
+        decoration: BoxDecoration(
+          color: outlined ? Colors.white : Colors.black,
+          borderRadius: AppRadius.mdBorder,
+          border: Border.all(color: Colors.black, width: 1.2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 16,
+                color: outlined ? Colors.black : Colors.white,
+              ),
+              const SizedBox(width: AppSpace.xs),
+            ],
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: outlined ? Colors.black : Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// 2. TRAVEL & CIVIC SCHEDULE CALENDAR SCREEN (ULTRA-MINIMAL WHITE / BLACK)
 // ============================================================================
 class ScheduleCalendarScreen extends StatefulWidget {
   const ScheduleCalendarScreen({super.key});
@@ -286,13 +394,13 @@ class ScheduleCalendarScreen extends StatefulWidget {
 }
 
 class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
-  int _selectedDayOffset = 0;
+  DateTime _selectedDate = DateTime.now();
   final List<Map<String, String>> _events = [
     {
       'time': '06:30 AM',
       'title': 'Sigiriya Lion Rock Sunrise Ascent',
       'location': 'Central Province • UNESCO Heritage',
-      'type': 'Travel Itinerary',
+      'type': 'Itinerary',
     },
     {
       'time': '10:30 AM',
@@ -310,7 +418,7 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
       'time': '06:00 PM',
       'title': 'Galle Fort Ramparts Sunset Walk & Dinner',
       'location': 'Southern Province',
-      'type': 'Travel Itinerary',
+      'type': 'Itinerary',
     },
   ];
 
@@ -322,37 +430,43 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Calendar Schedule'),
+        backgroundColor: Colors.white,
+        title: Text(
+          'Add Schedule Item',
+          style: AppTypography.title.copyWith(color: Colors.black),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppTextField(
+            TextField(
               controller: titleCtrl,
-              label: 'Event or Activity Title',
-              hint: 'e.g. Yala Safari Morning Drive',
-              isRequired: true,
+              style: AppTypography.body.copyWith(color: Colors.black),
+              decoration: const InputDecoration(
+                labelText: 'Activity Title',
+                hintText: 'e.g. Yala Safari Morning Drive',
+              ),
             ),
             const SizedBox(height: AppSpace.md),
-            AppTextField(
+            TextField(
               controller: timeCtrl,
-              label: 'Time',
-              hint: '09:00 AM',
+              style: AppTypography.body.copyWith(color: Colors.black),
+              decoration: const InputDecoration(labelText: 'Time'),
             ),
             const SizedBox(height: AppSpace.md),
-            AppTextField(
+            TextField(
               controller: locCtrl,
-              label: 'Location',
-              hint: 'Destination or Ward',
+              style: AppTypography.body.copyWith(color: Colors.black),
+              decoration: const InputDecoration(labelText: 'Location'),
             ),
           ],
         ),
         actions: [
-          AppButton(
+          _MinimalBlackButton(
             label: 'Cancel',
-            variant: AppButtonVariant.ghost,
+            outlined: true,
             onPressed: () => Navigator.pop(ctx),
           ),
-          AppButton(
+          _MinimalBlackButton(
             label: 'Save Event',
             onPressed: () {
               if (titleCtrl.text.trim().isNotEmpty) {
@@ -361,7 +475,7 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
                     'time': timeCtrl.text.trim(),
                     'title': titleCtrl.text.trim(),
                     'location': locCtrl.text.trim(),
-                    'type': 'Custom Plan',
+                    'type': 'Custom',
                   });
                 });
               }
@@ -375,146 +489,118 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Travel & Civic Schedule Calendar'),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _addScheduleItem,
-        backgroundColor: AppColors.primary(context),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Event'),
-      ),
+    return _MinimalMonochromeScaffold(
+      title: 'Calendar',
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpace.md),
+          child: Center(
+            child: _MinimalBlackButton(
+              label: '+ Add Event',
+              onPressed: _addScheduleItem,
+            ),
+          ),
+        ),
+      ],
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
-          const SectionHeader(
-            title: 'Upcoming 7-Day Schedule',
-            subtitle: 'Synchronized travel itineraries and municipal events',
-          ),
-          const SizedBox(height: AppSpace.md),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(7, (idx) {
-                final date = now.add(Duration(days: idx));
-                final selected = _selectedDayOffset == idx;
-                const weekdays = [
-                  'Mon',
-                  'Tue',
-                  'Wed',
-                  'Thu',
-                  'Fri',
-                  'Sat',
-                  'Sun',
-                ];
-                final dayLabel = weekdays[date.weekday - 1];
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: AppSpace.sm),
-                  child: InkWell(
-                    onTap: () => setState(() => _selectedDayOffset = idx),
-                    borderRadius: AppRadius.mdBorder,
-                    child: Container(
-                      width: 68,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpace.md,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selected
-                            ? AppColors.primary(context)
-                            : AppColors.surface(context),
-                        borderRadius: AppRadius.mdBorder,
-                        border: Border.all(
-                          color: selected
-                              ? AppColors.primary(context)
-                              : AppColors.outline(context),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            dayLabel,
-                            style: AppTypography.caption.copyWith(
-                              color: selected
-                                  ? Colors.white
-                                  : AppColors.textSecondary(context),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${date.day}',
-                            style: AppTypography.title.copyWith(
-                              color: selected
-                                  ? Colors.white
-                                  : AppColors.textPrimary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: AppRadius.lgBorder,
+              border: Border.all(color: Colors.black12),
+            ),
+            child: CalendarDatePicker(
+              initialDate: _selectedDate,
+              firstDate: DateTime(2024),
+              lastDate: DateTime(2030),
+              onDateChanged: (d) => setState(() => _selectedDate = d),
             ),
           ),
           const SizedBox(height: AppSpace.xl),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Schedule for ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                style: AppTypography.title.copyWith(color: Colors.black),
+              ),
+              Text(
+                '${_events.length} items',
+                style: AppTypography.caption.copyWith(color: Colors.black54),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
           ..._events.map(
-            (ev) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpace.md),
-              child: AppCard(
-                accentBorderColor: AppColors.primary(context),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.sm,
+            (ev) => Container(
+              margin: const EdgeInsets.only(bottom: AppSpace.md),
+              padding: const EdgeInsets.all(AppSpace.lg),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppRadius.mdBorder,
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: AppRadius.smBorder,
+                    ),
+                    child: Text(
+                      ev['time']!,
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary(
-                          context,
-                        ).withValues(alpha: 0.12),
-                        borderRadius: AppRadius.smBorder,
-                      ),
-                      child: Text(
-                        ev['time']!,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary(context),
-                          fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ev['title']!,
+                          style: AppTypography.subtitle.copyWith(
+                            color: Colors.black,
+                          ),
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          ev['location']!,
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: AppRadius.smBorder,
+                      border: Border.all(color: Colors.black26),
+                    ),
+                    child: Text(
+                      ev['type']!,
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            ev['title']!,
-                            style: AppTypography.subtitle.copyWith(
-                              color: AppColors.textPrimary(context),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            ev['location']!,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    StatusChip(
-                      label: ev['type']!,
-                      kind: StatusChipKind.info,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -525,7 +611,7 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
 }
 
 // ============================================================================
-// 3. WORLD CLOCK & TRAVEL TIMER SCREEN
+// 3. WORLD CLOCK & TRAVEL TIMER SCREEN (ULTRA-MINIMAL WHITE / BLACK)
 // ============================================================================
 class WorldClockScreen extends StatelessWidget {
   const WorldClockScreen({super.key});
@@ -547,107 +633,164 @@ class WorldClockScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final clockService = context.watch<ClockService>();
 
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('World Clock & Travel Timer'),
-      ),
+    return _MinimalMonochromeScaffold(
+      title: 'World Clock & Timer',
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: AppSpace.md),
+          child: Center(
+            child: _MinimalBlackButton(
+              label: '+ Add City',
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.white,
+                  builder: (ctx) => ListView(
+                    padding: AppSpace.pagePadding,
+                    children: ClockEntry.availableZones.map((zone) {
+                      return ListTile(
+                        leading: Text(zone.flag, style: AppTypography.title),
+                        title: Text(
+                          '${zone.city}, ${zone.country}',
+                          style: AppTypography.bodyStrong.copyWith(
+                            color: Colors.black,
+                          ),
+                        ),
+                        subtitle: Text(
+                          zone.formattedOffset,
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.black54,
+                          ),
+                        ),
+                        trailing: _MinimalBlackButton(
+                          label: 'Add',
+                          onPressed: () {
+                            clockService.addClock(zone);
+                            Navigator.pop(ctx);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ],
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
-          SectionHeader(
-            title: 'Global Time Zones',
-            subtitle: 'Compare Sri Lanka (UTC+05:30) with international hubs',
-            actionLabel: '+ Add City',
-            onAction: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (ctx) => ListView(
-                  padding: AppSpace.pagePadding,
-                  children: ClockEntry.availableZones.map((zone) {
-                    return ListTile(
-                      leading: Text(zone.flag, style: AppTypography.title),
-                      title: Text('${zone.city}, ${zone.country}'),
-                      subtitle: Text(zone.formattedOffset),
-                      onTap: () {
-                        clockService.addClock(zone);
-                        Navigator.pop(ctx);
-                      },
-                    );
-                  }).toList(),
-                ),
-              );
-            },
+          Text(
+            'Time Zones',
+            style: AppTypography.title.copyWith(color: Colors.black),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Live global clocks synchronized with Colombo (UTC+05:30)',
+            style: AppTypography.caption.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: AppSpace.md),
           ...clockService.clocks.asMap().entries.map((entry) {
             final idx = entry.key;
             final clock = entry.value;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSpace.md),
-              child: AppCard(
-                child: Row(
-                  children: [
-                    Text(clock.flag, style: AppTypography.display),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            clock.city,
-                            style: AppTypography.title.copyWith(
-                              color: AppColors.textPrimary(context),
-                            ),
+            return Container(
+              margin: const EdgeInsets.only(bottom: AppSpace.md),
+              padding: const EdgeInsets.all(AppSpace.lg),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppRadius.mdBorder,
+                border: Border.all(color: Colors.black12),
+              ),
+              child: Row(
+                children: [
+                  Text(clock.flag, style: AppTypography.display),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          clock.city,
+                          style: AppTypography.title.copyWith(
+                            color: Colors.black,
                           ),
-                          Text(
-                            '${clock.country} • ${clock.formattedOffset}',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
+                        ),
+                        Text(
+                          '${clock.country} • ${clock.formattedOffset}',
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.black54,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Text(
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: AppRadius.smBorder,
+                    ),
+                    child: Text(
                       _formatClockTime(clock.currentTime),
-                      style: AppTypography.title.copyWith(
+                      style: AppTypography.subtitle.copyWith(
                         fontFamily: 'monospace',
-                        color: AppColors.primary(context),
+                        color: Colors.white,
                       ),
                     ),
-                    if (idx > 0)
-                      IconButton(
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        onPressed: () => clockService.removeClock(idx),
+                  ),
+                  if (idx > 0) ...[
+                    const SizedBox(width: AppSpace.xs),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.black,
                       ),
+                      onPressed: () => clockService.removeClock(idx),
+                    ),
                   ],
-                ),
+                ],
               ),
             );
           }),
           const SizedBox(height: AppSpace.xl),
-          const SectionHeader(
-            title: 'Transit & Excursion Countdown Timer',
-            subtitle: 'Track parking, bus transfers, or safari excursion time',
+          Text(
+            'Countdown Timer',
+            style: AppTypography.title.copyWith(color: Colors.black),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Minimal excursion & transit timer',
+            style: AppTypography.caption.copyWith(color: Colors.black54),
           ),
           const SizedBox(height: AppSpace.md),
-          AppCard(
+          Container(
+            padding: const EdgeInsets.all(AppSpace.xl),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: AppRadius.lgBorder,
+              border: Border.all(color: Colors.black12),
+            ),
             child: Column(
               children: [
                 Text(
                   _formatDuration(clockService.timerRemaining),
                   style: AppTypography.display.copyWith(
                     fontFamily: 'monospace',
-                    color: AppColors.primary(context),
+                    color: Colors.black,
                   ),
                 ),
-                const SizedBox(height: AppSpace.md),
+                const SizedBox(height: AppSpace.lg),
                 Wrap(
                   spacing: AppSpace.sm,
                   runSpacing: AppSpace.sm,
                   alignment: WrapAlignment.center,
                   children: [
-                    AppButton(
+                    _MinimalBlackButton(
                       label: clockService.timerRunning ? 'Pause' : 'Start',
                       icon: clockService.timerRunning
                           ? Icons.pause_rounded
@@ -656,21 +799,30 @@ class WorldClockScreen extends StatelessWidget {
                           ? clockService.pauseTimer
                           : clockService.startTimer,
                     ),
-                    AppButton(
+                    _MinimalBlackButton(
                       label: 'Reset',
                       icon: Icons.refresh_rounded,
-                      variant: AppButtonVariant.secondary,
+                      outlined: true,
                       onPressed: clockService.resetTimer,
                     ),
-                    ...[5, 15, 30, 60].map(
-                      (mins) => ActionChip(
-                        label: Text('$mins min'),
-                        onPressed: () => clockService.setTimerDuration(
-                          Duration(minutes: mins),
-                        ),
-                      ),
-                    ),
                   ],
+                ),
+                const SizedBox(height: AppSpace.md),
+                Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
+                  alignment: WrapAlignment.center,
+                  children: [5, 15, 30, 60].map((mins) {
+                    final isCurrent =
+                        clockService.timerDuration.inMinutes == mins;
+                    return _MinimalBlackButton(
+                      label: '$mins min',
+                      outlined: !isCurrent,
+                      onPressed: () => clockService.setTimerDuration(
+                        Duration(minutes: mins),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
             ),
@@ -704,7 +856,7 @@ class CommunityFeedScreen extends StatelessWidget {
 }
 
 // ============================================================================
-// 5. REALTIME CITIZEN & GUIDE CHAT SCREEN
+// 5. REALTIME CITIZEN & GUIDE CHAT SCREEN (ULTRA-MINIMAL WHITE / BLACK)
 // ============================================================================
 class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
@@ -719,35 +871,32 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   final List<Map<String, dynamic>> _threads = [
     {
-      'name': 'Nintavur Municipal Dispatch Desk',
-      'role': 'Civic Engineering & Flood Ops',
-      'online': true,
+      'name': 'Municipal Dispatch',
+      'role': 'Nintavur Smart City Desk',
       'messages': <Map<String, dynamic>>[
         {
           'sender': 'Dispatch Desk',
           'text':
-              'Welcome to Nintavur Smart City Live Chat. How can our engineering crew assist you today?',
+              'Welcome to Smart City Live Chat. How can our team assist you today?',
           'isMe': false,
         },
       ],
     },
     {
-      'name': 'Nimal Perera (Verified Guide)',
-      'role': 'Cultural Triangle & Sigiriya Specialist',
-      'online': true,
+      'name': 'Nimal Perera',
+      'role': 'Cultural Triangle Guide',
       'messages': <Map<String, dynamic>>[
         {
           'sender': 'Nimal Perera',
           'text':
-              'Ayubowan! I recommend starting the Sigiriya climb at 6:15 AM tomorrow to beat the heat.',
+              'Ayubowan! I recommend starting the Sigiriya climb at 6:15 AM tomorrow.',
           'isMe': false,
         },
       ],
     },
     {
-      'name': 'Sara Fernando (Wildlife Safari)',
-      'role': 'Yala & Wilpattu Leopard Tracker',
-      'online': true,
+      'name': 'Sara Fernando',
+      'role': 'Yala Wildlife Tracker',
       'messages': <Map<String, dynamic>>[
         {
           'sender': 'Sara Fernando',
@@ -787,13 +936,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
     final activeThread = _threads[_selectedThread];
     final messages = activeThread['messages'] as List<Map<String, dynamic>>;
 
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('Realtime Citizen & Guide Chat'),
-      ),
+    return _MinimalMonochromeScaffold(
+      title: 'Realtime Chat',
       body: Padding(
         padding: AppSpace.pagePadding,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -803,17 +951,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   final selected = _selectedThread == idx;
                   return Padding(
                     padding: const EdgeInsets.only(right: AppSpace.sm),
-                    child: ChoiceChip(
-                      label: Text(t['name'] as String),
-                      selected: selected,
-                      onSelected: (_) => setState(() => _selectedThread = idx),
-                      selectedColor: AppColors.primary(context),
-                      labelStyle: AppTypography.caption.copyWith(
-                        color: selected
-                            ? Colors.white
-                            : AppColors.textPrimary(context),
-                        fontWeight: FontWeight.w700,
-                      ),
+                    child: _MinimalBlackButton(
+                      label: t['name'] as String,
+                      outlined: !selected,
+                      onPressed: () => setState(() => _selectedThread = idx),
                     ),
                   );
                 }),
@@ -821,17 +962,30 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             const SizedBox(height: AppSpace.md),
             Expanded(
-              child: AppCard(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpace.lg),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: AppRadius.lgBorder,
+                  border: Border.all(color: Colors.black12),
+                ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.primary(context),
-                          child: Text(
-                            (activeThread['name'] as String)[0],
-                            style: AppTypography.bodyStrong.copyWith(
-                              color: Colors.white,
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              (activeThread['name'] as String)[0],
+                              style: AppTypography.bodyStrong.copyWith(
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
@@ -843,26 +997,39 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               Text(
                                 activeThread['name'] as String,
                                 style: AppTypography.subtitle.copyWith(
-                                  color: AppColors.textPrimary(context),
+                                  color: Colors.black,
                                 ),
                               ),
                               Text(
                                 activeThread['role'] as String,
                                 style: AppTypography.caption.copyWith(
-                                  color: AppColors.textSecondary(context),
+                                  color: Colors.black54,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const StatusChip(
-                          label: 'ONLINE',
-                          kind: StatusChipKind.resolved,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpace.sm,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black,
+                            borderRadius: AppRadius.smBorder,
+                          ),
+                          child: Text(
+                            'ONLINE',
+                            style: AppTypography.caption.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSpace.md),
-                    Divider(height: 1, color: AppColors.outline(context)),
+                    Container(height: 1, color: Colors.black12),
                     Expanded(
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(
@@ -883,17 +1050,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               padding: const EdgeInsets.all(AppSpace.md),
                               constraints: const BoxConstraints(maxWidth: 420),
                               decoration: BoxDecoration(
-                                color: isMe
-                                    ? AppColors.primary(context)
-                                    : AppColors.surfaceMuted(context),
+                                color: isMe ? Colors.black : Colors.white,
                                 borderRadius: AppRadius.mdBorder,
+                                border: Border.all(color: Colors.black),
                               ),
                               child: Text(
                                 m['text'] as String,
                                 style: AppTypography.body.copyWith(
-                                  color: isMe
-                                      ? Colors.white
-                                      : AppColors.textPrimary(context),
+                                  color: isMe ? Colors.white : Colors.black,
                                 ),
                               ),
                             ),
@@ -907,13 +1071,37 @@ class _ChatListScreenState extends State<ChatListScreen> {
                           child: TextField(
                             controller: _msgCtrl,
                             onSubmitted: (_) => _sendMessage(),
-                            decoration: const InputDecoration(
+                            style: AppTypography.body.copyWith(
+                              color: Colors.black,
+                            ),
+                            decoration: InputDecoration(
                               hintText: 'Write a message...',
+                              hintStyle: AppTypography.body.copyWith(
+                                color: Colors.black54,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: AppSpace.md,
+                                vertical: AppSpace.md,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: AppRadius.mdBorder,
+                                borderSide: const BorderSide(
+                                  color: Colors.black26,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.mdBorder,
+                                borderSide: const BorderSide(
+                                  color: Colors.black26,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: AppSpace.sm),
-                        AppButton(
+                        _MinimalBlackButton(
                           label: 'Send',
                           icon: Icons.send_rounded,
                           onPressed: _sendMessage,
@@ -1345,7 +1533,7 @@ class GuidesScreen extends StatelessWidget {
 }
 
 // ============================================================================
-// 9. NOTIFICATIONS & SYSTEM INBOX SCREEN
+// 9. NOTIFICATIONS & SYSTEM INBOX SCREEN (ULTRA-MINIMAL WHITE / BLACK)
 // ============================================================================
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -1355,55 +1543,112 @@ class NotificationsScreen extends StatelessWidget {
     final notifService = context.watch<NotificationService>();
     final items = notifService.notifications;
 
-    return AppScaffold(
-      appBar: AppBar(
-        title: const Text('System Notifications & Inbox'),
-        actions: [
-          if (items.isNotEmpty)
-            TextButton(
+    return _MinimalMonochromeScaffold(
+      title: 'Notifications',
+      actions: [
+        if (items.isNotEmpty) ...[
+          Center(
+            child: _MinimalBlackButton(
+              label: 'Mark all read',
+              outlined: true,
               onPressed: notifService.markAllRead,
-              child: const Text('Mark all read'),
             ),
-          const SizedBox(width: AppSpace.sm),
+          ),
+          const SizedBox(width: AppSpace.xs),
+          Center(
+            child: _MinimalBlackButton(
+              label: 'Clear',
+              onPressed: notifService.clearAll,
+            ),
+          ),
+          const SizedBox(width: AppSpace.md),
         ],
-      ),
+      ],
       body: items.isEmpty
-          ? EmptyState(
-              icon: Icons.notifications_none_rounded,
-              title: 'All Caught Up',
-              subtitle:
-                  'Your civic alerts, work order updates, and travel reminders will appear here.',
-              actionLabel: 'Generate Test Alert',
-              onAction: () {
-                notifService.add(
-                  title: 'Nintavur Smart City Telemetry Active',
-                  body:
-                      'Route 22 Smart Bus arriving at Addappalam Junction in 4 minutes.',
-                  type: NotificationType.info,
-                );
-              },
+          ? Center(
+              child: Padding(
+                padding: AppSpace.pagePadding,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black26),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 30,
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.lg),
+                    Text(
+                      'No notifications yet',
+                      style: AppTypography.title.copyWith(color: Colors.black),
+                    ),
+                    const SizedBox(height: AppSpace.xs),
+                    Text(
+                      'Your civic alerts, work order updates, and travel reminders will appear here.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.body.copyWith(color: Colors.black54),
+                    ),
+                    const SizedBox(height: AppSpace.lg),
+                    _MinimalBlackButton(
+                      label: 'Generate Sample Notification',
+                      icon: Icons.add_alert_rounded,
+                      onPressed: () {
+                        notifService.add(
+                          title: 'Nintavur Smart City Telemetry Active',
+                          body:
+                              'Route 22 Smart Bus arriving at Addappalam Junction in 4 minutes.',
+                          type: NotificationType.info,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
             )
           : ListView.builder(
               padding: AppSpace.pagePadding,
               itemCount: items.length,
               itemBuilder: (context, idx) {
                 final n = items[idx];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpace.md),
-                  child: AppCard(
-                    onTap: () => notifService.markRead(n.id),
-                    accentBorderColor: n.isRead
-                        ? null
-                        : AppColors.primary(context),
+                return InkWell(
+                  onTap: () => notifService.markRead(n.id),
+                  borderRadius: AppRadius.mdBorder,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: AppSpace.md),
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: AppRadius.mdBorder,
+                      border: Border.all(
+                        color: n.isRead ? Colors.black12 : Colors.black,
+                        width: n.isRead ? 1 : 1.5,
+                      ),
+                    ),
                     child: Row(
                       children: [
-                        Icon(
-                          n.type == NotificationType.alert
-                              ? Icons.warning_amber_rounded
-                              : Icons.notifications_active_outlined,
-                          color: n.type == NotificationType.alert
-                              ? AppColors.danger(context)
-                              : AppColors.primary(context),
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: n.isRead ? Colors.white : Colors.black,
+                            borderRadius: AppRadius.smBorder,
+                            border: Border.all(color: Colors.black),
+                          ),
+                          child: Icon(
+                            n.type == NotificationType.alert
+                                ? Icons.warning_amber_rounded
+                                : Icons.notifications_outlined,
+                            size: 20,
+                            color: n.isRead ? Colors.black : Colors.white,
+                          ),
                         ),
                         const SizedBox(width: AppSpace.md),
                         Expanded(
@@ -1413,23 +1658,36 @@ class NotificationsScreen extends StatelessWidget {
                               Text(
                                 n.title,
                                 style: AppTypography.subtitle.copyWith(
-                                  color: AppColors.textPrimary(context),
+                                  color: Colors.black,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 n.body,
                                 style: AppTypography.body.copyWith(
-                                  color: AppColors.textSecondary(context),
+                                  color: Colors.black54,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         if (!n.isRead)
-                          const StatusChip(
-                            label: 'NEW',
-                            kind: StatusChipKind.info,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.sm,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black,
+                              borderRadius: AppRadius.smBorder,
+                            ),
+                            child: Text(
+                              'NEW',
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
                       ],
                     ),
