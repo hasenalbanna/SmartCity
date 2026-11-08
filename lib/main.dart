@@ -19,6 +19,8 @@ import 'services/smart_bus_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Disable runtime network font fetching on web to prevent fonts.dart network crashes
+  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(const SmartCityApp());
 }
 

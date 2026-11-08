@@ -225,6 +225,19 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.smartcity.app',
                 ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: const [
+                        LatLng(7.3780, 81.8385),
+                        LatLng(7.3486, 81.8385),
+                        LatLng(7.3180, 81.8385),
+                      ],
+                      strokeWidth: 2.5,
+                      color: const Color(0xFFDC2626),
+                    ),
+                  ],
+                ),
                 MarkerLayer(
                   markers: issues.map((issue) {
                     final color = _getMarkerColor(issue.status);
@@ -377,40 +390,65 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     CommunityIssueService service,
     bool isDark,
   ) {
-    return Column(
-      children: [
-        // Section Header
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Reports',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : Colors.black,
-                  letterSpacing: -0.5,
-                ),
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF161A22) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Drag Handle Pill
+          Center(
+            child: Container(
+              width: 38,
+              height: 4,
+              margin: const EdgeInsets.only(top: 10, bottom: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
+                borderRadius: BorderRadius.circular(2),
               ),
-              InkWell(
-                onTap: () {
-                  _showFilterBottomSheet(isDark);
-                },
-                child: Text(
-                  _selectedFilter == 'All' ? 'View All' : _selectedFilter,
+            ),
+          ),
+
+          // Section Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Reports',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
                     color: isDark ? Colors.white : Colors.black,
-                    decoration: TextDecoration.underline,
+                    letterSpacing: -0.5,
                   ),
                 ),
-              ),
-            ],
+                InkWell(
+                  onTap: () {
+                    _showFilterBottomSheet(isDark);
+                  },
+                  child: Text(
+                    _selectedFilter == 'All' ? 'View All' : _selectedFilter,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
 
         // Reports Cards List
         Expanded(
@@ -438,6 +476,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                 ),
         ),
       ],
+    ),
     );
   }
 

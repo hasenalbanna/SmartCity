@@ -528,6 +528,27 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                         urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         userAgentPackageName: 'com.smartcity.app',
                       ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: const [
+                              LatLng(7.3780, 81.8385),
+                              LatLng(7.3486, 81.8385),
+                              LatLng(7.3180, 81.8385),
+                            ],
+                            strokeWidth: 2.5,
+                            color: const Color(0xFFDC2626),
+                          ),
+                          Polyline(
+                            points: const [
+                              LatLng(7.3600, 81.8385),
+                              LatLng(7.3600, 81.8650),
+                            ],
+                            strokeWidth: 2.5,
+                            color: const Color(0xFFDC2626),
+                          ),
+                        ],
+                      ),
                       MarkerLayer(
                         markers: [
                           Marker(
@@ -545,55 +566,95 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                     ],
                   ),
 
-                  // Tap map to pin badge
+                  // Tap map to pin badge & Zoom Controls Top Left
                   Positioned(
                     top: 12,
                     left: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'Tap map to pin',
-                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-
-                  // Zoom Controls
-                  Positioned(
-                    top: 12,
-                    right: 12,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _mapCircleBtn(
-                          icon: Icons.add,
-                          onTap: () => _mapController.move(
-                            _mapController.camera.center,
-                            _mapController.camera.zoom + 1,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'Tap map to pin',
+                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        _mapCircleBtn(
-                          icon: Icons.remove,
-                          onTap: () => _mapController.move(
-                            _mapController.camera.center,
-                            _mapController.camera.zoom - 1,
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                          ),
+                          child: Column(
+                            children: [
+                              InkWell(
+                                onTap: () => _mapController.move(
+                                  _mapController.camera.center,
+                                  _mapController.camera.zoom + 1,
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(Icons.add, size: 18, color: Colors.black87),
+                                ),
+                              ),
+                              const Divider(height: 1, thickness: 1),
+                              InkWell(
+                                onTap: () => _mapController.move(
+                                  _mapController.camera.center,
+                                  _mapController.camera.zoom - 1,
+                                ),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(6),
+                                  child: Icon(Icons.remove, size: 18, color: Colors.black87),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Crosshair / Center button
+                  // Crosshair / Center button bottom left
                   Positioned(
                     bottom: 12,
                     left: 12,
-                    child: _mapCircleBtn(
-                      icon: Icons.filter_center_focus,
-                      onTap: () => _mapController.move(_selectedLocation, 15.0),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.my_location, size: 18, color: Colors.black87),
+                        onPressed: () => _mapController.move(_selectedLocation, 15.0),
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+
+                  // Leaflet | OpenStreetMap attribution bottom right
+                  Positioned(
+                    bottom: 6,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'Leaflet | © OpenStreetMap contributors',
+                        style: TextStyle(fontSize: 10, color: Color(0xFF4B5563), fontWeight: FontWeight.w500),
+                      ),
                     ),
                   ),
                 ],
@@ -615,10 +676,10 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                 setState(() => _currentStep = 2);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4B5563), // Slate gray
+                backgroundColor: const Color(0xFF6B7280), // Slate gray as in screenshot
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: const Text(
                 'Confirm Location',
@@ -659,52 +720,76 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: isDark ? Colors.white70 : const Color(0xFF374151),
+                color: isDark ? Colors.white70 : const Color(0xFF1F2937),
               ),
             ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
                 ),
               ),
-              child: TextFormField(
-                controller: _descriptionController,
-                maxLines: 5,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Please enter a short description of the issue';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Describe the issue...',
-                  hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.all(14),
-                ),
+              child: Stack(
+                children: [
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 5,
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Please enter a short description of the issue';
+                      }
+                      return null;
+                    },
+                    decoration: const InputDecoration(
+                      hintText: 'Describe the issue...',
+                      hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.all(14),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: Icon(
+                      Icons.format_size,
+                      size: 14,
+                      color: isDark ? Colors.white24 : const Color(0xFF9CA3AF),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
 
-            // CONTACT NUMBER
-            Text(
-              'CONTACT NUMBER *',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                color: isDark ? Colors.white70 : const Color(0xFF374151),
+            // CONTACT NUMBER *
+            RichText(
+              text: TextSpan(
+                text: 'CONTACT NUMBER ',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                  color: isDark ? Colors.white70 : const Color(0xFF1F2937),
+                ),
+                children: const [
+                  TextSpan(
+                    text: '*',
+                    style: TextStyle(
+                      color: Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
                 color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
                 ),
@@ -841,28 +926,6 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _mapCircleBtn({required IconData icon, required VoidCallback onTap}) {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 6,
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon, size: 18, color: Colors.black87),
-        onPressed: onTap,
-        padding: EdgeInsets.zero,
       ),
     );
   }

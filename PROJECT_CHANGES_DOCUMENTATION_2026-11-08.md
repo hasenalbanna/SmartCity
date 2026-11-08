@@ -155,4 +155,18 @@ flutter analyze
 - [ ] **Release Mode**: Compile production binaries using `flutter build apk --release` or `flutter build web --release` to ensure debug assertions and banners are stripped.
 
 ---
+
+## 7. Citizen Community Issue Reporting & Web Font Architecture Updates
+- **Pixel-Perfect Community Issue Reporting**:
+  - Implemented the 3-step wizard matching client design specifications:
+    - **Step 1 (Category)**: 2x3 grid covering Drainage/Canal (வடிகால்), Garbage Dump (குப்பை), Road/Pothole (வீதி), Coastal Erosion (கடல் அரிப்பு), Street Lights (வீதி விளக்கு), and Other Issues (பிற பிரச்சினைகள்).
+    - **Step 2 (Location)**: Interactive OpenStreetMap with Nintavur administrative boundary red polyline, road search, instant "Use My Current Location" GPS button, zoom controls, and slate confirmation action.
+    - **Step 3 (Details)**: Form with uppercase labels, description field with corner grip, required contact phone validation with red indicator, and dual media attachments (Camera Photo + Audio Memo).
+  - Map dashboard displays pending and resolved issues with custom glowing halo pins and quick status actions ("Mark In Progress", "Mark Resolved").
+- **Web Font Offline Resilience (`fonts.dart:96:28` fix)**:
+  - Configured `GoogleFonts.config.allowRuntimeFetching = false` in `main.dart` to prevent web runtime XHR crashes when Google Fonts servers are unreachable.
+  - Linked preloaded Inter font families via HTML `<link>` in `web/index.html` with system sans-serif fallback.
+
+---
 *Documentation compiled on November 8, 2026 for Smart City.*
+
