@@ -10,15 +10,29 @@ class GeocodingResult {
   GeocodingResult({required this.displayName, required this.location});
 }
 
+class _CachedGeocoding {
+  final DateTime timestamp;
+  final List<GeocodingResult> results;
+  _CachedGeocoding(this.timestamp, this.results);
+}
+
 class GeocodingService {
   static const String _host = 'nominatim.openstreetmap.org';
   static const String _path = '/search';
   static DateTime _lastRequestTime = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _minInterval = Duration(milliseconds: 1000);
+  static final Map<String, _CachedGeocoding> _cache = {};
+  static const Duration _cacheTtl = Duration(minutes: 15);
 
   Future<List<GeocodingResult>> searchPlaces(String query) async {
     final sanitizedQuery = query.trim();
     if (sanitizedQuery.isEmpty || sanitizedQuery.length > 200) return [];
+
+    final normalizedKey = sanitizedQuery.toLowerCase();
+    final cached = _cache[normalizedKey];
+    if (cached != null && DateTime.now().difference(cached.timestamp) < _cacheTtl) {
+      return cached.results;
+    }
 
     // Enforce rate limiting: max 1 request/sec to adhere to Nominatim AUP
     final now = DateTime.now();
@@ -61,6 +75,7 @@ class GeocodingService {
             }
           }
         }
+        _cache[normalizedKey] = _CachedGeocoding(DateTime.now(), results);
         return results;
       }
     } catch (e) {
