@@ -23,7 +23,7 @@ echo [2/2] Starting Flutter on Chrome...
 echo Press 'r' in this window to hot reload, 'R' to restart, 'q' to quit.
 echo.
 
-call flutter run -d chrome %DART_DEFINES_ARG%
+call flutter run -d chrome --web-port=0 %DART_DEFINES_ARG%
 
 echo.
 echo =========================================================

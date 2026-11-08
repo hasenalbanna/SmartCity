@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'screens/login_screen.dart';
 import 'services/social_service.dart';
 import 'services/location_service.dart';
@@ -19,8 +18,6 @@ import 'services/smart_bus_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Disable runtime network font fetching on web to prevent fonts.dart network crashes
-  GoogleFonts.config.allowRuntimeFetching = false;
   runApp(const SmartCityApp());
 }
 
@@ -76,12 +73,15 @@ class SmartCityApp extends StatelessWidget {
       ],
       child: Consumer2<LocalizationService, ThemeService>(
         builder: (context, localization, themeService, child) {
-          TextTheme textTheme;
-          try {
-            textTheme = GoogleFonts.interTextTheme();
-          } catch (_) {
-            textTheme = ThemeData.light().textTheme;
-          }
+          const fontFallback = [
+            'Inter',
+            '-apple-system',
+            'BlinkMacSystemFont',
+            'Segoe UI',
+            'Roboto',
+            'Arial',
+            'sans-serif',
+          ];
 
           return MaterialApp(
             title: 'Smart City',
@@ -89,13 +89,14 @@ class SmartCityApp extends StatelessWidget {
             locale: _getLocale(localization.currentLanguage),
             themeMode: themeService.themeMode,
             theme: ThemeData(
+              fontFamily: 'Inter',
+              fontFamilyFallback: fontFallback,
               brightness: Brightness.light,
               primaryColor: const Color(0xFF111111),
               scaffoldBackgroundColor: const Color(0xFFF7F9F9),
               splashColor: Colors.black.withValues(alpha: 0.06),
               hoverColor: Colors.black.withValues(alpha: 0.04),
               highlightColor: Colors.black.withValues(alpha: 0.03),
-              textTheme: textTheme,
               colorScheme: ColorScheme.fromSeed(
                 seedColor: const Color(0xFF111111),
                 brightness: Brightness.light,
@@ -162,6 +163,8 @@ class SmartCityApp extends StatelessWidget {
               ),
             ),
             darkTheme: ThemeData(
+              fontFamily: 'Inter',
+              fontFamilyFallback: fontFallback,
               brightness: Brightness.dark,
               primaryColor: const Color(0xFFEAF1FF),
               scaffoldBackgroundColor: const Color(
@@ -170,10 +173,6 @@ class SmartCityApp extends StatelessWidget {
               splashColor: Colors.white.withValues(alpha: 0.08),
               hoverColor: Colors.white.withValues(alpha: 0.06),
               highlightColor: Colors.white.withValues(alpha: 0.04),
-              textTheme: textTheme.apply(
-                bodyColor: Colors.white,
-                displayColor: Colors.white,
-              ),
               colorScheme: const ColorScheme.dark(
                 primary: Color(0xFFEAF1FF),
                 secondary: Color(0xFFEAF1FF),
