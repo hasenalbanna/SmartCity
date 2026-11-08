@@ -39,7 +39,7 @@ class TripHistoryService extends ChangeNotifier {
       distanceKm: 120.5,
       timeTaken: const Duration(hours: 2, minutes: 15),
       date: DateTime.now().subtract(const Duration(days: 2)),
-      mapPreviewUrl: 'assets/southern province/Galle Fort.jpg',
+      mapPreviewUrl: 'assets/southern province/galle fort.jpg',
     ),
     TripHistoryItem(
       id: const Uuid().v4(),
@@ -49,7 +49,7 @@ class TripHistoryService extends ChangeNotifier {
       distanceKm: 140.0,
       timeTaken: const Duration(hours: 6, minutes: 30),
       date: DateTime.now().subtract(const Duration(days: 10)),
-      mapPreviewUrl: 'assets/central province/Kandy Lake.jpg',
+      mapPreviewUrl: 'assets/images/nine_arch_bridge.jpg',
     ),
   ];
 

@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/ai_insights_section.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
@@ -102,7 +103,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     ),
     _ProvinceCardData(
       name: 'Southern Province',
-      coverImagePath: 'assets/PROVINCE COVER PHOTO/SOUTHERN.png',
+      coverImagePath: 'assets/PROVINCE COVER PHOTO/SOTHERN.png',
       hotspot: 'Galle Fort & Mirissa Coast',
       tempLabel: '27°C',
       liveVisitors: '4,890 live',
@@ -205,6 +206,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
           ),
           const SizedBox(height: AppSpace.xl),
+
+          // AI Insights with Real Destination & Civic Photography
+          const AiInsightsSection(),
+          const SizedBox(height: AppSpace.xl),
+
+          // Instagram-Style Citizen Social Feed
           const InstagramFeedSection(showStoriesRow: true),
         ],
       ),

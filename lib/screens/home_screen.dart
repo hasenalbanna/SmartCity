@@ -14,6 +14,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/ai_insights_section.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
@@ -438,7 +439,11 @@ class HomeScreen extends StatelessWidget {
                     child: _buildIssueSummaryCard(context, issue, issueService),
                   ),
                 ),
-          // 8. Instagram-Style Citizen Social Feed (User Posts, Likes, Comments, Stories)
+          // 8. AI Insights with Real Destination & Civic Photography
+          const SizedBox(height: AppSpace.xl),
+          const AiInsightsSection(),
+
+          // 9. Instagram-Style Citizen Social Feed (User Posts, Likes, Comments, Stories)
           const SizedBox(height: AppSpace.xl),
           const InstagramFeedSection(maxPosts: 3, showStoriesRow: true),
         ],

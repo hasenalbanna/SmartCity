@@ -9,7 +9,7 @@ final List<Guide> mockGuides = [
     name: 'Nimal Perera',
     expertise: 'History & Culture',
     rating: 4.8,
-    imageAsset: 'assets/g1.png',
+    imageAsset: 'assets/images/sigiriya.jpg',
     bio:
         'Passionate about Sri Lanka\'s ancient history, I have been guiding tourists through the cultural triangle for two decades. My specialty is making history come alive with stories and local insights.',
     languages: 'English, Sinhala, Tamil',
@@ -26,7 +26,7 @@ final List<Guide> mockGuides = [
     name: 'Sara Fernando',
     expertise: 'Wildlife Photography',
     rating: 4.9,
-    imageAsset: 'assets/g2.png',
+    imageAsset: 'assets/images/yala_leopard.jpg',
     bio:
         'Award-winning wildlife photographer specializing in leopard tracking. I guarantee the best photo opportunities in Yala and Wilpattu national parks.',
     languages: 'English, Spanish, Sinhala',
@@ -48,7 +48,7 @@ final List<Guide> mockGuides = [
     name: 'Kasun Jayasuriya',
     expertise: 'Hiking & Trekking',
     rating: 4.7,
-    imageAsset: 'assets/g3.png',
+    imageAsset: 'assets/images/nine_arch_bridge.jpg',
     bio:
         'Mountain enthusiast and certified trekking guide. From Adams Peak to Knuckles Range, I ensure safe and memorable hiking experiences.',
     languages: 'English, German, Sinhala',
@@ -70,7 +70,7 @@ final List<Guide> mockGuides = [
     name: 'Ayesha Khan',
     expertise: 'Culinary Tours',
     rating: 4.9,
-    imageAsset: 'assets/g4.png',
+    imageAsset: 'assets/western province/galle-face.jpg',
     bio:
         'Food is the best way to understand a culture. Join me for authentic Sri Lankan cooking classes and street food tours in Colombo.',
     languages: 'English, Tamil, Hindi, Sinhala',
@@ -92,7 +92,7 @@ final List<Guide> mockGuides = [
     name: 'Ruwan Silva',
     expertise: 'Surfing & Beach',
     rating: 4.6,
-    imageAsset: 'assets/g5.png',
+    imageAsset: 'assets/eastern province/arugam bay.jpg',
     bio:
         'Born and raised in Arugam Bay, I have been surfing since childhood. I offer lessons for all levels and beach tours along the east coast.',
     languages: 'English, Russian, Sinhala',
@@ -114,7 +114,7 @@ final List<Guide> mockGuides = [
     name: 'Malini De Silva',
     expertise: 'Wellness & Spiritual',
     rating: 5.0,
-    imageAsset: 'assets/g6.png',
+    imageAsset: 'assets/images/temple_tooth.jpg',
     bio:
         'Certified yoga instructor and meditation practitioner. I guide spiritual retreats combining ancient Buddhist practices with modern wellness.',
     languages: 'English, French, Sinhala',
