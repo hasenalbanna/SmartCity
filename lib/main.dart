@@ -70,7 +70,12 @@ class SmartCityApp extends StatelessWidget {
       ],
       child: Consumer2<LocalizationService, ThemeService>(
         builder: (context, localization, themeService, child) {
-          final textTheme = GoogleFonts.interTextTheme();
+          TextTheme textTheme;
+          try {
+            textTheme = GoogleFonts.interTextTheme();
+          } catch (_) {
+            textTheme = ThemeData.light().textTheme;
+          }
 
           return MaterialApp(
             title: 'Smart City',
