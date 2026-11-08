@@ -98,3 +98,4 @@ class AppColors {
   static Color infoBg(BuildContext context) =>
       isDark(context) ? infoBgDark : infoBgLight;
 }
+

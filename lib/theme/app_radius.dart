@@ -14,3 +14,4 @@ class AppRadius {
   static BorderRadius get lgBorder => BorderRadius.circular(lg);
   static BorderRadius get pillBorder => BorderRadius.circular(pill);
 }
+

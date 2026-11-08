@@ -15,3 +15,4 @@ class AppSpace {
   static const EdgeInsets cardPadding = EdgeInsets.all(lg);
   static const EdgeInsets horizontalLg = EdgeInsets.symmetric(horizontal: lg);
 }
+
