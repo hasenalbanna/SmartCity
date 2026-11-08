@@ -15,6 +15,7 @@ import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
+import 'civic_alerts_screen.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
@@ -393,7 +394,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   value: '$aiVerifiedCount',
                   icon: Icons.auto_awesome_outlined,
                   accentColor: AppColors.warning(context),
-                  onTap: () => MainNavigationScreen.switchToTab(context, 3),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CivicAlertsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 StatTile(
                   label: 'Civic Points',

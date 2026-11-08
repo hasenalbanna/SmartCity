@@ -17,6 +17,8 @@ import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
+import 'civic_alerts_screen.dart';
+import 'explore_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
 
@@ -141,7 +143,18 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.md),
 
-          // 2. Live City Sensor & Telemetry Strip
+          // 2. Explore Cover Weather Hero Card (Current Location / Drizzle / 25.8°C -> opens ExploreScreen)
+          ExploreCoverWeatherCard(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ExploreScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: AppSpace.md),
+
+          // 2.5 Live City Sensor & Telemetry Strip
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -203,7 +216,14 @@ class HomeScreen extends StatelessWidget {
                   value: '$activeAlertsCount',
                   icon: Icons.shield_outlined,
                   accentColor: AppColors.warning(context),
-                  onTap: () => MainNavigationScreen.switchToTab(context, 3),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CivicAlertsScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],

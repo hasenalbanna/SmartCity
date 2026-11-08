@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
 import '../services/community_issue_service.dart';
 import '../theme/app_colors.dart';
-import 'civic_alerts_screen.dart';
 import 'community_issues_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
@@ -14,7 +13,8 @@ class MainNavigationScreen extends StatefulWidget {
 
   const MainNavigationScreen({super.key, this.initialIndex = 0});
 
-  /// Allows child screens to switch the active primary navigation tab.
+  /// Allows child screens to switch the active primary navigation tab:
+  /// 0 = Home, 1 = Reports, 2 = Smart Bus, 3 = Profile
   static void switchToTab(BuildContext context, int index) {
     final state = context.findAncestorStateOfType<_MainNavigationScreenState>();
     state?.setTab(index);
@@ -31,14 +31,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     HomeScreen(),
     CommunityIssuesScreen(),
     SmartBusTrackingScreen(),
-    CivicAlertsScreen(),
     ProfileScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex;
+    _currentIndex = widget.initialIndex.clamp(0, _screens.length - 1);
   }
 
   void setTab(int index) {
@@ -60,10 +59,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       children: _screens,
     );
 
-    // Responsive Shell:
-    // < 600px: Material 3 NavigationBar (Bottom)
-    // 600-1024px: NavigationRail (Compact)
-    // > 1024px: NavigationRail (Extended)
     if (width >= 600) {
       final isExtended = width >= 1024;
       return Scaffold(
@@ -79,37 +74,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   : NavigationRailLabelType.all,
               destinations: [
                 const NavigationRailDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home_rounded),
                   label: Text('Home'),
                 ),
                 NavigationRailDestination(
                   icon: Badge(
                     isLabelVisible: pendingCount > 0,
                     label: Text('$pendingCount'),
-                    child: const Icon(Icons.map_outlined),
+                    child: const Icon(Icons.report_problem_outlined),
                   ),
                   selectedIcon: Badge(
                     isLabelVisible: pendingCount > 0,
                     label: Text('$pendingCount'),
-                    child: const Icon(Icons.map_rounded),
+                    child: const Icon(Icons.report_problem_rounded),
                   ),
-                  label: const Text('Report'),
+                  label: const Text('Reports'),
                 ),
                 const NavigationRailDestination(
                   icon: Icon(Icons.directions_bus_outlined),
                   selectedIcon: Icon(Icons.directions_bus_filled_rounded),
-                  label: Text('Transit'),
-                ),
-                const NavigationRailDestination(
-                  icon: Icon(Icons.notifications_outlined),
-                  selectedIcon: Icon(Icons.notifications_rounded),
-                  label: Text('Alerts'),
+                  label: Text('Smart Bus'),
                 ),
                 const NavigationRailDestination(
                   icon: Icon(Icons.person_outline_rounded),
                   selectedIcon: Icon(Icons.person_rounded),
-                  label: Text('Me'),
+                  label: Text('Profile'),
                 ),
               ],
             ),
@@ -138,37 +128,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           onDestinationSelected: setTab,
           destinations: [
             const NavigationDestination(
-              icon: Icon(Icons.dashboard_outlined),
-              selectedIcon: Icon(Icons.dashboard_rounded),
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home_rounded),
               label: 'Home',
             ),
             NavigationDestination(
               icon: Badge(
                 isLabelVisible: pendingCount > 0,
                 label: Text('$pendingCount'),
-                child: const Icon(Icons.map_outlined),
+                child: const Icon(Icons.report_problem_outlined),
               ),
               selectedIcon: Badge(
                 isLabelVisible: pendingCount > 0,
                 label: Text('$pendingCount'),
-                child: const Icon(Icons.map_rounded),
+                child: const Icon(Icons.report_problem_rounded),
               ),
-              label: 'Report',
+              label: 'Reports',
             ),
             const NavigationDestination(
               icon: Icon(Icons.directions_bus_outlined),
               selectedIcon: Icon(Icons.directions_bus_filled_rounded),
-              label: 'Transit',
-            ),
-            const NavigationDestination(
-              icon: Icon(Icons.notifications_outlined),
-              selectedIcon: Icon(Icons.notifications_rounded),
-              label: 'Alerts',
+              label: 'Smart Bus',
             ),
             const NavigationDestination(
               icon: Icon(Icons.person_outline_rounded),
               selectedIcon: Icon(Icons.person_rounded),
-              label: 'Me',
+              label: 'Profile',
             ),
           ],
         ),
