@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
 import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
+import '../services/currency_service.dart';
 import '../services/localization_service.dart';
 import '../services/notification_service.dart';
 import '../services/profile_service.dart';
@@ -19,6 +20,7 @@ import 'civic_alerts_screen.dart';
 import 'login_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -154,6 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final auth = context.watch<AuthService>();
     final profile = context.watch<ProfileService>();
     final localization = context.watch<LocalizationService>();
+    final currency = context.watch<CurrencyService>();
     final themeService = context.watch<ThemeService>();
     final issueService = context.watch<CommunityIssueService>();
     final busService = context.watch<SmartBusService>();
@@ -192,6 +195,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tooltip: 'Edit Profile',
             onPressed: () => _showEditProfileDialog(context, profile),
             icon: const Icon(Icons.edit_outlined),
+          ),
+          IconButton(
+            tooltip: 'Settings, Language & Currency',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined),
           ),
           Padding(
             padding: const EdgeInsets.only(right: AppSpace.md),
@@ -718,15 +731,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSpace.xl),
 
           // 7. Preferences, Ward Selection, Language & Appearance
-          const SectionHeader(
+          SectionHeader(
             title: 'Preferences & Notifications',
-            subtitle: 'Ward assignment, language, theme, and alert channels',
+            subtitle: 'Ward assignment, language, currency, and alert channels',
+            actionLabel: 'All Settings',
+            onAction: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
           ),
           const SizedBox(height: AppSpace.md),
           AppCard(
             padding: EdgeInsets.zero,
             child: Column(
               children: [
+                ListTile(
+                  leading: Icon(
+                    Icons.tune_rounded,
+                    color: AppColors.primary(context),
+                  ),
+                  title: Text(
+                    'Smart City Settings & Control Center',
+                    style: AppTypography.bodyStrong.copyWith(
+                      color: AppColors.textPrimary(context),
+                    ),
+                  ),
+                  subtitle: Text(
+                    '11 Languages (${localization.currentLanguage.toUpperCase()}) • Multi-Currency (${currency.currentCurrency}) • Falcon AI Voice Calibration',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
+                  ),
+                  trailing: Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.primary(context),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
+                Divider(height: 1, color: AppColors.outline(context)),
                 ListTile(
                   leading: Icon(
                     Icons.map_outlined,
@@ -766,13 +815,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppColors.primary(context),
                   ),
                   title: Text(
-                    'App Language',
+                    'App Language / භාෂාව / மொழி',
                     style: AppTypography.bodyStrong.copyWith(
                       color: AppColors.textPrimary(context),
                     ),
                   ),
                   subtitle: Text(
-                    localization.currentLanguageName,
+                    '${localization.currentLanguageName} • Tap for 11-language grid',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textSecondary(context),
                     ),
@@ -781,17 +830,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: DropdownButton<String>(
                       value: localization.currentLanguage,
                       borderRadius: AppRadius.mdBorder,
-                      items: const [
-                        DropdownMenuItem(value: 'en', child: Text('English')),
-                        DropdownMenuItem(
-                          value: 'ta',
-                          child: Text('தமிழ் (Tamil)'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'si',
-                          child: Text('සිංහල (Sinhala)'),
-                        ),
-                      ],
+                      items: LocalizationService.supportedLanguages.entries
+                          .map(
+                            (e) => DropdownMenuItem(
+                              value: e.key,
+                              child: Text(e.value),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (code) {
                         if (code != null) {
                           localization.setLanguage(code);
@@ -799,6 +845,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       },
                     ),
                   ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
                 ),
                 Divider(height: 1, color: AppColors.outline(context)),
                 SwitchListTile(

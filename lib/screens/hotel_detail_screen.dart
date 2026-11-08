@@ -460,3 +460,4 @@ class HotelDetailScreen extends StatelessWidget {
     }
   }
 }
+

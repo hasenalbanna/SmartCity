@@ -11,6 +11,7 @@ import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'itinerary_screen.dart';
+import 'settings_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -143,6 +144,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
             },
             icon: const Icon(Icons.notifications_active_outlined, size: 18),
             label: const Text('Civic Alerts'),
+          ),
+          IconButton(
+            tooltip: 'Settings, Language & Currency',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined),
           ),
           const SizedBox(width: AppSpace.sm),
         ],

@@ -28,3 +28,4 @@ class HotelListScreen extends StatelessWidget {
     );
   }
 }
+

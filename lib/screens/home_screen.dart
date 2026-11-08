@@ -24,6 +24,7 @@ import 'explore_screen.dart';
 import 'itinerary_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -141,6 +142,16 @@ class HomeScreen extends StatelessWidget {
                         : Icons.dark_mode_outlined,
                   ),
                 ),
+              ),
+              IconButton(
+                tooltip: 'Settings, Language & Currency',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+                icon: const Icon(Icons.settings_outlined),
               ),
             ],
           ),
