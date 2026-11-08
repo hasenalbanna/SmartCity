@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Chrome) - Local Fallback",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome"
+    },
+    {
+      "name": "Flutter (Chrome) - AI + Backend",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "args": [
+        "--dart-define=GEMINI_API_KEY=PASTE_YOUR_GEMINI_API_KEY_HERE",
+        "--dart-define=ITINERARY_API_BASE_URL=https://your-api.example.com"
+      ]
+    }
+  ]
+}
