@@ -1,0 +1,2380 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
+import 'package:latlong2/latlong.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/currency_service.dart';
+import '../services/localization_service.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import '../widgets/premium_store_modal.dart';
+import '../widgets/ui/ui.dart';
+import 'hotel_booking_screen.dart';
+import 'sim_recommendation_screen.dart';
+
+class ItineraryScreen extends StatefulWidget {
+  final int initialTabIndex;
+
+  const ItineraryScreen({super.key, this.initialTabIndex = 0});
+
+  @override
+  State<ItineraryScreen> createState() => _ItineraryScreenState();
+}
+
+class _ItineraryScreenState extends State<ItineraryScreen> {
+  int _activeTabIndex = 0;
+  String _selectedAirportCode = 'CMB';
+  double _budgetUsd = 1200;
+  int _stayDays = 6;
+  final Set<String> _selectedInterests = {};
+  bool _isGenerating = false;
+  bool _isLoadingMap = false;
+  String _plannerMode = 'AI + ML Engine';
+
+  List<_DayPlan> _generatedPlan = const [];
+  List<_PlanPlace> _routeStops = const [];
+  List<LatLng> _liveRoutePolyline = const [];
+  final Map<String, double> _livePriceByPlace = {};
+  double _estimatedTotal = 0;
+
+  final _backend = _ItineraryBackendService();
+  final _pricingService = _LivePricingService();
+  final _transportService = _LiveTransportService();
+  final _aiPlanner = _GeminiItineraryAI();
+
+  static const List<_Airport> _airports = [
+    _Airport(
+      code: 'CMB',
+      name: 'Bandaranaike International Airport',
+      city: 'Katunayake',
+      province: 'Western',
+    ),
+    _Airport(
+      code: 'HRI',
+      name: 'Mattala Rajapaksa International Airport',
+      city: 'Hambantota',
+      province: 'Southern',
+    ),
+    _Airport(
+      code: 'JAF',
+      name: 'Jaffna International Airport',
+      city: 'Jaffna',
+      province: 'Northern',
+    ),
+    _Airport(
+      code: 'TRR',
+      name: 'China Bay Airport',
+      city: 'Trincomalee',
+      province: 'Eastern',
+    ),
+    _Airport(
+      code: 'BTC',
+      name: 'Batticaloa Airport (Near Nintavur)',
+      city: 'Batticaloa',
+      province: 'Eastern',
+    ),
+  ];
+
+  static const Map<String, List<String>> _airportProvincePriority = {
+    'CMB': ['Western', 'Central', 'Southern', 'Sabaragamuwa'],
+    'HRI': ['Southern', 'Uva', 'Central', 'Sabaragamuwa'],
+    'JAF': ['Northern', 'North Central', 'Eastern', 'North Western'],
+    'TRR': ['Eastern', 'North Central', 'Uva', 'Northern'],
+    'BTC': ['Eastern', 'Uva', 'Southern', 'Northern'],
+  };
+
+  static const List<_PlanPlace> _famousPlaces = [
+    _PlanPlace(
+      name: 'Galle Face Green',
+      province: 'Western',
+      image: 'assets/western province/galle-face.jpg',
+      avgCost: 25,
+      popularity: 94,
+      history:
+          'A colonial-era ocean promenade that evolved into Colombo\'s social heart.',
+      visitTip: 'Best between 5:00 PM and 7:00 PM for breeze and street food.',
+    ),
+    _PlanPlace(
+      name: 'Gangaramaya Temple',
+      province: 'Western',
+      image: 'assets/western province/Gangaramaya-Temple.jpg',
+      avgCost: 30,
+      popularity: 90,
+      history:
+          'One of Colombo\'s most important Buddhist sites blending many architectural styles.',
+      visitTip: 'Dress modestly and visit early morning to avoid crowds.',
+    ),
+    _PlanPlace(
+      name: 'Mount Lavinia Beach',
+      province: 'Western',
+      image: 'assets/western province/mount lavinia beach.jpg',
+      avgCost: 20,
+      popularity: 86,
+      history:
+          'A historic beach linked to colonial Ceylon and old coastal trade routes.',
+      visitTip: 'Ideal for sunset dinner after a city day.',
+    ),
+    _PlanPlace(
+      name: 'Sigiriya Rock Fortress',
+      province: 'Central',
+      image: 'assets/central province/sigiriya.jpg',
+      avgCost: 75,
+      popularity: 99,
+      history:
+          'Built by King Kasyapa in the 5th century as a palace-fortress complex.',
+      visitTip: 'Start climb before 8:00 AM for cooler weather.',
+    ),
+    _PlanPlace(
+      name: 'Temple of the Tooth',
+      province: 'Central',
+      image: 'assets/central province/temple of tooth.jpg',
+      avgCost: 35,
+      popularity: 96,
+      history: 'The temple safeguards the sacred tooth relic of Lord Buddha.',
+      visitTip: 'Join evening puja for the full cultural atmosphere.',
+    ),
+    _PlanPlace(
+      name: 'Nuwara Eliya Tea Country',
+      province: 'Central',
+      image: 'assets/central province/nuwara eliya tea country.jpg',
+      avgCost: 45,
+      popularity: 91,
+      history:
+          'Known as Little England, shaped by hill-country tea plantations.',
+      visitTip: 'Pair with factory tour and tasting session.',
+    ),
+    _PlanPlace(
+      name: 'Knuckles Mountain Range',
+      province: 'Central',
+      image: 'assets/central province/knuckles.jpg',
+      avgCost: 55,
+      popularity: 84,
+      history: 'A UNESCO conservation landscape rich in endemic biodiversity.',
+      visitTip: 'Use a local guide for safer trekking routes.',
+    ),
+    _PlanPlace(
+      name: 'Galle Fort',
+      province: 'Southern',
+      image: 'assets/southern province/galle fort.jpg',
+      avgCost: 30,
+      popularity: 97,
+      history:
+          'Originally Portuguese and later fortified by the Dutch in the 17th century.',
+      visitTip: 'Walk the ramparts during golden hour.',
+    ),
+    _PlanPlace(
+      name: 'Mirissa Beach',
+      province: 'Southern',
+      image: 'assets/southern province/mirissa beach.jpg',
+      avgCost: 35,
+      popularity: 93,
+      history:
+          'A fishing village transformed into a major whale-watching coast.',
+      visitTip: 'Book whale watching from November to April.',
+    ),
+    _PlanPlace(
+      name: 'Yala National Park',
+      province: 'Southern',
+      image: 'assets/images/yala_leopard.jpg',
+      avgCost: 110,
+      popularity: 95,
+      history:
+          'One of Sri Lanka\'s oldest wildlife reserves with famous leopard sightings.',
+      visitTip: 'Choose dawn safari for better wildlife activity.',
+    ),
+    _PlanPlace(
+      name: 'Arugam Bay',
+      province: 'Eastern',
+      image: 'assets/eastern province/arugam bay.jpg',
+      avgCost: 45,
+      popularity: 89,
+      history:
+          'A global surf destination once known mainly to local fishing communities.',
+      visitTip: 'Peak surf season usually runs from May to September.',
+    ),
+    _PlanPlace(
+      name: 'Pasikuda Beach',
+      province: 'Eastern',
+      image: 'assets/eastern province/pasikuda beach.jpg',
+      avgCost: 50,
+      popularity: 88,
+      history: 'Known for its shallow bay and calm turquoise water belt.',
+      visitTip: 'Best for relaxed swimming and family stays.',
+    ),
+    _PlanPlace(
+      name: 'Batticaloa Fort',
+      province: 'Eastern',
+      image: 'assets/eastern province/batticaloa fort.jpg',
+      avgCost: 20,
+      popularity: 77,
+      history: 'A Portuguese and Dutch military site overlooking the lagoon.',
+      visitTip: 'Combine with lagoon cruise in late afternoon.',
+    ),
+    _PlanPlace(
+      name: 'Kumana National Park',
+      province: 'Eastern',
+      image: 'assets/eastern province/kumana national park.jpg',
+      avgCost: 95,
+      popularity: 82,
+      history:
+          'Bird-rich wetland extension linked to Yala\'s protected ecosystem.',
+      visitTip: 'Excellent for birdwatching from April to July.',
+    ),
+    _PlanPlace(
+      name: 'Ella Rock',
+      province: 'Uva',
+      image: 'assets/uva province/ella rock.webp',
+      avgCost: 28,
+      popularity: 92,
+      history:
+          'A classic hill-country trek route used by tea estate workers and hikers.',
+      visitTip: 'Start early to avoid mid-day heat on open sections.',
+    ),
+    _PlanPlace(
+      name: 'Ravana Falls',
+      province: 'Uva',
+      image: 'assets/uva province/ravana falls.jpg',
+      avgCost: 18,
+      popularity: 85,
+      history: 'Linked in folklore to the Ramayana narrative of King Ravana.',
+      visitTip: 'Visit after rains for stronger waterfall flow.',
+    ),
+    _PlanPlace(
+      name: 'Dambana Indigenous Village',
+      province: 'Uva',
+      image: 'assets/uva province/dambana.jpg',
+      avgCost: 35,
+      popularity: 74,
+      history:
+          'Home to Vedda heritage and one of the island\'s oldest communities.',
+      visitTip: 'Respect local customs during cultural visits.',
+    ),
+    _PlanPlace(
+      name: 'Ancient City of Polonnaruwa',
+      province: 'North Central',
+      image: 'assets/north central province/encient city of plonnaruwa.jpg',
+      avgCost: 60,
+      popularity: 91,
+      history:
+          'A medieval capital with monumental Buddhist and royal architecture.',
+      visitTip: 'Use bicycle rental to cover wider archaeological zones.',
+    ),
+    _PlanPlace(
+      name: 'Minneriya National Park',
+      province: 'North Central',
+      image: 'assets/north central province/minneriya national park.jpg',
+      avgCost: 85,
+      popularity: 90,
+      history:
+          'Famous for The Gathering, one of Asia\'s largest elephant aggregations.',
+      visitTip: 'Best sightings often happen in late dry season.',
+    ),
+    _PlanPlace(
+      name: 'Kala Wewa Reservoir',
+      province: 'North Central',
+      image: 'assets/north central province/kala wewa.jpg',
+      avgCost: 18,
+      popularity: 70,
+      history: 'An ancient irrigation masterpiece from the Anuradhapura era.',
+      visitTip: 'Great quick stop on cultural-triangle drives.',
+    ),
+    _PlanPlace(
+      name: 'Puttalam Lagoon',
+      province: 'North Western',
+      image: 'assets/north western province/puttalam lagoon.jpg',
+      avgCost: 25,
+      popularity: 72,
+      history:
+          'A large coastal lagoon ecosystem supporting fishing and bird life.',
+      visitTip: 'Try sunrise birdwatching tours.',
+    ),
+    _PlanPlace(
+      name: 'Ridi Viharaya',
+      province: 'North Western',
+      image: 'assets/north western province/ridi viharaya.jpg',
+      avgCost: 22,
+      popularity: 73,
+      history:
+          'Historic temple linked to silver ore discoveries in early kingdoms.',
+      visitTip: 'Pair with a short heritage circuit in Kurunegala region.',
+    ),
+    _PlanPlace(
+      name: 'Yapahuwa Rock Fortress',
+      province: 'North Western',
+      image: 'assets/north western province/yapahuwa.jpg',
+      avgCost: 28,
+      popularity: 78,
+      history: 'A 13th-century fortress briefly used as Sri Lanka\'s capital.',
+      visitTip: 'Climb steps in the morning when stone is cooler.',
+    ),
+    _PlanPlace(
+      name: 'Nallur Kovil',
+      province: 'Northern',
+      image: 'assets/nothern province/nallur kovil.jpg',
+      avgCost: 18,
+      popularity: 88,
+      history: 'A key Hindu temple and cultural landmark of Jaffna.',
+      visitTip:
+          'Dress respectfully; evenings are lively during festival season.',
+    ),
+    _PlanPlace(
+      name: 'Jaffna Fort',
+      province: 'Northern',
+      image: 'assets/nothern province/jaffna fort.avif',
+      avgCost: 16,
+      popularity: 80,
+      history: 'A Portuguese-built coastal fort later expanded by the Dutch.',
+      visitTip: 'Visit around sunset for softer light and views.',
+    ),
+    _PlanPlace(
+      name: 'Delft Island',
+      province: 'Northern',
+      image: 'assets/nothern province/delft island.jpg',
+      avgCost: 45,
+      popularity: 76,
+      history:
+          'An island with colonial ruins and distinct coral-stone landscapes.',
+      visitTip: 'Start ferry transfer early in the day.',
+    ),
+    _PlanPlace(
+      name: 'Keerimalai Hot Springs',
+      province: 'Northern',
+      image: 'assets/nothern province/keerimalai hot springs.jpg',
+      avgCost: 14,
+      popularity: 67,
+      history: 'A coastal spring site tied to local religious traditions.',
+      visitTip: 'Combine with temple and coastal stops nearby.',
+    ),
+    _PlanPlace(
+      name: 'Sinharaja Rainforest',
+      province: 'Sabaragamuwa',
+      image: 'assets/sabaragamuwa province/sinharaja.jpg',
+      avgCost: 65,
+      popularity: 89,
+      history:
+          'A UNESCO-listed tropical rainforest with high endemic biodiversity.',
+      visitTip: 'Use licensed eco-guides for trails and wildlife spotting.',
+    ),
+    _PlanPlace(
+      name: 'Bopath Ella',
+      province: 'Sabaragamuwa',
+      image: 'assets/sabaragamuwa province/bopath ella.jpg',
+      avgCost: 20,
+      popularity: 75,
+      history: 'A fan-shaped waterfall popular with local weekend travelers.',
+      visitTip: 'Good quick stop on Ratnapura region drives.',
+    ),
+    _PlanPlace(
+      name: 'Ratnapura Gem Mines',
+      province: 'Sabaragamuwa',
+      image: 'assets/sabaragamuwa province/Ratnapura gem mines.jpg',
+      avgCost: 42,
+      popularity: 81,
+      history: 'The city of gems has supplied sapphires for centuries.',
+      visitTip: 'Visit certified gem museums and workshops.',
+    ),
+  ];
+
+  static const Map<String, List<String>> _placeInterests = {
+    'Galle Face Green': ['Beach', 'Food'],
+    'Gangaramaya Temple': ['Culture', 'Heritage'],
+    'Mount Lavinia Beach': ['Beach'],
+    'Sigiriya Rock Fortress': ['Heritage', 'Culture', 'Adventure'],
+    'Temple of the Tooth': ['Culture', 'Heritage'],
+    'Nuwara Eliya Tea Country': ['Nature', 'Food', 'Honeymoon'],
+    'Knuckles Mountain Range': ['Nature', 'Adventure'],
+    'Galle Fort': ['Heritage', 'Culture', 'Honeymoon'],
+    'Mirissa Beach': ['Beach', 'Wildlife', 'Honeymoon'],
+    'Yala National Park': ['Wildlife', 'Adventure'],
+    'Arugam Bay': ['Beach', 'Adventure'],
+    'Pasikuda Beach': ['Beach', 'Honeymoon'],
+    'Batticaloa Fort': ['Heritage'],
+    'Kumana National Park': ['Wildlife', 'Nature'],
+    'Ella Rock': ['Nature', 'Adventure'],
+    'Ravana Falls': ['Nature'],
+    'Dambana Indigenous Village': ['Culture', 'Heritage'],
+    'Ancient City of Polonnaruwa': ['Heritage', 'Culture'],
+    'Minneriya National Park': ['Wildlife', 'Nature'],
+    'Kala Wewa Reservoir': ['Heritage', 'Nature'],
+    'Puttalam Lagoon': ['Nature', 'Wildlife'],
+    'Ridi Viharaya': ['Culture', 'Heritage'],
+    'Yapahuwa Rock Fortress': ['Heritage', 'Adventure'],
+    'Nallur Kovil': ['Culture', 'Heritage'],
+    'Jaffna Fort': ['Heritage', 'Culture'],
+    'Delft Island': ['Heritage', 'Adventure'],
+    'Keerimalai Hot Springs': ['Culture', 'Nature'],
+    'Sinharaja Rainforest': ['Nature', 'Wildlife', 'Adventure'],
+    'Bopath Ella': ['Nature'],
+    'Ratnapura Gem Mines': ['Culture', 'Food'],
+  };
+
+  static const Map<String, LatLng> _placeCoordinates = {
+    'Galle Face Green': LatLng(6.9271, 79.8447),
+    'Gangaramaya Temple': LatLng(6.9147, 79.8563),
+    'Mount Lavinia Beach': LatLng(6.8396, 79.8653),
+    'Sigiriya Rock Fortress': LatLng(7.9570, 80.7603),
+    'Temple of the Tooth': LatLng(7.2936, 80.6413),
+    'Nuwara Eliya Tea Country': LatLng(6.9497, 80.7891),
+    'Knuckles Mountain Range': LatLng(7.3967, 80.7926),
+    'Galle Fort': LatLng(6.0269, 80.2168),
+    'Mirissa Beach': LatLng(5.9456, 80.4583),
+    'Yala National Park': LatLng(6.3725, 81.5185),
+    'Arugam Bay': LatLng(6.8402, 81.8360),
+    'Pasikuda Beach': LatLng(7.9295, 81.5617),
+    'Batticaloa Fort': LatLng(7.7102, 81.6924),
+    'Kumana National Park': LatLng(6.5878, 81.7059),
+    'Ella Rock': LatLng(6.8667, 81.0460),
+    'Ravana Falls': LatLng(6.8406, 81.0597),
+    'Dambana Indigenous Village': LatLng(7.1540, 81.1160),
+    'Ancient City of Polonnaruwa': LatLng(7.9403, 81.0188),
+    'Minneriya National Park': LatLng(8.0362, 80.8918),
+    'Kala Wewa Reservoir': LatLng(8.1197, 80.5267),
+    'Puttalam Lagoon': LatLng(8.0362, 79.8283),
+    'Ridi Viharaya': LatLng(7.5768, 80.2486),
+    'Yapahuwa Rock Fortress': LatLng(7.8239, 80.3142),
+    'Nallur Kovil': LatLng(9.6753, 80.0213),
+    'Jaffna Fort': LatLng(9.6615, 80.0138),
+    'Delft Island': LatLng(9.5189, 79.7418),
+    'Keerimalai Hot Springs': LatLng(9.8169, 79.9608),
+    'Sinharaja Rainforest': LatLng(6.4062, 80.4675),
+    'Bopath Ella': LatLng(6.7996, 80.3664),
+    'Ratnapura Gem Mines': LatLng(6.6828, 80.3992),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _activeTabIndex = widget.initialTabIndex.clamp(0, 2);
+    _bootstrapPlanner();
+  }
+
+  Future<void> _bootstrapPlanner() async {
+    setState(() => _isGenerating = true);
+    await _restoreSavedPlan();
+    await _generatePlan();
+    if (!mounted) return;
+    setState(() => _isGenerating = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Ceylon Explorer',
+              style: AppTypography.title.copyWith(
+                color: AppColors.textPrimary(context),
+              ),
+            ),
+            Text(
+              'AI Trip Planner, Hotels & SIM Advisor',
+              style: AppTypography.caption.copyWith(
+                color: AppColors.primary(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Export / Share Itinerary',
+            onPressed: () => _openExportMenu(context),
+            icon: const Icon(Icons.ios_share_outlined),
+          ),
+          const SizedBox(width: AppSpace.sm),
+        ],
+      ),
+      body: ListView(
+        padding: AppSpace.pagePadding,
+        children: [
+          // 3-Option Trip Planner Hub Switcher:
+          // 0 = AI Itinerary, 1 = Find Hotels, 2 = AI SIM Advisor
+          _buildTripPlannerTabSelector(context),
+          const SizedBox(height: AppSpace.lg),
+
+          if (_activeTabIndex == 1)
+            const HotelBookingView()
+          else if (_activeTabIndex == 2)
+            const SimRecommendationView()
+          else ...[
+            // Companion Quick-Jump Cards for Hotels & SIM Advisor inside AI Trip Planner
+            _buildCompanionToolsRow(context),
+            const SizedBox(height: AppSpace.lg),
+            _buildPlannerInputCard(context),
+            const SizedBox(height: AppSpace.lg),
+            _buildRouteMapCard(context),
+            const SizedBox(height: AppSpace.lg),
+            const PremiumUpsellBanner(
+              title: 'Unlock Smart Bus 7-Day Unlimited VIP Pass',
+              subtitle:
+                  'Seamless intercity & airport transit across all stops in your AI itinerary.',
+              priceBadge: 'LKR 650 / WK',
+              ctaLabel: 'Unlock VIP Pass',
+            ),
+            const SizedBox(height: AppSpace.lg),
+            _buildTripTitle(context),
+            const SizedBox(height: AppSpace.md),
+            _buildBudgetBreakdownCard(context),
+            const SizedBox(height: AppSpace.lg),
+            if (_isGenerating)
+              ...List.generate(
+                _stayDays,
+                (_) => const Padding(
+                  padding: EdgeInsets.only(bottom: AppSpace.md),
+                  child: SkeletonBox(height: 110),
+                ),
+              )
+            else
+              ..._generatedPlan.asMap().entries.map((entry) {
+                final dayIndex = entry.key;
+                final day = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpace.lg),
+                  child: _buildDaySection(
+                    context: context,
+                    title: 'Day ${dayIndex + 1}: ${day.theme}',
+                    stops: day.stops,
+                  ),
+                );
+              }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripPlannerTabSelector(BuildContext context) {
+    final tabs = [
+      (
+        index: 0,
+        label: 'AI Trip Plan',
+        icon: Icons.event_note_rounded,
+      ),
+      (
+        index: 1,
+        label: 'Find Hotels',
+        icon: Icons.hotel_rounded,
+      ),
+      (
+        index: 2,
+        label: 'SIM Advisor',
+        icon: Icons.sim_card_rounded,
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted(context),
+        borderRadius: AppRadius.mdBorder,
+      ),
+      child: Row(
+        children: tabs.map((tab) {
+          final isSelected = _activeTabIndex == tab.index;
+          return Expanded(
+            child: InkWell(
+              borderRadius: AppRadius.smBorder,
+              onTap: () => setState(() => _activeTabIndex = tab.index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpace.sm,
+                  horizontal: AppSpace.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppColors.primary(context)
+                      : Colors.transparent,
+                  borderRadius: AppRadius.smBorder,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      tab.icon,
+                      size: 16,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary(context),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        tab.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary(context),
+                          fontWeight:
+                              isSelected ? FontWeight.w800 : FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCompanionToolsRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: AppRadius.lgBorder,
+            child: SizedBox(
+              height: 112,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => setState(() => _activeTabIndex = 1),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/southern province/mirissa beach.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.25),
+                              Colors.black.withValues(alpha: 0.84),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpace.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Icon(
+                              Icons.hotel_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Find Your Perfect Stay',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.subtitle.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  '12 curated hotels • Book Now',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSpace.md),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: AppRadius.lgBorder,
+            child: SizedBox(
+              height: 112,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => setState(() => _activeTabIndex = 2),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        'assets/western province/galle-face.jpg',
+                        fit: BoxFit.cover,
+                      ),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.25),
+                              Colors.black.withValues(alpha: 0.84),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpace.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Icon(
+                              Icons.sim_card_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI SIM Advisor',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.subtitle.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  '5G/4G Tourist eSIM Match',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlannerInputCard(BuildContext context) {
+    final currencyService = Provider.of<CurrencyService>(context);
+    final locService = Provider.of<LocalizationService>(context);
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionHeader(
+            title: 'Plan Inputs',
+            subtitle: 'Select arrival airport, budget, duration & interests',
+          ),
+          const SizedBox(height: AppSpace.md),
+          DropdownButtonFormField<String>(
+            initialValue: _selectedAirportCode,
+            decoration: const InputDecoration(
+              labelText: 'Arrival Airport (Sri Lanka)',
+              prefixIcon: Icon(Icons.flight_land_rounded),
+            ),
+            items: _airports
+                .map(
+                  (a) => DropdownMenuItem<String>(
+                    value: a.code,
+                    child: Text('${a.code} - ${a.name}'),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _selectedAirportCode = value);
+            },
+          ),
+          const SizedBox(height: AppSpace.md),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: locService.currentLanguage,
+                  decoration: const InputDecoration(
+                    labelText: 'Language',
+                    prefixIcon: Icon(Icons.language_rounded),
+                  ),
+                  items: LocalizationService.supportedLanguages.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text(e.value),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) locService.setLanguage(value);
+                  },
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: currencyService.currentCurrency,
+                  decoration: const InputDecoration(
+                    labelText: 'Currency',
+                    prefixIcon: Icon(Icons.currency_exchange_rounded),
+                  ),
+                  items: CurrencyService.supportedCurrencies.entries
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e.key,
+                          child: Text('${e.key} ${e.value.split(' ')[0]}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) currencyService.setCurrency(value);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.lg),
+          Row(
+            children: [
+              Icon(
+                Icons.payments_outlined,
+                color: AppColors.primary(context),
+                size: 18,
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Text(
+                'Budget: ${currencyService.currentCurrencySymbol}${currencyService.convertFromUsd(_budgetUsd).toStringAsFixed(0)}',
+                style: AppTypography.subtitle.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: _budgetUsd,
+            min: 250,
+            max: 4000,
+            divisions: 75,
+            activeColor: AppColors.primary(context),
+            onChanged: (v) => setState(() => _budgetUsd = v),
+          ),
+          Row(
+            children: [
+              Icon(
+                Icons.nights_stay_outlined,
+                color: AppColors.primary(context),
+                size: 18,
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Text(
+                'Stay: $_stayDays days',
+                style: AppTypography.subtitle.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+              const Spacer(),
+              IconButton.filledTonal(
+                onPressed: () {
+                  if (_stayDays <= 2) return;
+                  setState(() => _stayDays -= 1);
+                },
+                icon: const Icon(Icons.remove_rounded, size: 18),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              IconButton.filledTonal(
+                onPressed: () {
+                  if (_stayDays >= 14) return;
+                  setState(() => _stayDays += 1);
+                },
+                icon: const Icon(Icons.add_rounded, size: 18),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            'Travel Interests',
+            style: AppTypography.subtitle.copyWith(
+              color: AppColors.textPrimary(context),
+            ),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          Wrap(
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
+            children: [
+              'Culture',
+              'Beach',
+              'Nature',
+              'Adventure',
+              'Wildlife',
+              'Heritage',
+              'Food',
+              'Honeymoon',
+            ].map((interest) {
+              final selected = _selectedInterests.contains(interest);
+              return FilterChip(
+                selected: selected,
+                label: Text(interest),
+                onSelected: (_) {
+                  setState(() {
+                    if (selected) {
+                      _selectedInterests.remove(interest);
+                    } else {
+                      _selectedInterests.add(interest);
+                    }
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpace.lg),
+          AppButton(
+            label: _isGenerating ? 'Generating...' : 'Generate Smart Itinerary',
+            icon: Icons.auto_awesome_rounded,
+            isLoading: _isGenerating,
+            fullWidth: true,
+            onPressed: _isGenerating ? null : _onGeneratePressed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteMapCard(BuildContext context) {
+    final airport = _airports.firstWhere((a) => a.code == _selectedAirportCode);
+    final mapCenter = _routeStops.isNotEmpty
+        ? (_placeCoordinates[_routeStops.first.name] ??
+            const LatLng(7.8731, 80.7718))
+        : const LatLng(7.8731, 80.7718);
+    final markers = _routeStops
+        .where((p) => _placeCoordinates.containsKey(p.name))
+        .map((p) {
+          final point = _placeCoordinates[p.name]!;
+          return Marker(
+            point: point,
+            width: 32,
+            height: 32,
+            child: Tooltip(
+              message: p.name,
+              child: Icon(
+                Icons.location_on_rounded,
+                color: AppColors.primary(context),
+                size: 28,
+              ),
+            ),
+          );
+        })
+        .toList();
+    final polyline = _liveRoutePolyline.isNotEmpty
+        ? _liveRoutePolyline
+        : _routeStops
+            .map((p) => _placeCoordinates[p.name])
+            .whereType<LatLng>()
+            .toList();
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.alt_route_rounded,
+                size: 20,
+                color: AppColors.primary(context),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Text(
+                'Trip Map',
+                style: AppTypography.title.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+              const Spacer(),
+              StatusChip(
+                label: 'From ${airport.code}',
+                kind: StatusChipKind.info,
+                icon: Icons.flight_takeoff_rounded,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          ClipRRect(
+            borderRadius: AppRadius.mdBorder,
+            child: SizedBox(
+              height: 185,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: mapCenter,
+                  initialZoom: 7.1,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.smartcity.app',
+                  ),
+                  if (polyline.length >= 2)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: polyline,
+                          strokeWidth: 3.5,
+                          color: AppColors.primary(context),
+                        ),
+                      ],
+                    ),
+                  MarkerLayer(markers: markers),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${_routeStops.length} stops • ${_liveRoutePolyline.isNotEmpty ? "OSRM live route" : "direct route"}',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary(context),
+                  ),
+                ),
+              ),
+              if (_isLoadingMap)
+                const Padding(
+                  padding: EdgeInsets.only(right: AppSpace.sm),
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              TextButton.icon(
+                onPressed:
+                    _routeStops.isEmpty ? null : () => _openLiveMapSheet(context),
+                icon: const Icon(Icons.map_outlined, size: 16),
+                label: const Text('Open Map'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripTitle(BuildContext context) {
+    final budgetTag = _budgetTierLabel(_budgetUsd);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Your $_stayDays-Day AI Journey',
+                style: AppTypography.display.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+            ),
+            StatusChip(
+              label: budgetTag,
+              kind: StatusChipKind.resolved,
+              icon: Icons.auto_graph_rounded,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.xs),
+        Text(
+          'Mode: $_plannerMode • Recommended by airport, budget, stay length, and live transport data. Estimated total: USD ${_estimatedTotal.toStringAsFixed(0)}.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDaySection({
+    required BuildContext context,
+    required String title,
+    required List<_PlanStop> stops,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: AppColors.primary(context),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(
+              child: Text(
+                title,
+                style: AppTypography.title.copyWith(
+                  color: AppColors.textPrimary(context),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.sm),
+        Container(
+          margin: const EdgeInsets.only(left: 4),
+          padding: const EdgeInsets.only(left: AppSpace.lg),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(
+                color: AppColors.surfaceMuted(context),
+                width: 1.5,
+              ),
+            ),
+          ),
+          child: Column(
+            children: stops
+                .map((stop) => _buildJourneyCard(context, stop))
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildJourneyCard(BuildContext context, _PlanStop stop) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: AppCard(
+        onTap: () => _openPlaceDetail(context, stop.place),
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: AppRadius.mdBorder,
+              child: Image.asset(
+                stop.place.image,
+                width: 82,
+                height: 82,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 82,
+                  height: 82,
+                  color: AppColors.surfaceMuted(context),
+                  child: const Icon(Icons.landscape_outlined),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 13,
+                        color: AppColors.textSecondary(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        stop.time,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondary(context),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Icon(
+                        Icons.directions_car_outlined,
+                        size: 13,
+                        color: AppColors.textSecondary(context),
+                      ),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          stop.travelMode,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary(context),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (stop.durationLabel != null ||
+                      stop.scheduleHint != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      [
+                        if (stop.durationLabel != null) stop.durationLabel!,
+                        if (stop.scheduleHint != null) stop.scheduleHint!,
+                      ].join(' • '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.primary(context),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Text(
+                    stop.place.name,
+                    style: AppTypography.subtitle.copyWith(
+                      color: AppColors.textPrimary(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    stop.place.visitTip,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 13,
+                        color: AppColors.textSecondary(context),
+                      ),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          '${stop.place.province} Province',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary(context),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        'USD ${_priceFor(stop.place).toStringAsFixed(0)}',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.primary(context),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBudgetBreakdownCard(BuildContext context) {
+    final currencyService = Provider.of<CurrencyService>(context);
+    if (_generatedPlan.isEmpty) return const SizedBox.shrink();
+
+    final activityCost = _generatedPlan
+        .expand((d) => d.stops)
+        .fold<double>(0, (sum, stop) => sum + _priceFor(stop.place));
+    final dailyAccomm = _budgetUsd < 700
+        ? 30.0
+        : _budgetUsd < 1500
+            ? 65.0
+            : _budgetUsd < 2600
+                ? 115.0
+                : 200.0;
+    final dailyFood = _budgetUsd < 700
+        ? 18.0
+        : _budgetUsd < 1500
+            ? 35.0
+            : _budgetUsd < 2600
+                ? 58.0
+                : 90.0;
+    final transportCost =
+        (_stayDays - 1) * (_budgetUsd / _stayDays > 190 ? 28.0 : 16.0);
+    final accommCost = dailyAccomm * _stayDays;
+    final foodCost = dailyFood * _stayDays;
+    final total = activityCost + accommCost + transportCost + foodCost;
+    final overBudget = total > _budgetUsd;
+
+    final cats = <({String label, double cost, Color color, IconData icon})>[
+      (
+        label: 'Activities',
+        cost: activityCost,
+        color: AppColors.primary(context),
+        icon: Icons.confirmation_num_outlined,
+      ),
+      (
+        label: 'Accommodation',
+        cost: accommCost,
+        color: AppColors.info(context),
+        icon: Icons.hotel_outlined,
+      ),
+      (
+        label: 'Transport',
+        cost: transportCost,
+        color: AppColors.success(context),
+        icon: Icons.directions_car_outlined,
+      ),
+      (
+        label: 'Food & Dining',
+        cost: foodCost,
+        color: AppColors.warning(context),
+        icon: Icons.restaurant_menu_outlined,
+      ),
+    ];
+
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 20,
+                color: AppColors.primary(context),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Text(
+                  'Budget Breakdown',
+                  style: AppTypography.title.copyWith(
+                    color: AppColors.textPrimary(context),
+                  ),
+                ),
+              ),
+              StatusChip(
+                label: overBudget ? 'Over Budget' : 'Within Budget',
+                kind: overBudget
+                    ? StatusChipKind.pending
+                    : StatusChipKind.resolved,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          ...cats.map((cat) {
+            final fraction =
+                total > 0 ? (cat.cost / total).clamp(0.0, 1.0) : 0.0;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpace.sm),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(cat.icon, size: 15, color: cat.color),
+                      const SizedBox(width: AppSpace.xs),
+                      Expanded(
+                        child: Text(
+                          cat.label,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary(context),
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '${currencyService.currentCurrencySymbol}${currencyService.convertFromUsd(cat.cost).toStringAsFixed(0)}',
+                        style: AppTypography.subtitle.copyWith(
+                          color: AppColors.textPrimary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: AppRadius.smBorder,
+                    child: LinearProgressIndicator(
+                      value: fraction,
+                      minHeight: 6,
+                      backgroundColor: AppColors.surfaceMuted(context),
+                      valueColor: AlwaysStoppedAnimation<Color>(cat.color),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const Divider(height: AppSpace.xl),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Estimated Total',
+                  style: AppTypography.subtitle.copyWith(
+                    color: AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                '${currencyService.currentCurrencySymbol}${currencyService.convertFromUsd(total).toStringAsFixed(0)}',
+                style: AppTypography.title.copyWith(
+                  color: overBudget
+                      ? AppColors.danger(context)
+                      : AppColors.primary(context),
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openPlaceDetail(BuildContext context, _PlanPlace place) {
+    final starCount = ((place.popularity / 20).round()).clamp(1, 5);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.74,
+        minChildSize: 0.45,
+        maxChildSize: 0.94,
+        builder: (_, scrollController) => ListView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(AppSpace.xl),
+          children: [
+            ClipRRect(
+              borderRadius: AppRadius.lgBorder,
+              child: Image.asset(
+                place.image,
+                width: double.infinity,
+                height: 220,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 220,
+                  color: AppColors.surfaceMuted(ctx),
+                  child: const Icon(Icons.terrain_rounded, size: 48),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpace.md),
+            Row(
+              children: [
+                StatusChip(
+                  label: '${place.province} Province',
+                  kind: StatusChipKind.info,
+                  icon: Icons.place_outlined,
+                ),
+                const Spacer(),
+                Text(
+                  'USD ${place.avgCost.toStringAsFixed(0)}',
+                  style: AppTypography.title.copyWith(
+                    color: AppColors.primary(ctx),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              place.name,
+              style: AppTypography.display.copyWith(
+                color: AppColors.textPrimary(ctx),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Row(
+              children: [
+                ...List.generate(
+                  starCount,
+                  (_) => Icon(
+                    Icons.star_rounded,
+                    size: 16,
+                    color: AppColors.warning(ctx),
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                Text(
+                  '${place.popularity}/100 popularity score',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary(ctx),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.lg),
+            Text(
+              'Historical Background',
+              style: AppTypography.title.copyWith(
+                color: AppColors.textPrimary(ctx),
+              ),
+            ),
+            const SizedBox(height: AppSpace.xs),
+            Text(
+              place.history,
+              style: AppTypography.body.copyWith(
+                color: AppColors.textSecondary(ctx),
+              ),
+            ),
+            const SizedBox(height: AppSpace.lg),
+            AppCard(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline_rounded,
+                    color: AppColors.primary(ctx),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Text(
+                      place.visitTip,
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textPrimary(ctx),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generatePlan() async {
+    final prefs =
+        _airportProvincePriority[_selectedAirportCode] ?? const <String>[];
+    final dailyBudget = _budgetUsd / _stayDays;
+
+    List<_PlanPlace> candidates = _famousPlaces.where((p) {
+      if (_budgetUsd < 700) return p.avgCost <= 55;
+      if (_budgetUsd < 1500) return p.avgCost <= 90;
+      return true;
+    }).toList();
+
+    candidates.sort((a, b) {
+      final ai = prefs.indexOf(a.province);
+      final bi = prefs.indexOf(b.province);
+      final aRank = ai == -1 ? 999 : ai;
+      final bRank = bi == -1 ? 999 : bi;
+      if (aRank != bRank) return aRank.compareTo(bRank);
+      if (_selectedInterests.isNotEmpty) {
+        final aInterests = _placeInterests[a.name] ?? const <String>[];
+        final bInterests = _placeInterests[b.name] ?? const <String>[];
+        final aMatches = aInterests.where(_selectedInterests.contains).length;
+        final bMatches = bInterests.where(_selectedInterests.contains).length;
+        if (aMatches != bMatches) return bMatches.compareTo(aMatches);
+      }
+      return b.popularity.compareTo(a.popularity);
+    });
+
+    final currencyService =
+        Provider.of<CurrencyService>(context, listen: false);
+    final locService =
+        Provider.of<LocalizationService>(context, listen: false);
+
+    final aiOrderedNames = await _aiPlanner.rankPlaces(
+      airportCode: _selectedAirportCode,
+      budgetUsd: _budgetUsd,
+      stayDays: _stayDays,
+      interests: _selectedInterests.toList(),
+      candidates: candidates,
+      currencyCode: currencyService.currentCurrency,
+      languageCode: locService.currentLanguage,
+    );
+    if (aiOrderedNames.isNotEmpty) {
+      _plannerMode = 'AI + ML Engine';
+      final rank = <String, int>{
+        for (int i = 0; i < aiOrderedNames.length; i++) aiOrderedNames[i]: i,
+      };
+      candidates.sort((a, b) {
+        final ar = rank[a.name] ?? 999;
+        final br = rank[b.name] ?? 999;
+        if (ar != br) return ar.compareTo(br);
+        return b.popularity.compareTo(a.popularity);
+      });
+    } else {
+      _plannerMode = 'ML Fallback Model';
+    }
+
+    final neededStops = max(_stayDays * 2, 4);
+    final chosen = <_PlanPlace>[];
+    for (final place in candidates) {
+      if (chosen.length >= neededStops) break;
+      final duplicateName = chosen.any((p) => p.name == place.name);
+      if (!duplicateName) chosen.add(place);
+    }
+
+    if (chosen.isEmpty) {
+      chosen.addAll(_famousPlaces.take(min(neededStops, _famousPlaces.length)));
+    }
+
+    var days = <_DayPlan>[];
+    _PlanPlace? previous;
+    for (int day = 0; day < _stayDays; day++) {
+      final morning = chosen[(day * 2) % chosen.length];
+      final evening = chosen[(day * 2 + 1) % chosen.length];
+
+      final morningMode = previous == null
+          ? _arrivalMode(_selectedAirportCode, morning.province)
+          : _travelMode(previous.province, morning.province, dailyBudget);
+      final eveningMode = _travelMode(
+        morning.province,
+        evening.province,
+        dailyBudget,
+      );
+
+      days.add(
+        _DayPlan(
+          theme: _dailyTheme(morning, evening),
+          stops: [
+            _PlanStop(
+              time: '08:30 AM',
+              place: morning,
+              travelMode: morningMode,
+            ),
+            _PlanStop(
+              time: '03:30 PM',
+              place: evening,
+              travelMode: eveningMode,
+            ),
+          ],
+        ),
+      );
+
+      previous = evening;
+    }
+
+    await _syncLivePrices(chosen);
+    days = await _injectLiveTransport(days);
+
+    final uniqueRoute = <_PlanPlace>[];
+    for (final place in chosen) {
+      if (!uniqueRoute.any((p) => p.name == place.name)) {
+        uniqueRoute.add(place);
+      }
+      if (uniqueRoute.length >= 7) break;
+    }
+
+    final baseCost = days
+        .expand((d) => d.stops)
+        .fold<double>(0, (sum, stop) => sum + _priceFor(stop.place));
+    final transferCost = (_stayDays - 1) * (dailyBudget > 190 ? 28 : 16);
+
+    _generatedPlan = days;
+    _routeStops = uniqueRoute;
+    _estimatedTotal = baseCost + transferCost;
+
+    await _refreshLiveRoute();
+    await _backend.saveLatestPlan(_serializePlan());
+  }
+
+  double _priceFor(_PlanPlace place) {
+    return _livePriceByPlace[place.name] ?? place.avgCost;
+  }
+
+  Future<void> _syncLivePrices(List<_PlanPlace> chosen) async {
+    final prices = await _pricingService.fetchLivePrices(chosen);
+    _livePriceByPlace
+      ..clear()
+      ..addAll(prices);
+  }
+
+  Future<List<_DayPlan>> _injectLiveTransport(List<_DayPlan> days) async {
+    final updated = <_DayPlan>[];
+    _PlanPlace? previous;
+    for (final day in days) {
+      final newStops = <_PlanStop>[];
+      for (final stop in day.stops) {
+        LatLng? from;
+        if (previous != null) {
+          from = _placeCoordinates[previous.name];
+        } else {
+          from = _airportCoordinate(_selectedAirportCode);
+        }
+        final to = _placeCoordinates[stop.place.name];
+        String? duration;
+        String? schedule;
+        if (from != null && to != null) {
+          final info = await _transportService.getLiveTransport(from, to);
+          if (info != null) {
+            duration =
+                '${info.durationMinutes} min • ${info.distanceKm.toStringAsFixed(1)} km';
+            schedule = info.scheduleHint;
+          }
+        }
+        newStops.add(
+          stop.copyWith(durationLabel: duration, scheduleHint: schedule),
+        );
+        previous = stop.place;
+      }
+      updated.add(_DayPlan(theme: day.theme, stops: newStops));
+    }
+    return updated;
+  }
+
+  Future<void> _refreshLiveRoute() async {
+    final ordered = _routeStops
+        .map((p) => _placeCoordinates[p.name])
+        .whereType<LatLng>()
+        .toList();
+    if (ordered.length < 2) {
+      _liveRoutePolyline = ordered;
+      return;
+    }
+    final route = await _transportService.getRoutePolyline(ordered);
+    _liveRoutePolyline = route.isNotEmpty ? route : ordered;
+  }
+
+  Future<void> _restoreSavedPlan() async {
+    final saved = await _backend.loadLatestPlan();
+    if (saved == null) return;
+    _selectedAirportCode = saved['airport'] as String? ?? _selectedAirportCode;
+    _budgetUsd = (saved['budget'] as num?)?.toDouble() ?? _budgetUsd;
+    _stayDays = (saved['stayDays'] as num?)?.toInt() ?? _stayDays;
+    final savedInterests =
+        (saved['interests'] as List?)?.cast<String>() ?? const <String>[];
+    _selectedInterests
+      ..clear()
+      ..addAll(savedInterests);
+  }
+
+  Map<String, dynamic> _serializePlan() {
+    return {
+      'airport': _selectedAirportCode,
+      'budget': _budgetUsd,
+      'stayDays': _stayDays,
+      'interests': _selectedInterests.toList(),
+      'estimatedTotal': _estimatedTotal,
+      'plannerMode': _plannerMode,
+      'updatedAt': DateTime.now().toIso8601String(),
+      'days': _generatedPlan
+          .map(
+            (d) => {
+              'theme': d.theme,
+              'stops': d.stops
+                  .map(
+                    (s) => {
+                      'time': s.time,
+                      'place': s.place.name,
+                      'province': s.place.province,
+                      'travelMode': s.travelMode,
+                      'durationLabel': s.durationLabel,
+                      'scheduleHint': s.scheduleHint,
+                    },
+                  )
+                  .toList(),
+            },
+          )
+          .toList(),
+    };
+  }
+
+  LatLng? _airportCoordinate(String code) {
+    switch (code) {
+      case 'CMB':
+        return const LatLng(7.1808, 79.8841);
+      case 'HRI':
+        return const LatLng(6.2845, 81.1241);
+      case 'JAF':
+        return const LatLng(9.7924, 80.0701);
+      case 'TRR':
+        return const LatLng(8.5385, 81.1819);
+      case 'BTC':
+        return const LatLng(7.7060, 81.6788);
+      default:
+        return null;
+    }
+  }
+
+  String _arrivalMode(String airportCode, String destinationProvince) {
+    final airport = _airports.firstWhere((a) => a.code == airportCode);
+    if (airport.province == destinationProvince) {
+      return 'Airport transfer + local taxi';
+    }
+    if (_budgetUsd / _stayDays > 200) {
+      return 'Private cab transfer';
+    }
+    return 'Train or intercity bus';
+  }
+
+  String _travelMode(
+    String fromProvince,
+    String toProvince,
+    double dailyBudget,
+  ) {
+    if (fromProvince == toProvince) return 'Tuk tuk + short cab rides';
+    if (dailyBudget > 220) return 'Private cab to next destination';
+    if ((fromProvince == 'Western' && toProvince == 'Central') ||
+        (fromProvince == 'Central' && toProvince == 'Uva')) {
+      return 'Scenic train route';
+    }
+    return 'Intercity bus + taxi connection';
+  }
+
+  String _dailyTheme(_PlanPlace morning, _PlanPlace evening) {
+    final cultural = ['Central', 'North Central', 'Northern'];
+    final coastal = ['Western', 'Southern', 'Eastern'];
+
+    if (cultural.contains(morning.province) ||
+        cultural.contains(evening.province)) {
+      return 'Heritage and Culture Trail';
+    }
+    if (coastal.contains(morning.province) &&
+        coastal.contains(evening.province)) {
+      return 'Coastline and Sunset Journey';
+    }
+    return 'Nature and Scenic Discovery';
+  }
+
+  String _budgetTierLabel(double budget) {
+    if (budget < 700) return 'Budget Smart';
+    if (budget < 1500) return 'Balanced Comfort';
+    if (budget < 2600) return 'Premium Explorer';
+    return 'Luxury Escape';
+  }
+
+  void _onGeneratePressed() {
+    setState(() {
+      _isGenerating = true;
+      _isLoadingMap = true;
+    });
+    Future.delayed(const Duration(milliseconds: 400), () async {
+      if (!mounted) return;
+      await _generatePlan();
+      if (!mounted) return;
+      setState(() {
+        _isGenerating = false;
+        _isLoadingMap = false;
+      });
+    });
+  }
+
+  void _openExportMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.copy_all_outlined),
+                  title: const Text('Copy Itinerary Text'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _copyTripText();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.share_outlined),
+                  title: const Text('Share Natively'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _shareTripNatively();
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.picture_as_pdf_outlined),
+                  title: const Text('Export PDF'),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _exportAsPdf();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _tripPlanText() {
+    if (_generatedPlan.isEmpty) return '';
+    final buf = StringBuffer();
+    buf.writeln('Sri Lanka Ceylon Explorer Trip Plan - $_stayDays Days');
+    buf.writeln(
+      'Airport: $_selectedAirportCode  |  Budget: USD ${_budgetUsd.toStringAsFixed(0)}',
+    );
+    buf.writeln('Planner mode: $_plannerMode');
+    if (_selectedInterests.isNotEmpty) {
+      buf.writeln('Interests: ${_selectedInterests.join(', ')}');
+    }
+    buf.writeln();
+    for (int i = 0; i < _generatedPlan.length; i++) {
+      final day = _generatedPlan[i];
+      buf.writeln('Day ${i + 1}: ${day.theme}');
+      for (final stop in day.stops) {
+        buf.writeln(
+          '  ${stop.time} — ${stop.place.name} (${stop.place.province})',
+        );
+        buf.writeln(
+          '  via ${stop.travelMode}${stop.durationLabel != null ? ' • ${stop.durationLabel}' : ''}',
+        );
+      }
+      buf.writeln();
+    }
+    buf.writeln('Estimated Total: USD ${_estimatedTotal.toStringAsFixed(0)}');
+    buf.writeln('Generated by Smart City & Ceylon Explorer AI');
+    return buf.toString();
+  }
+
+  void _copyTripText() {
+    final text = _tripPlanText();
+    if (text.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text)).then((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Trip plan copied to clipboard!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
+  }
+
+  Future<void> _shareTripNatively() async {
+    final text = _tripPlanText();
+    if (text.isEmpty) return;
+    await Share.share(text, subject: 'My Sri Lanka AI Itinerary');
+  }
+
+  Future<void> _exportAsPdf() async {
+    final doc = pw.Document();
+    final text = _tripPlanText();
+    if (text.isEmpty) return;
+    doc.addPage(
+      pw.MultiPage(
+        build: (context) => [
+          pw.Header(level: 0, child: pw.Text('Smart City - AI Trip Plan')),
+          pw.Paragraph(text: text),
+        ],
+      ),
+    );
+    final bytes = await doc.save();
+    await Printing.sharePdf(bytes: bytes, filename: 'smartcity-itinerary.pdf');
+  }
+
+  void _openLiveMapSheet(BuildContext context) {
+    final markers = _routeStops
+        .where((p) => _placeCoordinates.containsKey(p.name))
+        .map((p) {
+          final point = _placeCoordinates[p.name]!;
+          return Marker(
+            point: point,
+            width: 36,
+            height: 36,
+            child: Tooltip(
+              message: p.name,
+              child: Icon(
+                Icons.location_pin,
+                color: AppColors.primary(context),
+                size: 32,
+              ),
+            ),
+          );
+        })
+        .toList();
+
+    final polyline = _liveRoutePolyline.isNotEmpty
+        ? _liveRoutePolyline
+        : _routeStops
+            .map((p) => _placeCoordinates[p.name])
+            .whereType<LatLng>()
+            .toList();
+
+    final center = polyline.isNotEmpty
+        ? polyline.first
+        : const LatLng(7.8731, 80.7718);
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        builder: (_, __) => Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(AppSpace.md),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Live Route Map',
+                      style: AppTypography.title.copyWith(
+                        color: AppColors.textPrimary(ctx),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: FlutterMap(
+                options: MapOptions(initialCenter: center, initialZoom: 7.0),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.smartcity.app',
+                  ),
+                  if (polyline.length >= 2)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: polyline,
+                          strokeWidth: 4,
+                          color: AppColors.primary(ctx),
+                        ),
+                      ],
+                    ),
+                  MarkerLayer(markers: markers),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Airport {
+  final String code;
+  final String name;
+  final String city;
+  final String province;
+
+  const _Airport({
+    required this.code,
+    required this.name,
+    required this.city,
+    required this.province,
+  });
+}
+
+class _PlanPlace {
+  final String name;
+  final String province;
+  final String image;
+  final double avgCost;
+  final int popularity;
+  final String history;
+  final String visitTip;
+
+  const _PlanPlace({
+    required this.name,
+    required this.province,
+    required this.image,
+    required this.avgCost,
+    required this.popularity,
+    required this.history,
+    required this.visitTip,
+  });
+}
+
+class _PlanStop {
+  final String time;
+  final _PlanPlace place;
+  final String travelMode;
+  final String? durationLabel;
+  final String? scheduleHint;
+
+  const _PlanStop({
+    required this.time,
+    required this.place,
+    required this.travelMode,
+    this.durationLabel,
+    this.scheduleHint,
+  });
+
+  _PlanStop copyWith({
+    String? time,
+    _PlanPlace? place,
+    String? travelMode,
+    String? durationLabel,
+    String? scheduleHint,
+  }) {
+    return _PlanStop(
+      time: time ?? this.time,
+      place: place ?? this.place,
+      travelMode: travelMode ?? this.travelMode,
+      durationLabel: durationLabel ?? this.durationLabel,
+      scheduleHint: scheduleHint ?? this.scheduleHint,
+    );
+  }
+}
+
+class _DayPlan {
+  final String theme;
+  final List<_PlanStop> stops;
+
+  const _DayPlan({required this.theme, required this.stops});
+}
+
+class _GeminiItineraryAI {
+  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
+
+  Future<List<String>> rankPlaces({
+    required String airportCode,
+    required double budgetUsd,
+    required int stayDays,
+    required List<String> interests,
+    required List<_PlanPlace> candidates,
+    String currencyCode = 'USD',
+    String languageCode = 'en',
+  }) async {
+    if (_apiKey.isEmpty) {
+      return _LocalMlRecommender.rank(candidates, interests);
+    }
+    try {
+      final model =
+          GenerativeModel(model: 'gemini-3.5-flash', apiKey: _apiKey);
+      final prompt = '''
+Return only a JSON array of place names in ranked order for a Sri Lanka itinerary.
+Target user language code: $languageCode
+Target user currency: $currencyCode
+Airport: $airportCode
+Budget USD: ${budgetUsd.toStringAsFixed(0)}
+Days: $stayDays
+Interests: ${interests.join(', ')}
+Candidates: ${candidates.map((e) => '${e.name} (${e.province}, popularity ${e.popularity}, avg ${e.avgCost})').join('; ')}
+      ''';
+      final result = await model.generateContent([Content.text(prompt)]);
+      final text = result.text ?? '';
+      final firstBracket = text.indexOf('[');
+      final lastBracket = text.lastIndexOf(']');
+      if (firstBracket == -1 ||
+          lastBracket == -1 ||
+          lastBracket <= firstBracket) {
+        return _LocalMlRecommender.rank(candidates, interests);
+      }
+      final decoded =
+          jsonDecode(text.substring(firstBracket, lastBracket + 1));
+      if (decoded is List) {
+        return decoded.whereType<String>().toList();
+      }
+    } catch (_) {
+      return _LocalMlRecommender.rank(candidates, interests);
+    }
+    return _LocalMlRecommender.rank(candidates, interests);
+  }
+}
+
+class _LocalMlRecommender {
+  static List<String> rank(
+    List<_PlanPlace> candidates,
+    List<String> interests,
+  ) {
+    final interestSet = interests.toSet();
+    final scored = candidates.map((p) {
+      final tags =
+          _ItineraryScreenState._placeInterests[p.name] ?? const <String>[];
+      final interestScore = tags.where(interestSet.contains).length * 20;
+      final novelty = (100 - p.popularity) * 0.08;
+      final score = p.popularity + interestScore + novelty;
+      return (name: p.name, score: score);
+    }).toList();
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    return scored.map((e) => e.name).toList();
+  }
+}
+
+class _LiveTransportInfo {
+  final int durationMinutes;
+  final double distanceKm;
+  final String scheduleHint;
+
+  const _LiveTransportInfo({
+    required this.durationMinutes,
+    required this.distanceKm,
+    required this.scheduleHint,
+  });
+}
+
+class _LiveTransportService {
+  Future<_LiveTransportInfo?> getLiveTransport(LatLng from, LatLng to) async {
+    try {
+      final uri = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=false',
+      );
+      final res = await http.get(uri);
+      if (res.statusCode != 200) return null;
+      final json = jsonDecode(res.body) as Map<String, dynamic>;
+      final routes = (json['routes'] as List?) ?? const [];
+      if (routes.isEmpty) return null;
+      final first = routes.first as Map<String, dynamic>;
+      final minutes = ((first['duration'] as num?)?.toDouble() ?? 0) ~/ 60;
+      final km = ((first['distance'] as num?)?.toDouble() ?? 0) / 1000;
+      final hh = DateTime.now().hour;
+      final hint = hh < 12
+          ? 'Next departure in ~20 min'
+          : 'Next departure in ~35 min';
+      return _LiveTransportInfo(
+        durationMinutes: minutes,
+        distanceKm: km,
+        scheduleHint: hint,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<List<LatLng>> getRoutePolyline(List<LatLng> points) async {
+    if (points.length < 2) return points;
+    try {
+      final coords =
+          points.map((p) => '${p.longitude},${p.latitude}').join(';');
+      final uri = Uri.parse(
+        'https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson',
+      );
+      final res = await http.get(uri);
+      if (res.statusCode != 200) return points;
+      final json = jsonDecode(res.body) as Map<String, dynamic>;
+      final routes = (json['routes'] as List?) ?? const [];
+      if (routes.isEmpty) return points;
+      final geometry = (routes.first as Map<String, dynamic>)['geometry']
+          as Map<String, dynamic>?;
+      final coordinates = (geometry?['coordinates'] as List?) ?? const [];
+      return coordinates
+          .whereType<List>()
+          .where((c) => c.length >= 2)
+          .map(
+            (c) => LatLng((c[1] as num).toDouble(), (c[0] as num).toDouble()),
+          )
+          .toList();
+    } catch (_) {
+      return points;
+    }
+  }
+}
+
+class _LivePricingService {
+  static const String _apiBase = String.fromEnvironment(
+    'ITINERARY_API_BASE_URL',
+  );
+
+  Future<Map<String, double>> fetchLivePrices(List<_PlanPlace> places) async {
+    if (_apiBase.isNotEmpty) {
+      try {
+        final uri = Uri.parse('$_apiBase/pricing');
+        final res = await http.post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'places': places.map((e) => e.name).toList()}),
+        );
+        if (res.statusCode == 200) {
+          final json = jsonDecode(res.body) as Map<String, dynamic>;
+          final data = (json['prices'] as Map?)?.cast<String, dynamic>() ??
+              const <String, dynamic>{};
+          return data.map((k, v) => MapEntry(k, (v as num).toDouble()));
+        }
+      } catch (_) {}
+    }
+
+    final dayFactor = (DateTime.now().weekday % 3) * 0.04;
+    return {
+      for (final p in places)
+        p.name: p.avgCost * (1 + dayFactor + ((p.popularity % 5) * 0.01)),
+    };
+  }
+}
+
+class _ItineraryBackendService {
+  static const String _key = 'smartcity_latest_plan';
+  static const String _apiBase = String.fromEnvironment(
+    'ITINERARY_API_BASE_URL',
+  );
+
+  Future<void> saveLatestPlan(Map<String, dynamic> payload) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_key, jsonEncode(payload));
+    if (_apiBase.isNotEmpty) {
+      try {
+        await http.post(
+          Uri.parse('$_apiBase/plans'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(payload),
+        );
+      } catch (_) {}
+    }
+  }
+
+  Future<Map<String, dynamic>?> loadLatestPlan() async {
+    if (_apiBase.isNotEmpty) {
+      try {
+        final res = await http.get(Uri.parse('$_apiBase/plans/latest'));
+        if (res.statusCode == 200) {
+          final cloud = jsonDecode(res.body) as Map<String, dynamic>;
+          return cloud;
+        }
+      } catch (_) {}
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_key);
+    if (raw == null || raw.isEmpty) return null;
+    return jsonDecode(raw) as Map<String, dynamic>;
+  }
+}

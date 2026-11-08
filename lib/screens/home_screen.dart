@@ -21,6 +21,7 @@ import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'explore_screen.dart';
+import 'itinerary_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
 
@@ -151,6 +152,18 @@ class HomeScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ExploreScreen()),
+              );
+            },
+          ),
+          const SizedBox(height: AppSpace.sm),
+          AppButton(
+            label: 'Open AI Trip Planner & Live Route Engine',
+            icon: Icons.event_note_rounded,
+            fullWidth: true,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ItineraryScreen()),
               );
             },
           ),

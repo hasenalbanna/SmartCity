@@ -10,6 +10,7 @@ import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
+import 'itinerary_screen.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -161,6 +162,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
           // Cover Weather Card (same cover card style)
           const ExploreCoverWeatherCard(showExploreBadge: false),
+          const SizedBox(height: AppSpace.sm),
+          AppButton(
+            label: 'Open AI Trip Planner & Live Route Engine',
+            icon: Icons.event_note_rounded,
+            fullWidth: true,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ItineraryScreen()),
+              );
+            },
+          ),
           const SizedBox(height: AppSpace.lg),
 
           // Premium Upsell Banner
