@@ -3,11 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/community_issue.dart';
+import '../models/ai_hazard_analysis.dart';
+import 'ai_hazard_aggregator_service.dart';
 
 class CommunityIssueService extends ChangeNotifier {
   static const String _storageKey = 'smartcity_community_issues_v1';
   final List<CommunityIssue> _issues = [];
   bool _initialized = false;
+  final AiHazardAggregatorService _aiAggregator = AiHazardAggregatorService();
 
   List<CommunityIssue> get issues => List.unmodifiable(_issues);
 
@@ -56,6 +59,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.pending,
         contactNumber: '+94 77 123 4567',
         createdAt: DateTime(2026, 4, 17),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.95,
+          urgencyScore: 7.8,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-NIN-4821',
+          locationMatch: true,
+          weatherCorrelated: true,
+          antiSpamPassed: true,
+          reasoning: 'Road surface pothole verified. Municipal Council Work Order dispatched.',
+          visionDetection: 'Asphalt structural fracture & depth ~14cm',
+          peopleAtRisk: 42,
+          estimatedResponseHours: 4,
+          processedAt: DateTime(2026, 4, 17, 10, 30),
+        ),
       ),
       CommunityIssue(
         id: 'rep_2',
@@ -68,6 +85,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.pending,
         contactNumber: '+94 77 987 6543',
         createdAt: DateTime(2026, 4, 17),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.93,
+          urgencyScore: 7.5,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-ADD-4822',
+          locationMatch: true,
+          weatherCorrelated: true,
+          antiSpamPassed: true,
+          reasoning: 'Monsoon erosion confirmed via radar correlation. Public works scheduled.',
+          visionDetection: 'Eroded road shoulder & loose gravel',
+          peopleAtRisk: 30,
+          estimatedResponseHours: 4,
+          processedAt: DateTime(2026, 4, 17, 11, 15),
+        ),
       ),
       CommunityIssue(
         id: 'rep_3',
@@ -80,6 +111,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.inProgress,
         contactNumber: '+94 71 222 3344',
         createdAt: DateTime(2026, 4, 16),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.91,
+          urgencyScore: 6.8,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-NIN-4809',
+          locationMatch: true,
+          weatherCorrelated: false,
+          antiSpamPassed: true,
+          reasoning: 'Sanitation backlog verified. Compactor truck dispatched.',
+          visionDetection: 'Solid waste accumulation >2m³',
+          peopleAtRisk: 65,
+          estimatedResponseHours: 8,
+          processedAt: DateTime(2026, 4, 16, 9, 0),
+        ),
       ),
       CommunityIssue(
         id: 'rep_4',
@@ -92,6 +137,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.resolved,
         contactNumber: '+94 76 555 4321',
         createdAt: DateTime(2026, 4, 14),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.96,
+          urgencyScore: 6.4,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-NIN-4792',
+          locationMatch: true,
+          weatherCorrelated: false,
+          antiSpamPassed: true,
+          reasoning: 'Utility repair completed. High-pressure sodium lamps replaced with LED.',
+          visionDetection: 'Overhead circuit restored',
+          peopleAtRisk: 50,
+          estimatedResponseHours: 12,
+          processedAt: DateTime(2026, 4, 14, 18, 0),
+        ),
       ),
       CommunityIssue(
         id: 'rep_5',
@@ -104,6 +163,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.pending,
         contactNumber: '+94 77 333 8899',
         createdAt: DateTime(2026, 4, 13),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.97,
+          urgencyScore: 8.8,
+          routingChannel: AiRoutingChannel.areaAlert,
+          councilTicketId: 'CW-2026-NIN-4780',
+          locationMatch: true,
+          weatherCorrelated: true,
+          antiSpamPassed: true,
+          reasoning: 'Severe stormwater canal blockage. Area Alert broadcasted to downstream residents.',
+          visionDetection: 'Canal capacity reduced by 85%',
+          peopleAtRisk: 120,
+          estimatedResponseHours: 2,
+          processedAt: DateTime(2026, 4, 13, 14, 30),
+        ),
       ),
       CommunityIssue(
         id: 'rep_6',
@@ -116,6 +189,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.resolved,
         contactNumber: '+94 77 444 1122',
         createdAt: DateTime(2026, 4, 12),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.95,
+          urgencyScore: 6.2,
+          routingChannel: AiRoutingChannel.published,
+          councilTicketId: 'CW-2026-NIN-4775',
+          locationMatch: true,
+          weatherCorrelated: false,
+          antiSpamPassed: true,
+          reasoning: 'Maintenance verified by field inspector.',
+          visionDetection: 'Luminaires operational',
+          peopleAtRisk: 35,
+          estimatedResponseHours: 24,
+          processedAt: DateTime(2026, 4, 12, 16, 20),
+        ),
       ),
       CommunityIssue(
         id: 'rep_7',
@@ -128,6 +215,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.resolved,
         contactNumber: '+94 71 888 9900',
         createdAt: DateTime(2026, 4, 11),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.94,
+          urgencyScore: 7.0,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-NIN-4768',
+          locationMatch: true,
+          weatherCorrelated: true,
+          antiSpamPassed: true,
+          reasoning: 'Road resurfacing certified by municipal engineering team.',
+          visionDetection: 'Fresh asphalt surface layer',
+          peopleAtRisk: 80,
+          estimatedResponseHours: 6,
+          processedAt: DateTime(2026, 4, 11, 12, 0),
+        ),
       ),
       CommunityIssue(
         id: 'rep_8',
@@ -140,6 +241,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.pending,
         contactNumber: '+94 75 111 2233',
         createdAt: DateTime(2026, 4, 10),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.89,
+          urgencyScore: 6.5,
+          routingChannel: AiRoutingChannel.councilTicket,
+          councilTicketId: 'CW-2026-NIN-4752',
+          locationMatch: true,
+          weatherCorrelated: false,
+          antiSpamPassed: true,
+          reasoning: 'Sanitation request queued.',
+          visionDetection: 'Container spillover verified',
+          peopleAtRisk: 25,
+          estimatedResponseHours: 12,
+          processedAt: DateTime(2026, 4, 10, 8, 45),
+        ),
       ),
       CommunityIssue(
         id: 'rep_9',
@@ -152,6 +267,20 @@ class CommunityIssueService extends ChangeNotifier {
         status: IssueStatus.resolved,
         contactNumber: '+94 78 999 0011',
         createdAt: DateTime(2026, 4, 9),
+        aiAnalysis: AiHazardAnalysis(
+          confidenceScore: 0.98,
+          urgencyScore: 8.6,
+          routingChannel: AiRoutingChannel.areaAlert,
+          councilTicketId: 'CW-2026-NIN-4740',
+          locationMatch: true,
+          weatherCorrelated: true,
+          antiSpamPassed: true,
+          reasoning: 'Shoreline revetment work completed and inspected.',
+          visionDetection: 'Rip-rap boulder placement verified',
+          peopleAtRisk: 90,
+          estimatedResponseHours: 2,
+          processedAt: DateTime(2026, 4, 9, 15, 0),
+        ),
       ),
     ]);
   }
@@ -166,7 +295,7 @@ class CommunityIssueService extends ChangeNotifier {
     }
   }
 
-  Future<void> addIssue({
+  Future<CommunityIssue> addIssue({
     required String category,
     required String categoryLocal,
     required String title,
@@ -177,6 +306,16 @@ class CommunityIssueService extends ChangeNotifier {
     String? imagePath,
     bool hasAudio = false,
   }) async {
+    // Run AI Hazard Aggregator Pipeline
+    final aiAnalysis = await _aiAggregator.evaluateReport(
+      category: category,
+      description: description,
+      contactNumber: contactNumber,
+      coordinates: location,
+      imagePath: imagePath,
+      hasAudio: hasAudio,
+    );
+
     final newIssue = CommunityIssue(
       id: 'rep_${DateTime.now().millisecondsSinceEpoch}',
       category: category,
@@ -190,9 +329,17 @@ class CommunityIssueService extends ChangeNotifier {
       imagePath: imagePath,
       hasAudio: hasAudio,
       createdAt: DateTime.now(),
+      aiAnalysis: aiAnalysis,
     );
 
     _issues.insert(0, newIssue);
+    notifyListeners();
+    await _saveToStorage();
+    return newIssue;
+  }
+
+  Future<void> addDirectIssue(CommunityIssue issue) async {
+    _issues.insert(0, issue);
     notifyListeners();
     await _saveToStorage();
   }

@@ -1,4 +1,5 @@
 import 'package:latlong2/latlong.dart';
+import 'ai_hazard_analysis.dart';
 
 enum IssueStatus {
   pending,
@@ -19,6 +20,7 @@ class CommunityIssue {
   final String? imagePath;
   final bool hasAudio;
   final DateTime createdAt;
+  final AiHazardAnalysis? aiAnalysis;
 
   CommunityIssue({
     required this.id,
@@ -33,6 +35,7 @@ class CommunityIssue {
     this.imagePath,
     this.hasAudio = false,
     required this.createdAt,
+    this.aiAnalysis,
   });
 
   CommunityIssue copyWith({
@@ -48,6 +51,7 @@ class CommunityIssue {
     String? imagePath,
     bool? hasAudio,
     DateTime? createdAt,
+    AiHazardAnalysis? aiAnalysis,
   }) {
     return CommunityIssue(
       id: id ?? this.id,
@@ -62,6 +66,7 @@ class CommunityIssue {
       imagePath: imagePath ?? this.imagePath,
       hasAudio: hasAudio ?? this.hasAudio,
       createdAt: createdAt ?? this.createdAt,
+      aiAnalysis: aiAnalysis ?? this.aiAnalysis,
     );
   }
 
@@ -80,6 +85,7 @@ class CommunityIssue {
       'imagePath': imagePath,
       'hasAudio': hasAudio,
       'createdAt': createdAt.toIso8601String(),
+      'aiAnalysis': aiAnalysis?.toJson(),
     };
   }
 
@@ -103,6 +109,10 @@ class CommunityIssue {
       imagePath: json['imagePath'] as String?,
       hasAudio: json['hasAudio'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? DateTime.now(),
+      aiAnalysis: json['aiAnalysis'] != null
+          ? AiHazardAnalysis.fromJson(json['aiAnalysis'] as Map<String, dynamic>)
+          : null,
     );
   }
 }
+

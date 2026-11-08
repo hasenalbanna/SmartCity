@@ -536,3 +536,4 @@ class _SmartBusTrackingScreenState extends State<SmartBusTrackingScreen> {
     );
   }
 }
+
