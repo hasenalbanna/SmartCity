@@ -3,8 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
-import 'itinerary_screen.dart';
 import 'profile_screen.dart';
+import 'community_issues_screen.dart';
+import 'smart_bus_tracking_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,8 +19,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   final List<Widget> _screens = const [
     HomeScreen(),
+    CommunityIssuesScreen(),
+    SmartBusTrackingScreen(),
     ExploreScreen(),
-    ItineraryScreen(),
     ProfileScreen(),
   ];
 
@@ -70,20 +72,27 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       ),
                       _buildItem(
                         1,
+                        Icons.report_problem_outlined,
+                        Icons.report_problem,
+                        'Reports',
+                        isDark,
+                      ),
+                      _buildItem(
+                        2,
+                        Icons.directions_bus_outlined,
+                        Icons.directions_bus_filled,
+                        'Smart Bus',
+                        isDark,
+                      ),
+                      _buildItem(
+                        3,
                         Icons.explore_outlined,
                         Icons.explore,
                         'Explore',
                         isDark,
                       ),
                       _buildItem(
-                        2,
-                        Icons.event_note_outlined,
-                        Icons.event_note,
-                        'Itinerary',
-                        isDark,
-                      ),
-                      _buildItem(
-                        3,
+                        4,
                         Icons.person_outline,
                         Icons.person,
                         'Profile',
@@ -118,7 +127,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onTap: () => setState(() => _currentIndex = index),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 260),
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             color: isSelected && !isDark
@@ -137,14 +146,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             children: [
               Icon(
                 isSelected ? activeIcon : icon,
-                size: 22,
+                size: 21,
                 color: isSelected ? Colors.white : inactiveColor,
               ),
               const SizedBox(height: 3),
               Text(
                 label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? Colors.white : inactiveColor,
                 ),
