@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
-import 'services/social_service.dart';
-import 'services/location_service.dart';
-import 'services/payment_service.dart';
-import 'services/localization_service.dart';
 import 'services/auth_service.dart';
-import 'services/profile_service.dart';
-import 'services/theme_service.dart';
 import 'services/clock_service.dart';
-import 'services/notification_service.dart';
-import 'services/weather_service.dart';
-import 'services/trip_history_service.dart';
-import 'services/currency_service.dart';
 import 'services/community_issue_service.dart';
+import 'services/currency_service.dart';
+import 'services/falcon_ai_service.dart';
+import 'services/localization_service.dart';
+import 'services/location_service.dart';
+import 'services/notification_service.dart';
+import 'services/payment_service.dart';
+import 'services/profile_service.dart';
 import 'services/smart_bus_service.dart';
+import 'services/social_service.dart';
+import 'services/subscription_service.dart';
+import 'services/theme_service.dart';
+import 'services/trip_history_service.dart';
+import 'services/weather_service.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -70,6 +72,8 @@ class SmartCityApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CurrencyService()),
         ChangeNotifierProvider(create: (_) => CommunityIssueService()),
         ChangeNotifierProvider(create: (_) => SmartBusService()),
+        ChangeNotifierProvider(create: (_) => FalconAiService()),
+        ChangeNotifierProvider(create: (_) => SubscriptionService()),
       ],
       child: Consumer2<LocalizationService, ThemeService>(
         builder: (context, localization, themeService, child) {

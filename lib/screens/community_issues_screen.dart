@@ -5,14 +5,16 @@ import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
 import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
+import '../services/falcon_ai_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
+import '../widgets/falcon_ai_disaster_panel.dart';
+import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
-import '../widgets/voice_ai_report_modal.dart';
 import 'report_issue_wizard_screen.dart';
 
 class CommunityIssuesScreen extends StatefulWidget {
@@ -25,6 +27,7 @@ class CommunityIssuesScreen extends StatefulWidget {
 class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
   final MapController _mapController = MapController();
   bool _isMapExpanded = false;
+  int _reportModeIndex = 0; // 0 = Local Issues, 1 = Disaster Issues (Falcon AI)
   String _selectedFilter = 'All';
   final Set<String> _expandedAiCards = {};
 
@@ -61,6 +64,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     final auth = context.watch<AuthService>();
     final profile = context.watch<ProfileService>();
     final issuesService = context.watch<CommunityIssueService>();
+    final falcon = context.watch<FalconAiService>();
 
     final userName = auth.currentUser?.username.isNotEmpty == true
         ? auth.currentUser!.username
@@ -86,20 +90,22 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Semantics(
-            label: 'Report issue by voice',
+            label: 'Activate Falcon AI Disaster Voice Assistant',
             button: true,
-            child: FloatingActionButton(
-              heroTag: 'voice_ai_fab',
-              tooltip: 'Voice AI Report',
-              backgroundColor: AppColors.surface(context),
-              foregroundColor: AppColors.primary(context),
+            child: FloatingActionButton.extended(
+              heroTag: 'falcon_voice_fab',
+              backgroundColor: _reportModeIndex == 1
+                  ? AppColors.danger(context)
+                  : AppColors.surface(context),
+              foregroundColor: _reportModeIndex == 1
+                  ? Colors.white
+                  : AppColors.danger(context),
               onPressed: () {
-                VoiceAiReportModal.show(
-                  context,
-                  initialLocation: const LatLng(7.3486, 81.8494),
-                );
+                setState(() => _reportModeIndex = 1);
+                falcon.wakeUpFalcon();
               },
-              child: const Icon(Icons.mic_rounded),
+              icon: const Icon(Icons.radar_rounded),
+              label: const Text('Hey Falcon AI'),
             ),
           ),
           const SizedBox(width: AppSpace.sm),
@@ -109,7 +115,9 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ReportIssueWizardScreen(),
+                  builder: (_) => ReportIssueWizardScreen(
+                    initialModeIndex: _reportModeIndex,
+                  ),
                 ),
               );
             },
@@ -123,13 +131,16 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
       body: Column(
         children: [
           _buildHeader(context, userName, avatarLetter),
-          _buildMapSection(context, allIssues),
+          _buildPrimaryTwoOptionsSelector(context, falcon),
+          _buildMapSection(context, allIssues, falcon),
           Expanded(
-            child: _buildRecentReportsSection(
-              context,
-              filteredIssues,
-              issuesService,
-            ),
+            child: _reportModeIndex == 1
+                ? FalconAiDisasterPanel(mapController: _mapController)
+                : _buildLocalIssuesSection(
+                    context,
+                    filteredIssues,
+                    issuesService,
+                  ),
           ),
         ],
       ),
@@ -144,7 +155,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpace.lg,
-        vertical: AppSpace.md,
+        vertical: AppSpace.sm,
       ),
       color: AppColors.surface(context),
       child: Row(
@@ -157,6 +168,16 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
             ),
           ),
           const Spacer(),
+          TextButton.icon(
+            onPressed: () => PremiumStoreModal.show(context),
+            icon: Icon(
+              Icons.workspace_premium_rounded,
+              size: 18,
+              color: AppColors.warning(context),
+            ),
+            label: const Text('Pro Store'),
+          ),
+          const SizedBox(width: AppSpace.xs),
           Semantics(
             label: 'Trigger Emergency SOS Strobe',
             button: true,
@@ -178,7 +199,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
           ),
           const SizedBox(width: AppSpace.sm),
           CircleAvatar(
-            radius: 18,
+            radius: 17,
             backgroundColor: AppColors.primary(context),
             child: Text(
               avatarLetter,
@@ -193,8 +214,163 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     );
   }
 
-  Widget _buildMapSection(BuildContext context, List<CommunityIssue> issues) {
-    final mapHeight = _isMapExpanded ? 340.0 : 220.0;
+  /// First thing the user sees on the Report page:
+  /// Option 1: Report Local Issues | Option 2: Disaster Issues (Falcon AI)
+  Widget _buildPrimaryTwoOptionsSelector(
+    BuildContext context,
+    FalconAiService falcon,
+  ) {
+    final isLocal = _reportModeIndex == 0;
+    final isDisaster = _reportModeIndex == 1;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.xs,
+        AppSpace.lg,
+        AppSpace.sm,
+      ),
+      color: AppColors.surface(context),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              borderRadius: AppRadius.mdBorder,
+              onTap: () => setState(() => _reportModeIndex = 0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm + 2,
+                ),
+                decoration: BoxDecoration(
+                  color: isLocal
+                      ? AppColors.primary(context)
+                      : AppColors.surfaceMuted(context),
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(
+                    color: isLocal
+                        ? AppColors.primary(context)
+                        : AppColors.outline(context),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.construction_rounded,
+                      size: 18,
+                      color: isLocal
+                          ? Colors.white
+                          : AppColors.textPrimary(context),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '1. Local Issues',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyStrong.copyWith(
+                              color: isLocal
+                                  ? Colors.white
+                                  : AppColors.textPrimary(context),
+                            ),
+                          ),
+                          Text(
+                            'Roads, drainage, lights',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption.copyWith(
+                              color: isLocal
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : AppColors.textSecondary(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: InkWell(
+              borderRadius: AppRadius.mdBorder,
+              onTap: () => setState(() => _reportModeIndex = 1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm + 2,
+                ),
+                decoration: BoxDecoration(
+                  color: isDisaster
+                      ? AppColors.danger(context)
+                      : AppColors.dangerBg(context),
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(color: AppColors.danger(context)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.radar_rounded,
+                      size: 18,
+                      color: isDisaster
+                          ? Colors.white
+                          : AppColors.danger(context),
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '2. Disaster • Falcon AI',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodyStrong.copyWith(
+                              color: isDisaster
+                                  ? Colors.white
+                                  : AppColors.danger(context),
+                            ),
+                          ),
+                          Text(
+                            falcon.isSirenActive
+                                ? 'SIREN ACTIVE!'
+                                : 'Say "Hey Falcon wake up"',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption.copyWith(
+                              color: isDisaster
+                                  ? Colors.white.withValues(alpha: 0.9)
+                                  : AppColors.danger(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapSection(
+    BuildContext context,
+    List<CommunityIssue> issues,
+    FalconAiService falcon,
+  ) {
+    final mapHeight = _isMapExpanded ? 320.0 : 200.0;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
@@ -223,90 +399,73 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                 ],
               ),
               MarkerLayer(
-                markers: issues.map((issue) {
-                  final dotColor = _getMarkerColor(context, issue.status);
-                  return Marker(
-                    point: issue.location,
-                    width: 34,
-                    height: 34,
-                    child: Semantics(
-                      label: '${issue.category} report at ${issue.address}',
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () => _showIssueDetailsSheet(context, issue),
-                        child: Center(
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: dotColor,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: dotColor.withValues(alpha: 0.45),
-                                  blurRadius: 8,
-                                  spreadRadius: 2,
+                markers: [
+                  ...issues.map((issue) {
+                    final dotColor = _getMarkerColor(context, issue.status);
+                    return Marker(
+                      point: issue.location,
+                      width: 34,
+                      height: 34,
+                      child: Semantics(
+                        label: '${issue.category} report at ${issue.address}',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () => _showIssueDetailsSheet(context, issue),
+                          child: Center(
+                            child: Container(
+                              width: 18,
+                              height: 18,
+                              decoration: BoxDecoration(
+                                color: dotColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2.5,
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
                       ),
+                    );
+                  }),
+                  if (falcon.state == FalconAiState.dispatched)
+                    Marker(
+                      point: falcon.lockedLocation,
+                      width: 80,
+                      height: 80,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.danger(context),
+                              borderRadius: AppRadius.smBorder,
+                            ),
+                            child: Text(
+                              'FALCON SOS',
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.my_location_rounded,
+                            size: 36,
+                            color: AppColors.danger(context),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }).toList(),
+                ],
               ),
             ],
           ),
-          // Zoom controls
-          Positioned(
-            top: AppSpace.md,
-            left: AppSpace.md,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                borderRadius: AppRadius.smBorder,
-                border: Border.all(color: AppColors.outline(context)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Zoom in',
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.add, size: 18),
-                    onPressed: () {
-                      final cam = _mapController.camera;
-                      _mapController.move(cam.center, cam.zoom + 1);
-                    },
-                  ),
-                  Divider(height: 1, color: AppColors.outline(context)),
-                  IconButton(
-                    tooltip: 'Zoom out',
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.remove, size: 18),
-                    onPressed: () {
-                      final cam = _mapController.camera;
-                      _mapController.move(cam.center, cam.zoom - 1);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Expand / Collapse map pill
           Positioned(
             left: AppSpace.md,
             bottom: AppSpace.md,
@@ -320,7 +479,6 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                   setState(() => _isMapExpanded = !_isMapExpanded),
             ),
           ),
-          // Center on Nintavur pill
           Positioned(
             right: AppSpace.md,
             bottom: AppSpace.md,
@@ -338,7 +496,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     );
   }
 
-  Widget _buildRecentReportsSection(
+  Widget _buildLocalIssuesSection(
     BuildContext context,
     List<CommunityIssue> issues,
     CommunityIssueService service,
@@ -353,17 +511,6 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: AppSpace.sm),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outline(context),
-                borderRadius: AppRadius.pillBorder,
-              ),
-            ),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpace.lg,
@@ -375,8 +522,11 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionHeader(
-                  title: 'Recent Reports (${issues.length})',
-                  subtitle: 'Filter by status or tap any report for AI forensics',
+                  title: 'Local Community Reports (${issues.length})',
+                  subtitle:
+                      'Filter by status or export a Certified AI Insurance Claim PDF',
+                  actionLabel: 'Insurance PDF',
+                  onAction: () => PremiumStoreModal.show(context),
                 ),
                 const SizedBox(height: AppSpace.sm),
                 SingleChildScrollView(
@@ -423,11 +573,22 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                       AppSpace.lg,
                       96,
                     ),
-                    itemCount: issues.length,
+                    itemCount: issues.length + 1,
                     separatorBuilder: (_, __) =>
                         const SizedBox(height: AppSpace.md),
                     itemBuilder: (context, index) {
-                      final issue = issues[index];
+                      if (index == 0) {
+                        return const PremiumUpsellBanner(
+                          title:
+                              'Vehicle Pothole or Flood Damage? Get Certified Claim PDF',
+                          subtitle:
+                              'Download an official GPS + AI Vision verified forensic report accepted by Sri Lankan auto & property insurers.',
+                          priceBadge: 'LKR 450',
+                          ctaLabel: 'Get Claim PDF',
+                          icon: Icons.verified_outlined,
+                        );
+                      }
+                      final issue = issues[index - 1];
                       return _buildIssueCard(context, issue, service);
                     },
                   ),
@@ -733,6 +894,15 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                 ),
               ],
               const SizedBox(height: AppSpace.lg),
+              AppButton(
+                label: 'Download Certified Insurance Claim PDF (LKR 450)',
+                icon: Icons.picture_as_pdf_outlined,
+                fullWidth: true,
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  PremiumStoreModal.show(context);
+                },
+              ),
             ],
           ),
         );

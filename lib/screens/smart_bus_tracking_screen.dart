@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 
 class SmartBusTrackingScreen extends StatefulWidget {
@@ -351,6 +352,17 @@ class _SmartBusTrackingScreenState extends State<SmartBusTrackingScreen> {
           SectionHeader(
             title: 'Active Smart Buses (${activeBuses.length})',
             subtitle: 'Tap a bus to track its live GPS route and ETA',
+            actionLabel: 'VIP Pass (LKR 650)',
+            onAction: () => PremiumStoreModal.show(context),
+          ),
+          const SizedBox(height: AppSpace.sm),
+          const PremiumUpsellBanner(
+            title: 'Smart Bus 7-Day Unlimited VIP Pass & Sponsored Bus Stop Pins',
+            subtitle:
+                'Reserve A/C seats + get 15% top-up cashback, or promote your local shop at Nintavur bus stops.',
+            priceBadge: 'LKR 650 / WK',
+            ctaLabel: 'Get VIP Pass',
+            icon: Icons.confirmation_num_outlined,
           ),
           const SizedBox(height: AppSpace.md),
           Expanded(

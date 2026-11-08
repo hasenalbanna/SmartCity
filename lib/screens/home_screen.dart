@@ -8,14 +8,15 @@ import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
 import '../services/profile_service.dart';
 import '../services/smart_bus_service.dart';
+import '../services/subscription_service.dart';
 import '../services/theme_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
+import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
-import '../widgets/voice_ai_report_modal.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
 
@@ -33,6 +34,7 @@ class HomeScreen extends StatelessWidget {
     final auth = context.watch<AuthService>();
     final profileService = context.watch<ProfileService>();
     final themeService = context.watch<ThemeService>();
+    final subService = context.watch<SubscriptionService>();
 
     final issues = issueService.issues;
     final openIssuesCount =
@@ -50,8 +52,8 @@ class HomeScreen extends StatelessWidget {
     final userName = auth.currentUser?.username.isNotEmpty == true
         ? auth.currentUser!.username
         : (profileService.displayName.isNotEmpty
-            ? profileService.displayName.split(' ').first
-            : 'AL');
+              ? profileService.displayName.split(' ').first
+              : 'AL');
 
     return AppScaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -76,7 +78,7 @@ class HomeScreen extends StatelessWidget {
           96,
         ),
         children: [
-          // 1. Header: Greeting + City Weather Chip + Theme Toggle
+          // 1. Header: Greeting + Pro Plan Pill + Theme Toggle
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -101,7 +103,7 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(width: AppSpace.xs),
                         Flexible(
                           child: Text(
-                            'Nintavur Smart Municipality • Eastern Province',
+                            'Nintavur Smart Municipality • ${subService.currentPlanName}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.caption.copyWith(
@@ -115,36 +117,13 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSpace.sm),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.sm,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.surface(context),
-                  borderRadius: AppRadius.pillBorder,
-                  border: Border.all(color: AppColors.outline(context)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.wb_cloudy_outlined,
-                      size: 16,
-                      color: AppColors.primary(context),
-                    ),
-                    const SizedBox(width: AppSpace.xs),
-                    Text(
-                      '29°C • Coastal',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textPrimary(context),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
+              AppButton(
+                label: subService.isProOrHigher ? 'Pro Hub' : 'Upgrade Pro',
+                icon: Icons.workspace_premium_rounded,
+                variant: AppButtonVariant.secondary,
+                onPressed: () => PremiumStoreModal.show(context),
               ),
-              const SizedBox(width: AppSpace.sm),
+              const SizedBox(width: AppSpace.xs),
               Semantics(
                 label: 'Toggle light and dark theme',
                 button: true,
@@ -160,9 +139,42 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpace.xl),
+          const SizedBox(height: AppSpace.md),
 
-          // 2. Live City KPI StatTiles (3 columns)
+          // 2. Live City Sensor & Telemetry Strip
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: const [
+                StatusChip(
+                  label: '29°C • Coastal Breeze',
+                  kind: StatusChipKind.info,
+                  icon: Icons.wb_cloudy_outlined,
+                ),
+                SizedBox(width: AppSpace.sm),
+                StatusChip(
+                  label: 'AQI 32 • Clean Air',
+                  kind: StatusChipKind.resolved,
+                  icon: Icons.air_rounded,
+                ),
+                SizedBox(width: AppSpace.sm),
+                StatusChip(
+                  label: 'Falcon AI • Online',
+                  kind: StatusChipKind.inProgress,
+                  icon: Icons.radar_rounded,
+                ),
+                SizedBox(width: AppSpace.sm),
+                StatusChip(
+                  label: 'Grid 94% Active',
+                  kind: StatusChipKind.neutral,
+                  icon: Icons.bolt_rounded,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpace.lg),
+
+          // 3. Live City KPI StatTiles (3 columns)
           Row(
             children: [
               Expanded(
@@ -196,13 +208,24 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpace.lg),
+
+          // 4. Premium Falcon Shield+ & B2B Monetization Banner
+          const PremiumUpsellBanner(
+            title:
+                'Falcon Shield+ Pro & B2B Map Sponsorships Now Available',
+            subtitle:
+                'Get 24/7 "Hey Falcon" voice SOS guardian, Insurance Claim PDFs (LKR 450), or sponsor your shop on the live city map.',
+            priceBadge: 'PRO & ADD-ONS',
+            ctaLabel: 'Explore Store',
+          ),
           const SizedBox(height: AppSpace.xl),
 
-          // 3. Quick Civic Actions Grid (2x2)
+          // 5. Quick Civic Actions Grid (2x2)
           const SectionHeader(
             title: 'Quick Actions',
             subtitle:
-                'Report problems, track transit, or get emergency help in 1 tap',
+                'Report local issues, wake Falcon AI for disasters, or track buses',
           ),
           const SizedBox(height: AppSpace.md),
           LayoutBuilder(
@@ -210,41 +233,49 @@ class HomeScreen extends StatelessWidget {
               final isWide = constraints.maxWidth >= 640;
               final actions = [
                 _QuickActionData(
-                  title: 'Report Issue',
-                  subtitle: 'Road, drainage, lighting',
-                  icon: Icons.add_location_alt_outlined,
+                  title: '1. Local Issues',
+                  subtitle: 'Roads, drainage, streetlights',
+                  icon: Icons.construction_rounded,
                   color: AppColors.primary(context),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ReportIssueWizardScreen(),
+                        builder: (_) => const ReportIssueWizardScreen(
+                          initialModeIndex: 0,
+                        ),
                       ),
                     );
                   },
                 ),
                 _QuickActionData(
-                  title: 'Track Bus',
+                  title: '2. Falcon AI Disaster',
+                  subtitle: 'Say "Hey Falcon, wake up"',
+                  icon: Icons.radar_rounded,
+                  color: AppColors.danger(context),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ReportIssueWizardScreen(
+                          initialModeIndex: 1,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                _QuickActionData(
+                  title: 'Track Smart Bus',
                   subtitle: 'Live GPS routes 22 & 48',
                   icon: Icons.directions_bus_filled_outlined,
                   color: AppColors.success(context),
                   onTap: () => MainNavigationScreen.switchToTab(context, 2),
                 ),
                 _QuickActionData(
-                  title: 'Voice AI Report',
-                  subtitle: 'Speak in English or Tamil',
-                  icon: Icons.mic_none_rounded,
-                  color: AppColors.warning(context),
-                  onTap: () => VoiceAiReportModal.show(
-                    context,
-                    initialLocation: _nintavurCenter,
-                  ),
-                ),
-                _QuickActionData(
-                  title: 'Emergency SOS',
-                  subtitle: 'High-visibility strobe & alert',
+                  title: 'Visual SOS Strobe',
+                  subtitle: 'High-visibility rescue beacon',
                   icon: Icons.sos_rounded,
-                  color: AppColors.danger(context),
+                  color: AppColors.warning(context),
                   onTap: () => EmergencyBeaconModal.show(context),
                 ),
               ];
@@ -294,7 +325,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.xl),
 
-          // 4. Nearby Issues Mini-Map (OpenStreetMap tiles)
+          // 6. Nearby Issues Mini-Map (OpenStreetMap tiles)
           SectionHeader(
             title: 'Nearby Civic Map',
             subtitle: 'Live Nintavur community issue pins & active transit',
@@ -364,7 +395,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: AppSpace.xl),
 
-          // 5. Latest 3 Community Reports
+          // 7. Latest 3 Community Reports
           SectionHeader(
             title: 'Recent Reports',
             subtitle:

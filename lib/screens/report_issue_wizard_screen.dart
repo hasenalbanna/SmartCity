@@ -11,8 +11,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/falcon_ai_disaster_panel.dart';
 import '../widgets/ui/ui.dart';
-import '../widgets/voice_ai_report_modal.dart';
 
 class ReportCategory {
   final String title;
@@ -27,7 +27,12 @@ class ReportCategory {
 }
 
 class ReportIssueWizardScreen extends StatefulWidget {
-  const ReportIssueWizardScreen({super.key});
+  final int initialModeIndex; // 0 = Local Issues, 1 = Disaster Issues (Falcon AI)
+
+  const ReportIssueWizardScreen({
+    super.key,
+    this.initialModeIndex = 0,
+  });
 
   @override
   State<ReportIssueWizardScreen> createState() =>
@@ -35,6 +40,7 @@ class ReportIssueWizardScreen extends StatefulWidget {
 }
 
 class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
+  late int _reportModeIndex;
   int _currentStep = 0; // 0 = Category, 1 = Location, 2 = Details
   int _selectedCategoryIndex = 4; // Default to Street Lights
 
@@ -92,6 +98,12 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   String? _pickedImagePath;
   bool _hasAudio = false;
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _reportModeIndex = widget.initialModeIndex;
+  }
 
   @override
   void dispose() {
@@ -283,39 +295,63 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      maxWidth: 720,
+      maxWidth: 760,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Report Issue'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: AppSpace.md),
-            child: TextButton.icon(
-              onPressed: () {
-                VoiceAiReportModal.show(
-                  context,
-                  initialLocation: _selectedLocation,
-                );
-              },
-              icon: const Icon(Icons.mic_rounded, size: 18),
-              label: const Text('Voice AI'),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          _buildStepHeader(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: AppSpace.pagePadding,
-              child: _buildCurrentStepContent(context),
+          // Top 2-Option Switcher: 1. Local Issues | 2. Disaster Issues (Falcon AI)
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.lg,
+              vertical: AppSpace.sm,
+            ),
+            color: AppColors.surface(context),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: '1. Local Civic Issues',
+                    icon: Icons.construction_rounded,
+                    variant: _reportModeIndex == 0
+                        ? AppButtonVariant.primary
+                        : AppButtonVariant.secondary,
+                    onPressed: () => setState(() => _reportModeIndex = 0),
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                Expanded(
+                  child: AppButton(
+                    label: '2. Disaster • Falcon AI',
+                    icon: Icons.radar_rounded,
+                    variant: _reportModeIndex == 1
+                        ? AppButtonVariant.danger
+                        : AppButtonVariant.secondary,
+                    onPressed: () => setState(() => _reportModeIndex = 1),
+                  ),
+                ),
+              ],
             ),
           ),
-          _buildStickyBottomBar(context),
+          if (_reportModeIndex == 1)
+            Expanded(
+              child: FalconAiDisasterPanel(mapController: _mapController),
+            )
+          else ...[
+            _buildStepHeader(context),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: AppSpace.pagePadding,
+                child: _buildCurrentStepContent(context),
+              ),
+            ),
+            _buildStickyBottomBar(context),
+          ],
         ],
       ),
     );
@@ -565,10 +601,10 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                     ),
                   ],
                 ),
-                Positioned(
+                const Positioned(
                   top: AppSpace.md,
                   left: AppSpace.md,
-                  child: const StatusChip(
+                  child: StatusChip(
                     label: 'Tap map to pin',
                     kind: StatusChipKind.info,
                     icon: Icons.touch_app_outlined,

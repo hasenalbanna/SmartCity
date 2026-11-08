@@ -9,6 +9,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
+import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 
 class CivicAlertsScreen extends StatefulWidget {
@@ -122,9 +123,16 @@ class _CivicAlertsScreenState extends State<CivicAlertsScreen> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpace.md),
+          const PremiumUpsellBanner(
+            title: '45-Min Early Flood Radar & Property Risk Certificate',
+            subtitle:
+                'Unlock street-level monsoon water predictions (Falcon Shield+ Pro) or buy a 10-year Property Flood Valuation Report (LKR 1,200).',
+            priceBadge: 'PRO / LKR 1,200',
+            ctaLabel: 'Unlock Pro',
+            icon: Icons.flood_outlined,
+          ),
           const SizedBox(height: AppSpace.lg),
-
-          // Filter Chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
