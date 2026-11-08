@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
 import '../services/community_issue_service.dart';
 import '../services/geocoding_service.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_radius.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import '../widgets/ui/ui.dart';
 import '../widgets/voice_ai_report_modal.dart';
 
 class ReportCategory {
@@ -25,15 +30,15 @@ class ReportIssueWizardScreen extends StatefulWidget {
   const ReportIssueWizardScreen({super.key});
 
   @override
-  State<ReportIssueWizardScreen> createState() => _ReportIssueWizardScreenState();
+  State<ReportIssueWizardScreen> createState() =>
+      _ReportIssueWizardScreenState();
 }
 
 class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   int _currentStep = 0; // 0 = Category, 1 = Location, 2 = Details
+  int _selectedCategoryIndex = 4; // Default to Street Lights
 
-  // Step 1: Category
-  int _selectedCategoryIndex = 4; // Default to Street Lights as in screenshot
-  final List<ReportCategory> _categories = const [
+  static const List<ReportCategory> _categories = [
     ReportCategory(
       title: 'Drainage/Canal',
       localTitle: 'வடிகால்',
@@ -66,17 +71,24 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
     ),
   ];
 
-  // Step 2: Location
+  static const List<LatLng> _nintavurBoundary = [
+    LatLng(7.3720, 81.8250),
+    LatLng(7.3720, 81.8650),
+    LatLng(7.3220, 81.8650),
+    LatLng(7.3220, 81.8250),
+    LatLng(7.3720, 81.8250),
+  ];
+
   final MapController _mapController = MapController();
-  LatLng _selectedLocation = const LatLng(7.3486, 81.8494); // Nintavur
+  LatLng _selectedLocation = const LatLng(7.3486, 81.8494);
   final TextEditingController _searchRoadController = TextEditingController();
-  String _addressText = 'Nintavur, Ampara District, Eastern Province, 32340, Sri Lanka';
+  String _addressText =
+      'Nintavur, Ampara District, Eastern Province, 32340, Sri Lanka';
   bool _isLocating = false;
 
-  // Step 3: Details
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
-  final GlobalKey<FormState> _detailsFormKey = GlobalKey<FormState>();
+  String? _contactError;
   String? _pickedImagePath;
   bool _hasAudio = false;
   bool _isSubmitting = false;
@@ -105,16 +117,20 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
         final userLatLng = LatLng(pos.latitude, pos.longitude);
         setState(() {
           _selectedLocation = userLatLng;
-          _addressText = 'Coordinates: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}';
+          _addressText =
+              'Coordinates: ${pos.latitude.toStringAsFixed(4)}, ${pos.longitude.toStringAsFixed(4)}';
         });
         _mapController.move(userLatLng, 15.0);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permission not granted. Tap map to select location.')),
+          const SnackBar(
+            content: Text(
+              'Location permission not granted. Tap map to select location.',
+            ),
+          ),
         );
       }
-    } catch (e) {
-      debugPrint('Error getting location: $e');
+    } catch (_) {
     } finally {
       if (mounted) setState(() => _isLocating = false);
     }
@@ -135,298 +151,221 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
       _mapController.move(first.location, 15.0);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Place not found. Tap on map to set marker.')),
+        const SnackBar(
+          content: Text('Place not found. Tap on map to set marker.'),
+        ),
       );
     }
   }
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, maxWidth: 1200);
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+    );
     if (image != null && mounted) {
-      setState(() {
-        _pickedImagePath = image.path;
-      });
+      setState(() => _pickedImagePath = image.path);
     }
   }
 
   Future<void> _submitReport() async {
-    if (!_detailsFormKey.currentState!.validate()) return;
+    final contact = _contactController.text.trim();
+    if (contact.isEmpty || contact.length < 7) {
+      setState(() {
+        _contactError = 'Please enter a valid contact number.';
+      });
+      return;
+    }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _contactError = null;
+      _isSubmitting = true;
+    });
+
     final category = _categories[_selectedCategoryIndex];
     final issueService = context.read<CommunityIssueService>();
-
     final desc = _descriptionController.text.trim();
-    final title = desc.length > 40 ? '${desc.substring(0, 37)}...' : (desc.isEmpty ? '${category.title} Issue' : desc);
+    final title = desc.length > 40
+        ? '${desc.substring(0, 37)}...'
+        : (desc.isEmpty ? '${category.title} Issue' : desc);
 
     final createdIssue = await issueService.addIssue(
       category: category.title.toUpperCase(),
       categoryLocal: category.localTitle,
       title: title,
-      description: desc,
+      description: desc.isEmpty
+          ? 'Reported ${category.title} issue in Nintavur'
+          : desc,
       address: _addressText,
       location: _selectedLocation,
-      contactNumber: _contactController.text.trim(),
+      contactNumber: contact,
       imagePath: _pickedImagePath,
       hasAudio: _hasAudio,
     );
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    _showAiSubmissionDialog(createdIssue, isDark);
+    _showAiSubmissionDialog(createdIssue);
   }
 
-  void _showAiSubmissionDialog(CommunityIssue issue, bool isDark) {
+  void _showAiSubmissionDialog(CommunityIssue issue) {
     final ai = issue.aiAnalysis;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF161A22) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.verified_user_outlined, color: Color(0xFF10B981), size: 24),
+            Icon(
+              Icons.verified_user_outlined,
+              color: AppColors.success(context),
             ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('AI Triage Completed', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                  Text('DisasterShield AI Engine', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                ],
-              ),
-            ),
+            const SizedBox(width: AppSpace.sm),
+            const Expanded(child: Text('AI Triage Completed')),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white10 : const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE5E7EB)),
-              ),
+            AppCard(
+              backgroundColor: AppColors.surfaceMuted(context),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('COUNCIL TICKET:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text(ai?.councilTicketId ?? 'CW-2026-NIN-001', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontFamily: 'monospace')),
-                    ],
+                  Text(
+                    'Ticket: ${ai?.councilTicketId ?? "CW-2026-NIN-001"}',
+                    style: AppTypography.bodyStrong.copyWith(
+                      fontFamily: 'monospace',
+                      color: AppColors.primary(context),
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('ROUTING CHANNEL:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text(ai?.channelLabel ?? 'Council Work Order', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
-                    ],
+                  const SizedBox(height: AppSpace.xs),
+                  Text(
+                    'Channel: ${ai?.channelLabel ?? "Council Work Order"}',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textPrimary(context),
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('RISK URGENCY:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text('${ai?.urgencyScore ?? 7.5}/10', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('AI CONFIDENCE:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      Text('${((ai?.confidenceScore ?? 0.94) * 100).toInt()}% Verified', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
-                    ],
+                  Text(
+                    'Urgency: ${ai?.urgencyScore.toStringAsFixed(1) ?? "7.5"}/10 • ${((ai?.confidenceScore ?? 0.94) * 100).toInt()}% Confidence',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Text(
-              ai?.reasoning ?? 'Report verified and queued for municipal dispatch.',
-              style: TextStyle(fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF4B5563)),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.timer_outlined, size: 16, color: Color(0xFF2563EB)),
-                const SizedBox(width: 6),
-                Text(
-                  'Response SLA: Crew assigned within ${ai?.estimatedResponseHours ?? 4} hrs',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                ),
-              ],
+              ai?.reasoning ??
+                  'Your report has been verified and dispatched to the Nintavur Municipal Council.',
+              style: AppTypography.body.copyWith(
+                color: AppColors.textPrimary(context),
+              ),
             ),
           ],
         ),
         actions: [
-          ElevatedButton(
+          AppButton(
+            label: 'Done',
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('View on Live Map', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _openVoiceAiModal() async {
-    await VoiceAiReportModal.show(
-      context,
-      initialLocation: _selectedLocation,
-      onReportGenerated: (res) {
-        if (res.detectedCategory != null) {
-          final catIdx = _categories.indexWhere(
-            (c) => c.title.toUpperCase() == res.detectedCategory!.toUpperCase(),
-          );
-          if (catIdx != -1) {
-            setState(() => _selectedCategoryIndex = catIdx);
-          }
-        }
-        if (res.suggestedDescription != null) {
-          setState(() {
-            _descriptionController.text = res.suggestedDescription!;
-          });
-        }
-        if (res.suggestedLocation != null) {
-          setState(() {
-            _selectedLocation = res.suggestedLocation!;
-          });
-          _mapController.move(res.suggestedLocation!, 15.0);
-        }
-        setState(() => _currentStep = 2); // Jump to details
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF101318) : Colors.white,
-      appBar: _buildTopBar(isDark),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildStepIndicator(isDark),
-            Expanded(
-              child: IndexedStack(
-                index: _currentStep,
-                children: [
-                  _buildStepCategory(isDark),
-                  _buildStepLocation(isDark),
-                  _buildStepDetails(isDark),
-                ],
-              ),
-            ),
-          ],
+    return AppScaffold(
+      maxWidth: 720,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: const Text('Report Issue'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpace.md),
+            child: TextButton.icon(
+              onPressed: () {
+                VoiceAiReportModal.show(
+                  context,
+                  initialLocation: _selectedLocation,
+                );
+              },
+              icon: const Icon(Icons.mic_rounded, size: 18),
+              label: const Text('Voice AI'),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildStepHeader(context),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: AppSpace.pagePadding,
+              child: _buildCurrentStepContent(context),
+            ),
+          ),
+          _buildStickyBottomBar(context),
+        ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildTopBar(bool isDark) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black, size: 24),
-        onPressed: () => Navigator.pop(context),
+  Widget _buildStepHeader(BuildContext context) {
+    const steps = ['1. Category', '2. Location', '3. Details'];
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.md,
       ),
-      title: Text(
-        'Report Issue',
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      actions: [
-        // Voice AI Assistant Action
-        IconButton(
-          tooltip: 'Voice AI Assistant',
-          icon: const Icon(Icons.auto_awesome, color: Color(0xFF2563EB), size: 22),
-          onPressed: _openVoiceAiModal,
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.white12 : const Color(0xFFF1F3F5),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'EN',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-              const Icon(Icons.keyboard_arrow_down, size: 16),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          margin: const EdgeInsets.only(right: 16, top: 10, bottom: 10),
-          width: 34,
-          height: 34,
-          decoration: const BoxDecoration(
-            color: Colors.black,
-            shape: BoxShape.circle,
-          ),
-          child: const Center(
-            child: Text(
-              'A',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStepIndicator(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      color: AppColors.surface(context),
       child: Row(
-        children: List.generate(3, (index) {
+        children: List.generate(steps.length, (index) {
           final isActive = index <= _currentStep;
+          final isCurrent = index == _currentStep;
           return Expanded(
-            child: Container(
-              height: 4,
-              margin: EdgeInsets.only(right: index < 2 ? 8 : 0),
-              decoration: BoxDecoration(
-                color: isActive
-                    ? (isDark ? Colors.white : Colors.black)
-                    : (isDark ? Colors.white24 : const Color(0xFFE5E7EB)),
-                borderRadius: BorderRadius.circular(2),
+            child: Padding(
+              padding: EdgeInsets.only(
+                right: index < steps.length - 1 ? AppSpace.sm : 0,
+              ),
+              child: InkWell(
+                onTap: () => setState(() => _currentStep = index),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AppColors.primary(context)
+                            : AppColors.outline(context),
+                        borderRadius: AppRadius.pillBorder,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.xs),
+                    Text(
+                      steps[index],
+                      style: AppTypography.caption.copyWith(
+                        color: isCurrent
+                            ? AppColors.primary(context)
+                            : AppColors.textSecondary(context),
+                        fontWeight: isCurrent
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -435,737 +374,356 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
     );
   }
 
-  // -------------------------------------------------------------
-  // STEP 1: CATEGORY SELECTION
-  // -------------------------------------------------------------
-  Widget _buildStepCategory(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 8),
-          Text(
-            'Category',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              color: isDark ? Colors.white : Colors.black,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 1.35,
-            ),
-            itemCount: _categories.length,
-            itemBuilder: (context, index) {
-              final cat = _categories[index];
-              final isSelected = _selectedCategoryIndex == index;
-
-              return InkWell(
-                onTap: () {
-                  setState(() => _selectedCategoryIndex = index);
-                  // Automatically advance to Step 2
-                  Future.delayed(const Duration(milliseconds: 180), () {
-                    if (mounted) setState(() => _currentStep = 1);
-                  });
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? (isSelected ? Colors.white10 : Colors.white.withValues(alpha: 0.04))
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected
-                          ? (isDark ? Colors.white : Colors.black)
-                          : (isDark ? Colors.white12 : const Color(0xFFE5E7EB)),
-                      width: isSelected ? 2.0 : 1.0,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isSelected ? 0.08 : 0.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        cat.icon,
-                        size: 30,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        cat.title,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        cat.localTitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white60 : const Color(0xFF9CA3AF),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 28),
-        ],
-      ),
-    );
+  Widget _buildCurrentStepContent(BuildContext context) {
+    switch (_currentStep) {
+      case 0:
+        return _buildCategoryStep(context);
+      case 1:
+        return _buildLocationStep(context);
+      default:
+        return _buildDetailsStep(context);
+    }
   }
 
-  // -------------------------------------------------------------
-  // STEP 2: LOCATION
-  // -------------------------------------------------------------
-  Widget _buildStepLocation(bool isDark) {
+  Widget _buildCategoryStep(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Location',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Mark Location',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? Colors.white60 : const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Road search row
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _searchRoadController,
-                        onSubmitted: (_) => _searchRoad(),
-                        decoration: const InputDecoration(
-                          hintText: 'Search road name in Nintavur',
-                          hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
-                          border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _searchRoad,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.black,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                      ),
-                      child: const Text('Search', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              // Use My Current Location Button
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton.icon(
-                  onPressed: _isLocating ? null : _useCurrentLocation,
-                  icon: _isLocating
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Icon(Icons.my_location, size: 18),
-                  label: const Text(
-                    'Use My Current Location',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB), // Vibrant blue
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                ),
-              ),
-            ],
+        Text(
+          'Category',
+          style: AppTypography.display.copyWith(
+            color: AppColors.textPrimary(context),
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpace.xs),
+        Text(
+          'Select the type of civic problem to route it to the right department.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _categories.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: AppSpace.md,
+            crossAxisSpacing: AppSpace.md,
+            childAspectRatio: 1.45,
+          ),
+          itemBuilder: (context, index) {
+            final item = _categories[index];
+            final selected = _selectedCategoryIndex == index;
+            return InkWell(
+              borderRadius: AppRadius.mdBorder,
+              onTap: () => setState(() => _selectedCategoryIndex = index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(AppSpace.md),
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(
+                    color: selected
+                        ? AppColors.primary(context)
+                        : AppColors.outline(context),
+                    width: selected ? 2.0 : 1.0,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      item.icon,
+                      size: 26,
+                      color: selected
+                          ? AppColors.primary(context)
+                          : AppColors.textPrimary(context),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    Text(
+                      item.title,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.subtitle.copyWith(
+                        color: AppColors.textPrimary(context),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.localTitle,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textSecondary(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
 
-        // Interactive Map
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? Colors.white24 : const Color(0xFFE5E7EB),
+  Widget _buildLocationStep(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Location',
+          style: AppTypography.display.copyWith(
+            color: AppColors.textPrimary(context),
+          ),
+        ),
+        const SizedBox(height: AppSpace.xs),
+        Text(
+          'Mark the exact problem spot inside the Nintavur boundary.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchRoadController,
+                onSubmitted: (_) => _searchRoad(),
+                decoration: const InputDecoration(
+                  hintText: 'Search road name in Nintavur',
+                ),
               ),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: _selectedLocation,
-                      initialZoom: 14.5,
-                      onTap: (tapPosition, point) {
-                        setState(() {
-                          _selectedLocation = point;
-                          _addressText = 'Pinned Location: ${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)}';
-                        });
-                      },
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.smartcity.app',
-                      ),
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: const [
-                              LatLng(7.3780, 81.8385),
-                              LatLng(7.3486, 81.8385),
-                              LatLng(7.3180, 81.8385),
-                            ],
-                            strokeWidth: 2.5,
-                            color: const Color(0xFFDC2626),
-                          ),
-                          Polyline(
-                            points: const [
-                              LatLng(7.3600, 81.8385),
-                              LatLng(7.3600, 81.8650),
-                            ],
-                            strokeWidth: 2.5,
-                            color: const Color(0xFFDC2626),
-                          ),
-                        ],
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: _selectedLocation,
-                            width: 50,
-                            height: 50,
-                            child: const Icon(
-                              Icons.location_on,
-                              size: 44,
-                              color: Color(0xFFEF4444), // Vibrant Red
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+            const SizedBox(width: AppSpace.sm),
+            AppButton(
+              label: 'Search',
+              icon: Icons.search_rounded,
+              onPressed: _searchRoad,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpace.md),
+        AppButton(
+          label: _isLocating ? 'Locating...' : 'Use My Current Location',
+          icon: Icons.my_location_rounded,
+          variant: AppButtonVariant.secondary,
+          fullWidth: true,
+          isLoading: _isLocating,
+          onPressed: _useCurrentLocation,
+        ),
+        const SizedBox(height: AppSpace.md),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: SizedBox(
+            height: 280,
+            child: Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _selectedLocation,
+                    initialZoom: 14.0,
+                    onTap: (_, latLng) {
+                      setState(() {
+                        _selectedLocation = latLng;
+                        _addressText =
+                            'Nintavur (${latLng.latitude.toStringAsFixed(4)}, ${latLng.longitude.toStringAsFixed(4)})';
+                      });
+                    },
                   ),
-
-                  // Tap map to pin badge & Zoom Controls Top Left
-                  Positioned(
-                    top: 12,
-                    left: 12,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.85),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'Tap map to pin',
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.smartcity.app',
+                    ),
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: _nintavurBoundary,
+                          strokeWidth: 3.0,
+                          color: AppColors.danger(context),
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                          ),
-                          child: Column(
-                            children: [
-                              InkWell(
-                                onTap: () => _mapController.move(
-                                  _mapController.camera.center,
-                                  _mapController.camera.zoom + 1,
-                                ),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(Icons.add, size: 18, color: Colors.black87),
-                                ),
-                              ),
-                              const Divider(height: 1, thickness: 1),
-                              InkWell(
-                                onTap: () => _mapController.move(
-                                  _mapController.camera.center,
-                                  _mapController.camera.zoom - 1,
-                                ),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(Icons.remove, size: 18, color: Colors.black87),
-                                ),
-                              ),
-                            ],
+                      ],
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: _selectedLocation,
+                          width: 40,
+                          height: 40,
+                          child: Icon(
+                            Icons.location_on,
+                            size: 38,
+                            color: AppColors.danger(context),
                           ),
                         ),
                       ],
                     ),
+                  ],
+                ),
+                Positioned(
+                  top: AppSpace.md,
+                  left: AppSpace.md,
+                  child: const StatusChip(
+                    label: 'Tap map to pin',
+                    kind: StatusChipKind.info,
+                    icon: Icons.touch_app_outlined,
                   ),
-
-                  // Crosshair / Center button bottom left
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)],
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.my_location, size: 18, color: Colors.black87),
-                        onPressed: () => _mapController.move(_selectedLocation, 15.0),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-
-                  // Leaflet | OpenStreetMap attribution bottom right
-                  Positioned(
-                    bottom: 6,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'Leaflet | © OpenStreetMap contributors',
-                        style: TextStyle(fontSize: 10, color: Color(0xFF4B5563), fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-
-        const SizedBox(height: 14),
-
-        // Confirm Location Button
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          child: SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() => _currentStep = 2);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6B7280), // Slate gray as in screenshot
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text(
-                'Confirm Location',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ),
+        const SizedBox(height: AppSpace.sm),
+        Text(
+          _addressText,
+          style: AppTypography.caption.copyWith(
+            color: AppColors.textSecondary(context),
           ),
         ),
       ],
     );
   }
 
-  // -------------------------------------------------------------
-  // STEP 3: DETAILS
-  // -------------------------------------------------------------
-  Widget _buildStepDetails(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Form(
-        key: _detailsFormKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDetailsStep(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Details',
+          style: AppTypography.display.copyWith(
+            color: AppColors.textPrimary(context),
+          ),
+        ),
+        const SizedBox(height: AppSpace.xs),
+        Text(
+          'Provide a short description and contact number for status updates.',
+          style: AppTypography.body.copyWith(
+            color: AppColors.textSecondary(context),
+          ),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        AppTextField(
+          controller: _descriptionController,
+          label: 'Description',
+          hint: 'Describe the issue...',
+          maxLines: 4,
+        ),
+        const SizedBox(height: AppSpace.lg),
+        AppTextField(
+          controller: _contactController,
+          label: 'Contact Number',
+          hint: 'Enter your contact number',
+          isRequired: true,
+          keyboardType: TextInputType.phone,
+          errorText: _contactError,
+          onChanged: (_) {
+            if (_contactError != null) {
+              setState(() => _contactError = null);
+            }
+          },
+        ),
+        const SizedBox(height: AppSpace.lg),
+        Row(
           children: [
-            Text(
-              'Details',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // DESCRIPTION
-            Text(
-              'DESCRIPTION',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-                color: isDark ? Colors.white70 : const Color(0xFF1F2937),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
-                ),
-              ),
-              child: Stack(
-                children: [
-                  TextFormField(
-                    controller: _descriptionController,
-                    maxLines: 5,
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return 'Please enter a short description of the issue';
-                      }
-                      return null;
-                    },
-                    decoration: const InputDecoration(
-                      hintText: 'Describe the issue...',
-                      hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(14),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 8,
-                    right: 8,
-                    child: Icon(
-                      Icons.format_size,
-                      size: 14,
-                      color: isDark ? Colors.white24 : const Color(0xFF9CA3AF),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // CONTACT NUMBER *
-            RichText(
-              text: TextSpan(
-                text: 'CONTACT NUMBER ',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                  color: isDark ? Colors.white70 : const Color(0xFF1F2937),
-                ),
-                children: const [
-                  TextSpan(
-                    text: '*',
-                    style: TextStyle(
-                      color: Color(0xFFEF4444),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isDark ? Colors.white24 : const Color(0xFFD1D5DB),
-                ),
-              ),
-              child: TextFormField(
-                controller: _contactController,
-                keyboardType: TextInputType.phone,
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) {
-                    return 'Please enter a contact number';
-                  }
-                  if (val.trim().length < 7) {
-                    return 'Please enter a valid phone number';
-                  }
-                  return null;
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Enter your contact number',
-                  hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Add Photo & Record Audio side-by-side
-            Row(
-              children: [
-                Expanded(
-                  child: _dashedMediaButton(
-                    icon: Icons.camera_alt_outlined,
-                    label: _pickedImagePath == null ? 'Add Photo' : 'Photo Attached ✓',
-                    isDark: isDark,
-                    isSelected: _pickedImagePath != null,
-                    onTap: _pickImage,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _dashedMediaButton(
-                    icon: Icons.mic_none_outlined,
-                    label: _hasAudio ? 'Audio Added ✓' : 'Record Audio',
-                    isDark: isDark,
-                    isSelected: _hasAudio,
-                    onTap: () {
-                      setState(() => _hasAudio = !_hasAudio);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(_hasAudio ? 'Voice memo recorded' : 'Voice memo removed'),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            if (_pickedImagePath != null) ...[
-              const SizedBox(height: 14),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B) : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)),
-                ),
-                child: Row(
+            Expanded(
+              child: AppCard(
+                onTap: _pickImage,
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2563EB),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.remove_red_eye, color: Colors.white, size: 14),
+                    Icon(
+                      _pickedImagePath != null
+                          ? Icons.check_circle_rounded
+                          : Icons.photo_camera_outlined,
+                      color: _pickedImagePath != null
+                          ? AppColors.success(context)
+                          : AppColors.textSecondary(context),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Row(
-                            children: [
-                              Text(
-                                'AI Vision Analysis: 96.4% Authenticity',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                  color: Color(0xFF1D4ED8),
-                                ),
-                              ),
-                              SizedBox(width: 6),
-                              Icon(Icons.check_circle, size: 14, color: Color(0xFF10B981)),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Object detected: ${_categories[_selectedCategoryIndex].title} structural defect cross-checked with Nintavur municipal database.',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDark ? Colors.white70 : const Color(0xFF3B82F6),
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: AppSpace.xs),
+                    Text(
+                      _pickedImagePath != null ? 'Photo Attached' : 'Add Photo',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textPrimary(context),
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-
-            const SizedBox(height: 16),
-
-            // Live AI Triage Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isDark ? Colors.white12 : const Color(0xFFE5E7EB)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF2563EB)),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'AI Triage: Auto-routing to Municipal Council Work Order (#CW-2026)',
-                      style: TextStyle(
-                        fontSize: 11,
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: AppCard(
+                onTap: () => setState(() => _hasAudio = !_hasAudio),
+                child: Column(
+                  children: [
+                    Icon(
+                      _hasAudio ? Icons.mic_rounded : Icons.mic_none_rounded,
+                      color: _hasAudio
+                          ? AppColors.danger(context)
+                          : AppColors.textSecondary(context),
+                    ),
+                    const SizedBox(height: AppSpace.xs),
+                    Text(
+                      _hasAudio ? 'Audio Recorded' : 'Record Audio',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.textPrimary(context),
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : const Color(0xFF374151),
                       ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'LIVE AI',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF059669),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Submit Report Button
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submitReport,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ],
                 ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 22,
-                        height: 22,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : const Text(
-                        'Submit Report',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
               ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _dashedMediaButton({
-    required IconData icon,
-    required String label,
-    required bool isDark,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (isDark ? Colors.white12 : const Color(0xFFEFF6FF))
-              : (isDark ? Colors.white.withValues(alpha: 0.04) : const Color(0xFFF9FAFB)),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF2563EB)
-                : (isDark ? Colors.white24 : const Color(0xFFD1D5DB)),
-            style: BorderStyle.solid,
-            width: 1.5,
-          ),
+  Widget _buildStickyBottomBar(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface(context),
+        border: Border(
+          top: BorderSide(color: AppColors.outline(context)),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white70 : const Color(0xFF4B5563)),
+      ),
+      child: Row(
+        children: [
+          if (_currentStep > 0) ...[
+            AppButton(
+              label: 'Back',
+              variant: AppButtonVariant.secondary,
+              onPressed: () => setState(() => _currentStep--),
             ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? const Color(0xFF2563EB) : (isDark ? Colors.white70 : const Color(0xFF4B5563)),
-              ),
-            ),
+            const SizedBox(width: AppSpace.md),
           ],
-        ),
+          Expanded(
+            child: AppButton(
+              label: _currentStep == 0
+                  ? 'Continue to Location'
+                  : (_currentStep == 1 ? 'Confirm Location' : 'Submit Report'),
+              icon: _currentStep == 2
+                  ? Icons.send_rounded
+                  : Icons.arrow_forward_rounded,
+              isLoading: _isSubmitting,
+              fullWidth: true,
+              onPressed: () {
+                if (_currentStep < 2) {
+                  setState(() => _currentStep++);
+                } else {
+                  _submitReport();
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

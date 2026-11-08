@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
+import 'ui/ui.dart';
 
 class EmergencyBeaconModal extends StatefulWidget {
   const EmergencyBeaconModal({super.key});
@@ -23,7 +27,7 @@ class _EmergencyBeaconModalState extends State<EmergencyBeaconModal> {
   @override
   void initState() {
     super.initState();
-    _strobeTimer = Timer.periodic(const Duration(milliseconds: 200), (t) {
+    _strobeTimer = Timer.periodic(const Duration(milliseconds: 240), (_) {
       if (mounted) {
         setState(() => _isBright = !_isBright);
       }
@@ -38,53 +42,40 @@ class _EmergencyBeaconModalState extends State<EmergencyBeaconModal> {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = _isBright ? const Color(0xFFEF4444) : Colors.white;
-    final fgColor = _isBright ? Colors.white : Colors.black;
+    final disableAnimations = MediaQuery.disableAnimationsOf(context);
+    final activeFlash = !disableAnimations && _isBright;
+    final bgColor = activeFlash ? AppColors.dangerLight : Colors.white;
+    final fgColor = activeFlash ? Colors.white : AppColors.textPrimaryLight;
 
     return Scaffold(
       backgroundColor: bgColor,
       body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpace.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.warning_rounded, color: fgColor, size: 84),
-              const SizedBox(height: 24),
+              const Spacer(),
+              Icon(Icons.sos_rounded, size: 88, color: fgColor),
+              const SizedBox(height: AppSpace.lg),
               Text(
-                'EMERGENCY SOS BEACON',
-                style: TextStyle(
-                  color: fgColor,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                ),
+                'EMERGENCY VISUAL BEACON',
+                textAlign: TextAlign.center,
+                style: AppTypography.display.copyWith(color: fgColor),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpace.md),
               Text(
-                'HIGH INTENSITY VISUAL SEARCH STROBE',
-                style: TextStyle(
-                  color: fgColor.withValues(alpha: 0.8),
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
+                'High-visibility strobe active for first responders in Nintavur.',
+                textAlign: TextAlign.center,
+                style: AppTypography.subtitle.copyWith(color: fgColor),
               ),
-              const SizedBox(height: 48),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  elevation: 12,
-                ),
-                icon: const Icon(Icons.stop_circle_rounded, size: 24, color: Color(0xFFEF4444)),
-                label: const Text(
-                  'DEACTIVATE BEACON',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                ),
-                onPressed: () => Navigator.pop(context),
+              const Spacer(),
+              AppButton(
+                label: 'Turn Off Beacon',
+                icon: Icons.close_rounded,
+                variant: AppButtonVariant.secondary,
+                fullWidth: true,
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ],
           ),
@@ -93,4 +84,3 @@ class _EmergencyBeaconModalState extends State<EmergencyBeaconModal> {
     );
   }
 }
-

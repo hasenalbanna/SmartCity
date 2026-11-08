@@ -237,3 +237,4 @@ Goal: drive both counts toward zero outside `lib/theme/`.
 
 ---
 *Written 2026-11-08 for Smart City. No code was changed; this document is the plan. Tell me which phase to start and I will implement it.*
+

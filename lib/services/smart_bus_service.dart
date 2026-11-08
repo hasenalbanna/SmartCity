@@ -188,6 +188,13 @@ class SmartBusService extends ChangeNotifier {
     return _buses.where((b) => b.routeId == _selectedRouteId).toList();
   }
 
+  BusRoute? getRouteById(String routeId) {
+    for (final route in _routes) {
+      if (route.id == routeId) return route;
+    }
+    return _routes.isNotEmpty ? _routes.first : null;
+  }
+
   @override
   void dispose() {
     _simulationTimer?.cancel();

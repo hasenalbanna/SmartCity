@@ -1,167 +1,176 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'explore_screen.dart';
-import 'profile_screen.dart';
+import 'package:provider/provider.dart';
+import '../models/community_issue.dart';
+import '../services/community_issue_service.dart';
+import '../theme/app_colors.dart';
+import 'civic_alerts_screen.dart';
 import 'community_issues_screen.dart';
+import 'home_screen.dart';
+import 'profile_screen.dart';
 import 'smart_bus_tracking_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final int initialIndex;
+
+  const MainNavigationScreen({super.key, this.initialIndex = 0});
+
+  /// Allows child screens to switch the active primary navigation tab.
+  static void switchToTab(BuildContext context, int index) {
+    final state = context.findAncestorStateOfType<_MainNavigationScreenState>();
+    state?.setTab(index);
+  }
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex;
 
-  final List<Widget> _screens = const [
+  static const List<Widget> _screens = [
     HomeScreen(),
     CommunityIssuesScreen(),
     SmartBusTrackingScreen(),
-    ExploreScreen(),
+    CivicAlertsScreen(),
     ProfileScreen(),
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.06)
-                    : Colors.white.withValues(alpha: 0.86),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.14)
-                      : const Color(0xFFE3EEFB),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? const Color(0xFF2BC0E4).withValues(alpha: 0.12)
-                        : const Color(0xFF2BC0E4).withValues(alpha: 0.14),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      _buildItem(
-                        0,
-                        Icons.home_outlined,
-                        Icons.home,
-                        'Home',
-                        isDark,
-                      ),
-                      _buildItem(
-                        1,
-                        Icons.report_problem_outlined,
-                        Icons.report_problem,
-                        'Reports',
-                        isDark,
-                      ),
-                      _buildItem(
-                        2,
-                        Icons.directions_bus_outlined,
-                        Icons.directions_bus_filled,
-                        'Smart Bus',
-                        isDark,
-                      ),
-                      _buildItem(
-                        3,
-                        Icons.explore_outlined,
-                        Icons.explore,
-                        'Explore',
-                        isDark,
-                      ),
-                      _buildItem(
-                        4,
-                        Icons.person_outline,
-                        Icons.person,
-                        'Profile',
-                        isDark,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
   }
 
-  Widget _buildItem(
-    int index,
-    IconData icon,
-    IconData activeIcon,
-    String label,
-    bool isDark,
-  ) {
-    final isSelected = _currentIndex == index;
-    final inactiveColor = isDark
-        ? const Color(0xFFE0E8F5)
-        : const Color(0xFF93A5BD);
+  void setTab(int index) {
+    if (index >= 0 && index < _screens.length) {
+      setState(() => _currentIndex = index);
+    }
+  }
 
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => setState(() => _currentIndex = index),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 260),
-          margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            color: isSelected && !isDark
-                ? Colors.black
-                : null, // Plan black for light mode
-            gradient: isSelected && isDark
-                ? const LinearGradient(
-                    colors: [Color(0xFF2BC0E4), Color(0xFF8A7CFF)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  )
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                isSelected ? activeIcon : icon,
-                size: 21,
-                color: isSelected ? Colors.white : inactiveColor,
-              ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : inactiveColor,
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final issueService = context.watch<CommunityIssueService>();
+    final pendingCount = issueService.issues
+        .where((i) => i.status == IssueStatus.pending)
+        .length;
+
+    final body = IndexedStack(
+      index: _currentIndex,
+      children: _screens,
+    );
+
+    // Responsive Shell:
+    // < 600px: Material 3 NavigationBar (Bottom)
+    // 600-1024px: NavigationRail (Compact)
+    // > 1024px: NavigationRail (Extended)
+    if (width >= 600) {
+      final isExtended = width >= 1024;
+      return Scaffold(
+        backgroundColor: AppColors.background(context),
+        body: Row(
+          children: [
+            NavigationRail(
+              extended: isExtended,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: setTab,
+              labelType: isExtended
+                  ? NavigationRailLabelType.none
+                  : NavigationRailLabelType.all,
+              destinations: [
+                const NavigationRailDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: Text('Home'),
                 ),
-              ),
-            ],
+                NavigationRailDestination(
+                  icon: Badge(
+                    isLabelVisible: pendingCount > 0,
+                    label: Text('$pendingCount'),
+                    child: const Icon(Icons.map_outlined),
+                  ),
+                  selectedIcon: Badge(
+                    isLabelVisible: pendingCount > 0,
+                    label: Text('$pendingCount'),
+                    child: const Icon(Icons.map_rounded),
+                  ),
+                  label: const Text('Report'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.directions_bus_outlined),
+                  selectedIcon: Icon(Icons.directions_bus_filled_rounded),
+                  label: Text('Transit'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.notifications_outlined),
+                  selectedIcon: Icon(Icons.notifications_rounded),
+                  label: Text('Alerts'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: Text('Me'),
+                ),
+              ],
+            ),
+            VerticalDivider(
+              width: 1,
+              thickness: 1,
+              color: AppColors.outline(context),
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background(context),
+      body: body,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(color: AppColors.outline(context), width: 1),
           ),
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: setTab,
+          destinations: [
+            const NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined),
+              selectedIcon: Icon(Icons.dashboard_rounded),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Badge(
+                isLabelVisible: pendingCount > 0,
+                label: Text('$pendingCount'),
+                child: const Icon(Icons.map_outlined),
+              ),
+              selectedIcon: Badge(
+                isLabelVisible: pendingCount > 0,
+                label: Text('$pendingCount'),
+                child: const Icon(Icons.map_rounded),
+              ),
+              label: 'Report',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.directions_bus_outlined),
+              selectedIcon: Icon(Icons.directions_bus_filled_rounded),
+              label: 'Transit',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.notifications_outlined),
+              selectedIcon: Icon(Icons.notifications_rounded),
+              label: 'Alerts',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.person_outline_rounded),
+              selectedIcon: Icon(Icons.person_rounded),
+              label: 'Me',
+            ),
+          ],
         ),
       ),
     );

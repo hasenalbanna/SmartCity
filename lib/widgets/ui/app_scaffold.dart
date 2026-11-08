@@ -1,0 +1,40 @@
+import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
+
+class AppScaffold extends StatelessWidget {
+  final PreferredSizeWidget? appBar;
+  final Widget body;
+  final Widget? floatingActionButton;
+  final double maxWidth;
+  final bool safeArea;
+
+  const AppScaffold({
+    super.key,
+    this.appBar,
+    required this.body,
+    this.floatingActionButton,
+    this.maxWidth = 1100,
+    this.safeArea = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget content = Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        child: body,
+      ),
+    );
+
+    if (safeArea) {
+      content = SafeArea(child: content);
+    }
+
+    return Scaffold(
+      backgroundColor: AppColors.background(context),
+      appBar: appBar,
+      body: content,
+      floatingActionButton: floatingActionButton,
+    );
+  }
+}
