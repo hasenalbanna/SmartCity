@@ -26,6 +26,7 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onPrimary = AppColors.onPrimary(context);
     final child = isLoading
         ? SizedBox(
             width: 20,
@@ -34,7 +35,7 @@ class AppButton extends StatelessWidget {
               strokeWidth: 2.2,
               color: variant == AppButtonVariant.primary ||
                       variant == AppButtonVariant.danger
-                  ? Colors.white
+                  ? onPrimary
                   : AppColors.primary(context),
             ),
           )
@@ -69,8 +70,8 @@ class AppButton extends StatelessWidget {
         button = ElevatedButton(
           onPressed: isLoading ? null : onPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.danger(context),
-            foregroundColor: Colors.white,
+            backgroundColor: AppColors.primary(context),
+            foregroundColor: onPrimary,
           ),
           child: child,
         );
@@ -102,4 +103,3 @@ class AppButton extends StatelessWidget {
     return button;
   }
 }
-

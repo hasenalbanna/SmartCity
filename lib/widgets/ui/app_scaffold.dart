@@ -36,9 +36,13 @@ class AppScaffold extends StatelessWidget {
       backgroundColor: AppColors.background(context),
       appBar: appBar,
       drawer: drawer,
-      body: content,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: AppColors.backgroundGradient(context),
+        ),
+        child: SizedBox.expand(child: content),
+      ),
       floatingActionButton: floatingActionButton,
     );
   }
 }
-

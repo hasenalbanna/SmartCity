@@ -527,10 +527,10 @@ class ExploreCoverWeatherCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.explore_rounded,
                             size: 15,
-                            color: AppColors.primary(context),
+                            color: AppColors.textPrimaryLight,
                           ),
                           const SizedBox(width: AppSpace.xs),
                           Text(

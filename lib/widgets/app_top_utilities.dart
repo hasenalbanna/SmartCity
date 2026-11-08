@@ -8,7 +8,12 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 
 class AppTopUtilities extends StatelessWidget {
-  const AppTopUtilities({super.key});
+  final EdgeInsetsGeometry padding;
+
+  const AppTopUtilities({
+    super.key,
+    this.padding = const EdgeInsets.only(bottom: AppSpace.md),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +27,7 @@ class AppTopUtilities extends StatelessWidget {
     final badgeFg = isDark ? Colors.black : Colors.white;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      padding: padding,
       child: Row(
         children: [
           _buildUtilityButton(

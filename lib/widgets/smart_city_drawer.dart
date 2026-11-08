@@ -53,6 +53,14 @@ class _DrawerPageItem {
   });
 }
 
+/// Psychologically Ordered 24-Page Navigation Drawer:
+/// Ordered by User Preference & Frequency of Engagement:
+/// 1. Explore, AI Trip & Stays (Most Loved Aspirational & Travel Experiences)
+/// 2. Smart Transit & Live Maps (Daily Habitual Mobility & GPS)
+/// 3. Social Feed, Chat & Saved (Community Connection & Memories)
+/// 4. Civic Reports & Falcon SOS (Safety, Hazard Reporting & Emergency)
+/// 5. Minimal B&W Utilities (Fast Personal Tools: Notifications, Calendar, Clock)
+/// 6. Profile, Settings & Pro Store (Account, 11 Languages, 6 Currencies & Store)
 class SmartCityDrawer extends StatefulWidget {
   const SmartCityDrawer({super.key});
 
@@ -66,12 +74,12 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
 
   static const List<String> _categories = [
     'All',
-    '1. Core Civic & SOS',
-    '2. Smart Transit & Map',
-    '3. Ceylon Explorer & AI',
-    '4. Social, Chat & Logs',
-    '5. Time & Schedule',
-    '6. Account & Control',
+    '1. Explore, AI Trip & Stays',
+    '2. Smart Transit & Maps',
+    '3. Social, Chat & Saved',
+    '4. Civic Reports & SOS',
+    '5. Minimal B&W Utilities',
+    '6. Profile & Settings',
   ];
 
   List<_DrawerPageItem> _buildSystemPages({
@@ -82,64 +90,71 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
   }) {
     return [
       // ======================================================================
-      // CATEGORY 1: CORE CIVIC & EMERGENCY OPS (5 PAGES)
+      // CATEGORY 1: EXPLORE, AI TRIP & STAYS (6 PAGES — MOST LOVED BY USERS)
       // ======================================================================
       _DrawerPageItem(
-        id: 'home',
-        title: 'Smart City Home Dashboard',
-        subtitle: 'Live telemetry, Explore weather card & Instagram feed',
-        category: '1. Core Civic & SOS',
-        icon: Icons.home_rounded,
-        badge: 'TAB 1',
-        onNavigate: (ctx) => _switchOrPush(ctx, 0, null),
+        id: 'itinerary_planner',
+        title: 'Ceylon Explorer — AI Trip Planner',
+        subtitle: 'Unified Route Engine, Hotels, SIM Advisor & Expense Split',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.auto_awesome_rounded,
+        badge: '#1 LOVED',
+        onNavigate: (ctx) => _pushScreen(ctx, const ItineraryScreen()),
       ),
       _DrawerPageItem(
-        id: 'reports',
-        title: 'Citizen Issue & Disaster Reports',
-        subtitle: '2-Mode Hub: Local Issues & Falcon AI Voice Guardian',
-        category: '1. Core Civic & SOS',
-        icon: Icons.report_problem_rounded,
-        badge: pendingIssues > 0 ? '$pendingIssues OPEN' : 'TAB 2',
-        onNavigate: (ctx) =>
-            _switchOrPush(ctx, 1, const CommunityIssuesScreen()),
+        id: 'explore',
+        title: 'Explore Smart Regions & Weather',
+        subtitle: 'Live weather cover, Must-See landmarks & 9 provinces',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.explore_rounded,
+        badge: 'HERO',
+        onNavigate: (ctx) => _pushScreen(ctx, const ExploreScreen()),
       ),
       _DrawerPageItem(
-        id: 'report_wizard',
-        title: '4-Step Issue Wizard & Falcon SOS',
-        subtitle: 'AI Vision hazard intake, GPS pin & voice wake-word',
-        category: '1. Core Civic & SOS',
-        icon: Icons.record_voice_over_rounded,
-        badge: 'FALCON AI',
-        isDanger: true,
-        onNavigate: (ctx) => _pushScreen(ctx, const ReportIssueWizardScreen()),
+        id: 'hotels',
+        title: 'Find Your Perfect Stay (Hotels)',
+        subtitle: 'Booking.com-style stays, map pins & room reservation',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.hotel_rounded,
+        badge: '12 STAYS',
+        onNavigate: (ctx) => _pushScreen(ctx, const HotelBookingScreen()),
       ),
       _DrawerPageItem(
-        id: 'civic_alerts',
-        title: 'Civic Alerts & Weather Radar',
-        subtitle: '117 DMC monsoon warnings & council work orders',
-        category: '1. Core Civic & SOS',
-        icon: Icons.campaign_rounded,
-        badge: 'LIVE',
-        onNavigate: (ctx) => _pushScreen(ctx, const CivicAlertsScreen()),
+        id: 'ai_travel_planner',
+        title: 'AI Day-by-Day Itinerary Generator',
+        subtitle: 'Custom Sri Lanka plan by days, budget & interests',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.event_note_rounded,
+        badge: 'AI',
+        onNavigate: (ctx) => _pushScreen(ctx, const AiTravelPlannerScreen()),
       ),
       _DrawerPageItem(
-        id: 'notifications',
-        title: 'System Notifications & Inbox',
-        subtitle: 'Real-time work order updates & travel reminders',
-        category: '1. Core Civic & SOS',
-        icon: Icons.notifications_active_outlined,
-        badge: unreadNotifications > 0 ? '$unreadNotifications NEW' : null,
-        onNavigate: (ctx) => _pushScreen(ctx, const NotificationsScreen()),
+        id: 'sim_advisor',
+        title: 'AI SIM Card & Coverage Advisor',
+        subtitle: 'Dialog, Mobitel, Airtel & Hutch tourist eSIM matcher',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.sim_card_rounded,
+        badge: '5G/4G',
+        onNavigate: (ctx) => _pushScreen(ctx, const SIMRecommendationScreen()),
+      ),
+      _DrawerPageItem(
+        id: 'guides',
+        title: 'Certified Local Tour Guides',
+        subtitle: 'Verified cultural, safari, surfing & hiking specialists',
+        category: '1. Explore, AI Trip & Stays',
+        icon: Icons.badge_outlined,
+        badge: '6 GUIDES',
+        onNavigate: (ctx) => _pushScreen(ctx, const GuidesScreen()),
       ),
 
       // ======================================================================
-      // CATEGORY 2: SMART TRANSIT & LIVE MOBILITY (3 PAGES)
+      // CATEGORY 2: SMART TRANSIT & LIVE MAPS (3 PAGES — DAILY MOBILITY)
       // ======================================================================
       _DrawerPageItem(
         id: 'smart_bus',
         title: 'Smart Bus Live Radar (Routes 22 & 48)',
         subtitle: 'Real-time bus telemetry, seat load & ETA countdown',
-        category: '2. Smart Transit & Map',
+        category: '2. Smart Transit & Maps',
         icon: Icons.directions_bus_filled_rounded,
         badge: 'TAB 3',
         onNavigate: (ctx) =>
@@ -149,7 +164,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
         id: 'island_map',
         title: 'Interactive Island & Smart City Map',
         subtitle: 'Full-screen OpenStreetMap with UNESCO & civic pins',
-        category: '2. Smart Transit & Map',
+        category: '2. Smart Transit & Maps',
         icon: Icons.map_rounded,
         badge: 'OSM',
         onNavigate: (ctx) => _pushScreen(ctx, const MapScreen()),
@@ -158,78 +173,20 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
         id: 'live_route_engine',
         title: 'Live OSRM Route & Drive Engine',
         subtitle: 'Multi-stop road routing, vehicle speed & fuel estimator',
-        category: '2. Smart Transit & Map',
+        category: '2. Smart Transit & Maps',
         icon: Icons.alt_route_rounded,
         badge: 'GPS',
         onNavigate: (ctx) => _pushScreen(ctx, const ItineraryScreen()),
       ),
 
       // ======================================================================
-      // CATEGORY 3: CEYLON EXPLORER & AI TRAVEL SUITE (6 PAGES)
-      // ======================================================================
-      _DrawerPageItem(
-        id: 'explore',
-        title: 'Explore Smart Regions & Provinces',
-        subtitle: 'Weather cover, Must-See landmarks & 9 Sri Lanka provinces',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.explore_rounded,
-        badge: 'HUB',
-        onNavigate: (ctx) => _pushScreen(ctx, const ExploreScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'itinerary_planner',
-        title: 'Ceylon Explorer — AI Trip Planner',
-        subtitle: 'Unified Route Engine, Hotels, SIM Advisor & Expense Split',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.event_note_rounded,
-        badge: '4-IN-1',
-        onNavigate: (ctx) => _pushScreen(ctx, const ItineraryScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'ai_travel_planner',
-        title: 'AI Travel Itinerary Generator',
-        subtitle: 'Custom day-by-day Sri Lanka plan by budget & interests',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.auto_awesome_rounded,
-        badge: 'AI',
-        onNavigate: (ctx) => _pushScreen(ctx, const AiTravelPlannerScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'hotels',
-        title: 'Find Your Perfect Stay (Hotels)',
-        subtitle: 'Booking.com-style stays, map pins & room reservation',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.hotel_rounded,
-        badge: '12 STAYS',
-        onNavigate: (ctx) => _pushScreen(ctx, const HotelBookingScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'sim_advisor',
-        title: 'AI SIM Card & Coverage Advisor',
-        subtitle: 'Dialog, Mobitel, Airtel & Hutch tourist eSIM matcher',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.sim_card_rounded,
-        badge: '5G/4G',
-        onNavigate: (ctx) => _pushScreen(ctx, const SIMRecommendationScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'guides',
-        title: 'Certified Local Tour Guides',
-        subtitle: 'Verified cultural, safari, surfing & hiking specialists',
-        category: '3. Ceylon Explorer & AI',
-        icon: Icons.badge_outlined,
-        badge: '6 GUIDES',
-        onNavigate: (ctx) => _pushScreen(ctx, const GuidesScreen()),
-      ),
-
-      // ======================================================================
-      // CATEGORY 4: COMMUNITY SOCIAL, CHAT & LOGS (4 PAGES)
+      // CATEGORY 3: SOCIAL FEED, CHAT & SAVED (4 PAGES — COMMUNITY LOOP)
       // ======================================================================
       _DrawerPageItem(
         id: 'social_feed',
         title: 'Locals by AI — Instagram Feed',
         subtitle: 'Citizen stories, photo uploads, likes & comments',
-        category: '4. Social, Chat & Logs',
+        category: '3. Social, Chat & Saved',
         icon: Icons.photo_camera_back_rounded,
         badge: 'SOCIAL',
         onNavigate: (ctx) => _pushScreen(ctx, const CommunityFeedScreen()),
@@ -237,87 +194,66 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
       _DrawerPageItem(
         id: 'realtime_chat',
         title: 'Realtime Citizen & Guide Chat',
-        subtitle: 'Direct messaging with municipal dispatch & tour guides',
-        category: '4. Social, Chat & Logs',
+        subtitle: 'Clean minimal B&W messaging with municipal & tour desks',
+        category: '3. Social, Chat & Saved',
         icon: Icons.chat_bubble_outline_rounded,
-        badge: 'ONLINE',
+        badge: 'MINIMAL B&W',
         onNavigate: (ctx) => _pushScreen(ctx, const ChatListScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'trip_journal',
-        title: 'Trip Journal & Field Memories',
-        subtitle: 'Personal travel log, photos & route distance archive',
-        category: '4. Social, Chat & Logs',
-        icon: Icons.menu_book_rounded,
-        onNavigate: (ctx) => _pushScreen(ctx, const TripJournalScreen()),
       ),
       _DrawerPageItem(
         id: 'saved',
         title: 'Saved Trips, Places & Stays',
         subtitle: 'Bookmarked routes, heritage landmarks & luxury hotels',
-        category: '4. Social, Chat & Logs',
+        category: '3. Social, Chat & Saved',
         icon: Icons.bookmarks_outlined,
         onNavigate: (ctx) => _pushScreen(ctx, const SavedScreen()),
       ),
-
-      // ======================================================================
-      // CATEGORY 5: TIME, SCHEDULE & UTILITIES (2 PAGES)
-      // ======================================================================
       _DrawerPageItem(
-        id: 'calendar',
-        title: 'Travel & Civic Schedule Calendar',
-        subtitle: '7-day timeline for excursions, trains & ward inspections',
-        category: '5. Time & Schedule',
-        icon: Icons.calendar_month_rounded,
-        onNavigate: (ctx) => _pushScreen(ctx, const ScheduleCalendarScreen()),
-      ),
-      _DrawerPageItem(
-        id: 'world_clock',
-        title: 'World Clock & Travel Timer',
-        subtitle: 'Colombo (UTC+5:30) multi-zone clock & excursion timer',
-        category: '5. Time & Schedule',
-        icon: Icons.access_time_filled_rounded,
-        onNavigate: (ctx) => _pushScreen(ctx, const WorldClockScreen()),
+        id: 'trip_journal',
+        title: 'Trip Journal & Field Memories',
+        subtitle: 'Personal travel log, photos & route distance archive',
+        category: '3. Social, Chat & Saved',
+        icon: Icons.menu_book_rounded,
+        onNavigate: (ctx) => _pushScreen(ctx, const TripJournalScreen()),
       ),
 
       // ======================================================================
-      // CATEGORY 6: ACCOUNT, MONETIZATION & SYSTEM CONTROL (4 PAGES)
+      // CATEGORY 4: CIVIC REPORTS & FALCON AI SOS (4 PAGES — SAFETY & OPS)
       // ======================================================================
       _DrawerPageItem(
-        id: 'profile',
-        title: 'Citizen Profile & Civic Hub',
-        subtitle: 'Digital Citizen ID, Smart Transit Pass & evidence vault',
-        category: '6. Account & Control',
-        icon: Icons.person_rounded,
-        badge: 'TAB 4',
-        onNavigate: (ctx) => _switchOrPush(ctx, 3, const ProfileScreen()),
+        id: 'reports',
+        title: 'Citizen Issue & Disaster Hub',
+        subtitle: '2-Mode Hub: Local Issues & Falcon AI Voice Guardian',
+        category: '4. Civic Reports & SOS',
+        icon: Icons.report_problem_rounded,
+        badge: pendingIssues > 0 ? '$pendingIssues OPEN' : 'TAB 2',
+        onNavigate: (ctx) =>
+            _switchOrPush(ctx, 1, const CommunityIssuesScreen()),
       ),
       _DrawerPageItem(
-        id: 'settings',
-        title: 'Settings & Smart City Control Center',
-        subtitle: '11 Languages, 6 Currencies, Dark Mode & Falcon AI',
-        category: '6. Account & Control',
-        icon: Icons.settings_rounded,
-        badge: '$activeLang • $activeCurrency',
-        onNavigate: (ctx) => _pushScreen(ctx, const SettingsScreen()),
+        id: 'report_wizard',
+        title: 'Falcon AI Voice SOS & Issue Wizard',
+        subtitle: 'Say "Hey Falcon, wake up" or report local road hazards',
+        category: '4. Civic Reports & SOS',
+        icon: Icons.record_voice_over_rounded,
+        badge: 'FALCON AI',
+        isDanger: true,
+        onNavigate: (ctx) => _pushScreen(ctx, const ReportIssueWizardScreen()),
       ),
       _DrawerPageItem(
-        id: 'pro_store',
-        title: 'Smart City Pro & Revenue Storefront',
-        subtitle: 'Falcon Shield+ Pro, Insurance Dossiers & Sponsored Pins',
-        category: '6. Account & Control',
-        icon: Icons.workspace_premium_rounded,
-        badge: 'PRO',
-        onNavigate: (ctx) {
-          Navigator.pop(ctx);
-          PremiumStoreModal.show(ctx);
-        },
+        id: 'civic_alerts',
+        title: 'Civic Alerts & Weather Radar',
+        subtitle: '117 DMC monsoon warnings & council work orders',
+        category: '4. Civic Reports & SOS',
+        icon: Icons.campaign_rounded,
+        badge: 'LIVE',
+        onNavigate: (ctx) => _pushScreen(ctx, const CivicAlertsScreen()),
       ),
       _DrawerPageItem(
         id: 'sos_beacon',
-        title: 'Emergency SOS Beacon & Hotlines',
+        title: 'Emergency SOS Strobe & Hotlines',
         subtitle: '1990 Suwa Seriya, 117 DMC & instant GPS distress beacon',
-        category: '6. Account & Control',
+        category: '4. Civic Reports & SOS',
         icon: Icons.sos_rounded,
         badge: '117 / 1990',
         isDanger: true,
@@ -326,12 +262,87 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
           EmergencyBeaconModal.show(ctx);
         },
       ),
+
+      // ======================================================================
+      // CATEGORY 5: MINIMAL B&W DAILY UTILITIES (3 PAGES — MONOCHROME SUITE)
+      // ======================================================================
+      _DrawerPageItem(
+        id: 'notifications',
+        title: 'System Notifications & Inbox',
+        subtitle: 'Clean minimal B&W alerts, work orders & bus ETA',
+        category: '5. Minimal B&W Utilities',
+        icon: Icons.notifications_active_outlined,
+        badge: unreadNotifications > 0 ? '$unreadNotifications NEW' : 'B&W',
+        onNavigate: (ctx) => _pushScreen(ctx, const NotificationsScreen()),
+      ),
+      _DrawerPageItem(
+        id: 'calendar',
+        title: 'Travel & Civic Schedule Calendar',
+        subtitle: 'Clean minimal B&W 7-day planner for trips & inspections',
+        category: '5. Minimal B&W Utilities',
+        icon: Icons.calendar_month_rounded,
+        badge: 'B&W',
+        onNavigate: (ctx) => _pushScreen(ctx, const ScheduleCalendarScreen()),
+      ),
+      _DrawerPageItem(
+        id: 'world_clock',
+        title: 'World Clock & Travel Timer',
+        subtitle: 'Clean minimal B&W Colombo (UTC+5:30) multi-zone clock',
+        category: '5. Minimal B&W Utilities',
+        icon: Icons.access_time_filled_rounded,
+        badge: 'B&W',
+        onNavigate: (ctx) => _pushScreen(ctx, const WorldClockScreen()),
+      ),
+
+      // ======================================================================
+      // CATEGORY 6: PROFILE, SETTINGS & PRO STORE (4 PAGES — CONTROL CENTER)
+      // ======================================================================
+      _DrawerPageItem(
+        id: 'home',
+        title: 'Smart City Home Dashboard',
+        subtitle: 'Calm 5-Zone Command Center & Most Popular Experiences',
+        category: '6. Profile & Settings',
+        icon: Icons.home_rounded,
+        badge: 'TAB 1',
+        onNavigate: (ctx) => _switchOrPush(ctx, 0, null),
+      ),
+      _DrawerPageItem(
+        id: 'profile',
+        title: 'Citizen Profile & Civic Hub',
+        subtitle: 'Digital Citizen ID, Smart Transit Pass & evidence vault',
+        category: '6. Profile & Settings',
+        icon: Icons.person_rounded,
+        badge: 'TAB 4',
+        onNavigate: (ctx) => _switchOrPush(ctx, 3, const ProfileScreen()),
+      ),
+      _DrawerPageItem(
+        id: 'settings',
+        title: 'Settings & Smart City Control Center',
+        subtitle: '11 Languages, 6 Currencies, Dark Mode & Falcon AI',
+        category: '6. Profile & Settings',
+        icon: Icons.settings_rounded,
+        badge: '$activeLang • $activeCurrency',
+        onNavigate: (ctx) => _pushScreen(ctx, const SettingsScreen()),
+      ),
+      _DrawerPageItem(
+        id: 'pro_store',
+        title: 'Smart City Pro & Revenue Storefront',
+        subtitle: 'Falcon Shield+ Pro, Insurance Dossiers & Sponsored Pins',
+        category: '6. Profile & Settings',
+        icon: Icons.workspace_premium_rounded,
+        badge: 'PRO',
+        onNavigate: (ctx) {
+          Navigator.pop(ctx);
+          PremiumStoreModal.show(ctx);
+        },
+      ),
     ];
   }
 
   void _switchOrPush(BuildContext context, int tabIndex, Widget? fallback) {
     Navigator.pop(context);
-    final navState = context.findAncestorStateOfType<State<MainNavigationScreen>>();
+    final navState =
+        context.findAncestorStateOfType<State<MainNavigationScreen>>();
     if (navState != null) {
       MainNavigationScreen.switchToTab(context, tabIndex);
     } else if (fallback != null) {
@@ -391,14 +402,13 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
           p.category.toLowerCase().contains(q);
     }).toList();
 
-    // Group filtered pages by category
     final Map<String, List<_DrawerPageItem>> grouped = {};
     for (final page in filteredPages) {
       grouped.putIfAbsent(page.category, () => []).add(page);
     }
 
     return Drawer(
-      width: 350,
+      width: 356,
       backgroundColor: AppColors.background(context),
       child: SafeArea(
         child: Column(
@@ -428,7 +438,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                             ? Text(
                                 avatarLetter,
                                 style: AppTypography.title.copyWith(
-                                  color: Colors.white,
+                                  color: AppColors.onPrimary(context),
                                 ),
                               )
                             : null,
@@ -447,7 +457,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                               ),
                             ),
                             Text(
-                              '${subscription.currentPlanName} • 24 System Pages',
+                              '${subscription.currentPlanName} • 24 Pages by Priority',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.caption.copyWith(
@@ -531,7 +541,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                             backgroundColor: AppColors.surfaceMuted(context),
                             labelStyle: AppTypography.caption.copyWith(
                               color: selected
-                                  ? Colors.white
+                                  ? AppColors.onPrimary(context)
                                   : AppColors.textPrimary(context),
                               fontWeight: FontWeight.w700,
                             ),
@@ -544,7 +554,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
               ),
             ),
 
-            // 2. Categorized System Pages List
+            // 2. Categorized System Pages List (With "Most Loved" Quick Pin Bar)
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(
@@ -552,6 +562,75 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                   vertical: AppSpace.md,
                 ),
                 children: [
+                  if (_searchQuery.isEmpty && _selectedCategory == 'All') ...[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: AppSpace.xs,
+                        bottom: AppSpace.xs,
+                      ),
+                      child: Text(
+                        '★ MOST LOVED BY USERS (1-TAP)',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.primary(context),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildTopFavoriteChip(
+                            context,
+                            icon: Icons.auto_awesome_rounded,
+                            label: 'AI Trip',
+                            onTap: () =>
+                                _pushScreen(context, const ItineraryScreen()),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          _buildTopFavoriteChip(
+                            context,
+                            icon: Icons.hotel_rounded,
+                            label: 'Hotels',
+                            onTap: () => _pushScreen(
+                              context,
+                              const HotelBookingScreen(),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          _buildTopFavoriteChip(
+                            context,
+                            icon: Icons.explore_rounded,
+                            label: 'Explore',
+                            onTap: () =>
+                                _pushScreen(context, const ExploreScreen()),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          _buildTopFavoriteChip(
+                            context,
+                            icon: Icons.directions_bus_filled_rounded,
+                            label: 'Smart Bus',
+                            onTap: () => _switchOrPush(
+                              context,
+                              2,
+                              const SmartBusTrackingScreen(),
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.xs),
+                          _buildTopFavoriteChip(
+                            context,
+                            icon: Icons.radar_rounded,
+                            label: 'Falcon SOS',
+                            onTap: () => _pushScreen(
+                              context,
+                              const ReportIssueWizardScreen(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.md),
+                  ],
                   for (final entry in grouped.entries) ...[
                     Padding(
                       padding: const EdgeInsets.only(
@@ -742,5 +821,41 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
       ),
     );
   }
-}
 
+  Widget _buildTopFavoriteChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.pillBorder,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md,
+          vertical: AppSpace.xs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: AppRadius.pillBorder,
+          border: Border.all(color: AppColors.outline(context)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppColors.primary(context)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: AppColors.textPrimary(context),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

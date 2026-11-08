@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../models/ai_hazard_analysis.dart';
 import '../models/community_issue.dart';
@@ -9,29 +7,37 @@ import '../services/community_issue_service.dart';
 import '../services/profile_service.dart';
 import '../services/smart_bus_service.dart';
 import '../services/subscription_service.dart';
-import '../services/theme_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/ai_insights_section.dart';
 import '../widgets/app_top_utilities.dart';
-import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'explore_screen.dart';
+import 'hotel_booking_screen.dart';
 import 'itinerary_screen.dart';
 import 'main_navigation_screen.dart';
 import 'report_issue_wizard_screen.dart';
-import 'settings_screen.dart';
+import 'sim_recommendation_screen.dart';
+import 'system_feature_screens.dart';
 
+/// Psychologically Engineered Monochrome Luxury Home Screen:
+/// - Background: Plain Deep Black (#000000) with a subtle obsidian/charcoal
+///   gradient (#000000 -> #0A0A0D -> #141419).
+/// - Palette: Zero blue — strictly Black, White, Platinum, and Obsidian Grays.
+/// - 5-Zone Cognitive Architecture:
+///   1. Single Unified Header Row ([☰ Menu] + Greeting | 5 Minimal Utilities) + Search Bar
+///   2. Ambient Hero Cover (`ExploreCoverWeatherCard`)
+///   3. Miller's Law "Most-Loved 4" Experience Grid (AI Trip, Hotels, Smart Bus, Falcon SOS)
+///   4. Picture Superiority `AI Insights` Real Photography Carousel
+///   5. Live City Pulse + Citizen Social Feed + Executive Pro Footer Card
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  static const LatLng _nintavurCenter = LatLng(7.3486, 81.8475);
 
   String _formatDate(DateTime dt) => '${dt.month}/${dt.day}/${dt.year}';
 
@@ -41,7 +47,6 @@ class HomeScreen extends StatelessWidget {
     final busService = context.watch<SmartBusService>();
     final auth = context.watch<AuthService>();
     final profileService = context.watch<ProfileService>();
-    final themeService = context.watch<ThemeService>();
     final subService = context.watch<SubscriptionService>();
 
     final issues = issueService.issues;
@@ -63,126 +68,134 @@ class HomeScreen extends StatelessWidget {
               ? profileService.displayName.split(' ').first
               : 'AL');
 
+    final latestIssue = issues.isNotEmpty ? issues.first : null;
+    final fg = AppColors.textPrimary(context);
+    final muted = AppColors.textSecondary(context);
+    final surface = AppColors.surface(context);
+    final surfaceMuted = AppColors.surfaceMuted(context);
+    final outline = AppColors.outline(context);
+
     return AppScaffold(
       drawer: const SmartCityDrawer(),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const ReportIssueWizardScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primary(context),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Report Issue'),
-      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpace.lg,
+          AppSpace.md,
           AppSpace.lg,
-          AppSpace.lg,
-          96,
+          AppSpace.xxl,
         ),
         children: [
-          const AppTopUtilities(),
-          // 1. Header: 3-Line Left-Side Toggle Bar Button + Greeting + Pro Plan Pill + Theme Toggle
+          // ===================================================================
+          // ZONE 1: UNIFIED SINGLE HEADER BAR (MONOCHROME BLACK / WHITE / GRAY)
+          // ===================================================================
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Builder(
                 builder: (scaffoldContext) => InkWell(
                   onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
-                  borderRadius: AppRadius.pillBorder,
+                  borderRadius: AppRadius.mdBorder,
                   child: Container(
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: AppColors.surface(context),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.outline(context)),
+                      color: surface,
+                      borderRadius: AppRadius.mdBorder,
+                      border: Border.all(color: outline),
                     ),
                     child: Icon(
                       Icons.menu_rounded,
                       size: 22,
-                      color: AppColors.textPrimary(context),
+                      color: fg,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: AppSpace.md),
+              const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Hello, $userName',
-                      style: AppTypography.display.copyWith(
-                        color: AppColors.textPrimary(context),
-                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.title.copyWith(color: fg),
                     ),
-                    const SizedBox(height: AppSpace.xs),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 15,
-                          color: AppColors.primary(context),
-                        ),
-                        const SizedBox(width: AppSpace.xs),
-                        Flexible(
-                          child: Text(
-                            'Nintavur Smart Municipality • ${subService.currentPlanName}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      'Nintavur • ${subService.currentPlanName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.caption.copyWith(color: muted),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: AppSpace.sm),
-              AppButton(
-                label: subService.isProOrHigher ? 'Pro Hub' : 'Upgrade Pro',
-                icon: Icons.workspace_premium_rounded,
-                variant: AppButtonVariant.secondary,
-                onPressed: () => PremiumStoreModal.show(context),
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Semantics(
-                label: 'Toggle light and dark theme',
-                button: true,
-                child: IconButton(
-                  tooltip: 'Switch Theme',
-                  onPressed: themeService.toggleTheme,
-                  icon: Icon(
-                    AppColors.isDark(context)
-                        ? Icons.light_mode_outlined
-                        : Icons.dark_mode_outlined,
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Settings, Language & Currency',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-                icon: const Icon(Icons.settings_outlined),
+              const AppTopUtilities(
+                padding: EdgeInsets.zero,
               ),
             ],
           ),
           const SizedBox(height: AppSpace.md),
 
-          // 2. Explore Cover Weather Hero Card (Current Location / Drizzle / 25.8°C -> opens ExploreScreen)
+          // Instant Monochrome Search / 24-Page Quick Jump Bar
+          Builder(
+            builder: (scaffoldContext) => InkWell(
+              onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
+              borderRadius: AppRadius.pillBorder,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.md,
+                ),
+                decoration: BoxDecoration(
+                  color: surface,
+                  borderRadius: AppRadius.pillBorder,
+                  border: Border.all(color: outline),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: fg,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Expanded(
+                      child: Text(
+                        'Search destinations, hotels, AI planner, or 24 pages...',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body.copyWith(color: muted),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: fg,
+                        borderRadius: AppRadius.pillBorder,
+                      ),
+                      child: Text(
+                        'All 24',
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.onPrimary(context),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpace.lg),
+
+          // ===================================================================
+          // ZONE 2: VISCERAL HERO ANCHOR — EXPLORE & LIVE WEATHER COVER CARD
+          // ===================================================================
           ExploreCoverWeatherCard(
             onTap: () {
               Navigator.push(
@@ -191,54 +204,184 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: AppSpace.sm),
-          AppButton(
-            label: 'Open AI Trip Planner & Live Route Engine',
-            icon: Icons.event_note_rounded,
-            fullWidth: true,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const ItineraryScreen()),
+          const SizedBox(height: AppSpace.xl),
+
+          // ===================================================================
+          // ZONE 3: MILLER'S LAW "MOST-LOVED 4" MONOCHROME EXPERIENCE HUB
+          // ===================================================================
+          const SectionHeader(
+            title: 'Most Popular Experiences',
+            subtitle: 'Ranked by what citizens & travelers use most every day',
+          ),
+          const SizedBox(height: AppSpace.md),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth >= 640;
+              final experiences = [
+                _QuickActionData(
+                  badge: '#1 MOST LOVED',
+                  title: 'AI Trip Planner',
+                  subtitle: 'Route, Hotels, SIM & Budget',
+                  icon: Icons.auto_awesome_rounded,
+                  isPrimaryInvert: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ItineraryScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _QuickActionData(
+                  badge: '12 STAYS',
+                  title: 'Find Hotels & Stays',
+                  subtitle: 'Booking.com stays & map pins',
+                  icon: Icons.hotel_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const HotelBookingScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _QuickActionData(
+                  badge: 'LIVE GPS',
+                  title: 'Smart Bus Radar',
+                  subtitle: 'Routes 22 & 48 live ETA',
+                  icon: Icons.directions_bus_filled_rounded,
+                  onTap: () => MainNavigationScreen.switchToTab(context, 2),
+                ),
+                _QuickActionData(
+                  badge: 'FALCON AI',
+                  title: 'Report & Voice SOS',
+                  subtitle: 'Local issues & "Hey Falcon"',
+                  icon: Icons.radar_rounded,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ReportIssueWizardScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ];
+
+              if (isWide) {
+                return Row(
+                  children: [
+                    for (int i = 0; i < experiences.length; i++) ...[
+                      Expanded(
+                        child: _buildExperienceCard(context, experiences[i]),
+                      ),
+                      if (i < experiences.length - 1)
+                        const SizedBox(width: AppSpace.md),
+                    ],
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildExperienceCard(context, experiences[0]),
+                      ),
+                      const SizedBox(width: AppSpace.md),
+                      Expanded(
+                        child: _buildExperienceCard(context, experiences[1]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildExperienceCard(context, experiences[2]),
+                      ),
+                      const SizedBox(width: AppSpace.md),
+                      Expanded(
+                        child: _buildExperienceCard(context, experiences[3]),
+                      ),
+                    ],
+                  ),
+                ],
               );
             },
           ),
           const SizedBox(height: AppSpace.md),
 
-          // 2.5 Live City Sensor & Telemetry Strip
+          // Secondary Fast-Access Monochrome Pill Strip
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: const [
-                StatusChip(
-                  label: '29°C • Coastal Breeze',
-                  kind: StatusChipKind.info,
-                  icon: Icons.wb_cloudy_outlined,
+              children: [
+                _buildQuickPill(
+                  context,
+                  icon: Icons.sim_card_outlined,
+                  label: 'AI SIM Advisor',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const SIMRecommendationScreen(),
+                    ),
+                  ),
                 ),
-                SizedBox(width: AppSpace.sm),
-                StatusChip(
-                  label: 'AQI 32 • Clean Air',
-                  kind: StatusChipKind.resolved,
-                  icon: Icons.air_rounded,
+                const SizedBox(width: AppSpace.sm),
+                _buildQuickPill(
+                  context,
+                  icon: Icons.map_outlined,
+                  label: 'Full Island Map',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const MapScreen()),
+                  ),
                 ),
-                SizedBox(width: AppSpace.sm),
-                StatusChip(
-                  label: 'Falcon AI • Online',
-                  kind: StatusChipKind.inProgress,
-                  icon: Icons.radar_rounded,
+                const SizedBox(width: AppSpace.sm),
+                _buildQuickPill(
+                  context,
+                  icon: Icons.badge_outlined,
+                  label: 'Local Tour Guides',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GuidesScreen()),
+                  ),
                 ),
-                SizedBox(width: AppSpace.sm),
-                StatusChip(
-                  label: 'Grid 94% Active',
-                  kind: StatusChipKind.neutral,
-                  icon: Icons.bolt_rounded,
+                const SizedBox(width: AppSpace.sm),
+                _buildQuickPill(
+                  context,
+                  icon: Icons.bookmarks_outlined,
+                  label: 'Saved Places',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SavedScreen()),
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppSpace.lg),
+          const SizedBox(height: AppSpace.xl),
 
-          // 3. Live City KPI StatTiles (3 columns)
+          // ===================================================================
+          // ZONE 4: PICTURE SUPERIORITY EFFECT — AI INSIGHTS PHOTO CAROUSEL
+          // ===================================================================
+          const AiInsightsSection(),
+          const SizedBox(height: AppSpace.xl),
+
+          // ===================================================================
+          // ZONE 5: PROGRESSIVE DISCLOSURE — MONOCHROME LIVE CITY PULSE
+          // ===================================================================
+          SectionHeader(
+            title: 'Live City Pulse',
+            subtitle: 'Real-time Nintavur civic status at a glance',
+            actionLabel: 'All Reports (${issues.length})',
+            onAction: () => MainNavigationScreen.switchToTab(context, 1),
+          ),
+          const SizedBox(height: AppSpace.md),
           Row(
             children: [
               Expanded(
@@ -246,7 +389,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Open Reports',
                   value: '$openIssuesCount',
                   icon: Icons.report_problem_outlined,
-                  accentColor: AppColors.danger(context),
+                  accentColor: fg,
                   onTap: () => MainNavigationScreen.switchToTab(context, 1),
                 ),
               ),
@@ -256,7 +399,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Buses Live',
                   value: '$busesCount',
                   icon: Icons.directions_bus_outlined,
-                  accentColor: AppColors.primary(context),
+                  accentColor: fg,
                   onTap: () => MainNavigationScreen.switchToTab(context, 2),
                 ),
               ),
@@ -266,7 +409,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Active Alerts',
                   value: '$activeAlertsCount',
                   icon: Icons.shield_outlined,
-                  accentColor: AppColors.warning(context),
+                  accentColor: fg,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -279,293 +422,236 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpace.lg),
+          if (latestIssue != null) ...[
+            const SizedBox(height: AppSpace.md),
+            _buildCleanLatestIssueBanner(context, latestIssue),
+          ],
 
-          // 4. Premium Falcon Shield+ & B2B Monetization Banner
-          const PremiumUpsellBanner(
-            title:
-                'Falcon Shield+ Pro & B2B Map Sponsorships Now Available',
-            subtitle:
-                'Get 24/7 "Hey Falcon" voice SOS guardian, Insurance Claim PDFs (LKR 450), or sponsor your shop on the live city map.',
-            priceBadge: 'PRO & ADD-ONS',
-            ctaLabel: 'Explore Store',
-          ),
+          // ===================================================================
+          // ZONE 6: SOCIAL PROOF — LOCALS BY AI (COMPACT PREVIEW)
+          // ===================================================================
           const SizedBox(height: AppSpace.xl),
+          const InstagramFeedSection(maxPosts: 2, showStoriesRow: true),
 
-          // 5. Quick Civic Actions Grid (2x2)
-          const SectionHeader(
-            title: 'Quick Actions',
-            subtitle:
-                'Report local issues, wake Falcon AI for disasters, or track buses',
-          ),
-          const SizedBox(height: AppSpace.md),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 640;
-              final actions = [
-                _QuickActionData(
-                  title: '1. Local Issues',
-                  subtitle: 'Roads, drainage, streetlights',
-                  icon: Icons.construction_rounded,
-                  color: AppColors.primary(context),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ReportIssueWizardScreen(
-                          initialModeIndex: 0,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _QuickActionData(
-                  title: '2. Falcon AI Disaster',
-                  subtitle: 'Say "Hey Falcon, wake up"',
-                  icon: Icons.radar_rounded,
-                  color: AppColors.danger(context),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ReportIssueWizardScreen(
-                          initialModeIndex: 1,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                _QuickActionData(
-                  title: 'Track Smart Bus',
-                  subtitle: 'Live GPS routes 22 & 48',
-                  icon: Icons.directions_bus_filled_outlined,
-                  color: AppColors.success(context),
-                  onTap: () => MainNavigationScreen.switchToTab(context, 2),
-                ),
-                _QuickActionData(
-                  title: 'Visual SOS Strobe',
-                  subtitle: 'High-visibility rescue beacon',
-                  icon: Icons.sos_rounded,
-                  color: AppColors.warning(context),
-                  onTap: () => EmergencyBeaconModal.show(context),
-                ),
-              ];
-
-              if (isWide) {
-                return Row(
-                  children: [
-                    for (int i = 0; i < actions.length; i++) ...[
-                      Expanded(
-                        child: _buildQuickActionCard(context, actions[i]),
-                      ),
-                      if (i < actions.length - 1)
-                        const SizedBox(width: AppSpace.md),
-                    ],
-                  ],
-                );
-              }
-
-              return Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickActionCard(context, actions[0]),
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: _buildQuickActionCard(context, actions[1]),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickActionCard(context, actions[2]),
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: _buildQuickActionCard(context, actions[3]),
-                      ),
-                    ],
-                  ),
-                ],
-              );
-            },
-          ),
+          // ===================================================================
+          // ZONE 7: EXECUTIVE MONOCHROME PRO STOREFRONT CARD AT FOOTER
+          // ===================================================================
           const SizedBox(height: AppSpace.xl),
-
-          // 6. Nearby Issues Mini-Map (OpenStreetMap tiles)
-          SectionHeader(
-            title: 'Nearby Civic Map',
-            subtitle: 'Live Nintavur community issue pins & active transit',
-            actionLabel: 'Full Map',
-            onAction: () => MainNavigationScreen.switchToTab(context, 1),
-          ),
-          const SizedBox(height: AppSpace.md),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: SizedBox(
-              height: 220,
-              child: Stack(
+          InkWell(
+            onTap: () => PremiumStoreModal.show(context),
+            borderRadius: AppRadius.lgBorder,
+            child: Container(
+              padding: const EdgeInsets.all(AppSpace.lg),
+              decoration: BoxDecoration(
+                color: surfaceMuted,
+                borderRadius: AppRadius.lgBorder,
+                border: Border.all(color: fg.withValues(alpha: 0.45)),
+              ),
+              child: Row(
                 children: [
-                  FlutterMap(
-                    options: const MapOptions(
-                      initialCenter: _nintavurCenter,
-                      initialZoom: 13.8,
-                      interactionOptions: InteractionOptions(
-                        flags: InteractiveFlag.none,
-                      ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: fg,
+                      borderRadius: AppRadius.mdBorder,
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.smartcity.app',
-                      ),
-                      MarkerLayer(
-                        markers: issues.take(10).map((issue) {
-                          final isResolved =
-                              issue.status == IssueStatus.resolved;
-                          final color = isResolved
-                              ? AppColors.success(context)
-                              : AppColors.danger(context);
-                          return Marker(
-                            point: issue.location,
-                            width: 22,
-                            height: 22,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2.5,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
+                    child: Icon(
+                      Icons.workspace_premium_rounded,
+                      color: AppColors.onPrimary(context),
+                      size: 24,
+                    ),
                   ),
-                  Positioned(
-                    right: AppSpace.md,
-                    bottom: AppSpace.md,
-                    child: AppButton(
-                      label: 'Explore Map',
-                      icon: Icons.open_in_full_rounded,
-                      onPressed: () =>
-                          MainNavigationScreen.switchToTab(context, 1),
+                  const SizedBox(width: AppSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          subService.isProOrHigher
+                              ? '${subService.currentPlanName} Active'
+                              : 'Upgrade to Falcon Shield+ Pro',
+                          style: AppTypography.subtitle.copyWith(color: fg),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '24/7 voice SOS guardian, insurance dossiers & priority alerts.',
+                          style: AppTypography.caption.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: AppSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: fg,
+                      borderRadius: AppRadius.pillBorder,
+                    ),
+                    child: Text(
+                      'Open Pro',
+                      style: AppTypography.caption.copyWith(
+                        color: AppColors.onPrimary(context),
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: AppSpace.xl),
-
-          // 7. Latest 3 Community Reports
-          SectionHeader(
-            title: 'Recent Reports',
-            subtitle:
-                'Latest citizen submissions verified by AI Hazard Aggregator',
-            actionLabel: 'View All (${issues.length})',
-            onAction: () => MainNavigationScreen.switchToTab(context, 1),
-          ),
-          const SizedBox(height: AppSpace.md),
-          if (issues.isEmpty)
-            const EmptyState(
-              icon: Icons.check_circle_outline_rounded,
-              title: 'No open community issues',
-              subtitle: 'All reported problems in Nintavur have been resolved.',
-            )
-          else
-            ...issues.take(3).map(
-                  (issue) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpace.md),
-                    child: _buildIssueSummaryCard(context, issue, issueService),
-                  ),
-                ),
-          // 8. AI Insights with Real Destination & Civic Photography
-          const SizedBox(height: AppSpace.xl),
-          const AiInsightsSection(),
-
-          // 9. Instagram-Style Citizen Social Feed (User Posts, Likes, Comments, Stories)
-          const SizedBox(height: AppSpace.xl),
-          const InstagramFeedSection(maxPosts: 3, showStoriesRow: true),
         ],
       ),
     );
   }
 
-  Widget _buildQuickActionCard(BuildContext context, _QuickActionData data) {
-    return AppCard(
+  Widget _buildExperienceCard(BuildContext context, _QuickActionData data) {
+    final fg = AppColors.textPrimary(context);
+    final muted = AppColors.textSecondary(context);
+    final surface = AppColors.surface(context);
+    final surfaceMuted = AppColors.surfaceMuted(context);
+    final outline = AppColors.outline(context);
+    final onPrimary = AppColors.onPrimary(context);
+
+    return InkWell(
       onTap: data.onTap,
-      padding: const EdgeInsets.all(AppSpace.lg),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: data.color.withValues(alpha: 0.12),
-              borderRadius: AppRadius.smBorder,
-            ),
-            child: Icon(data.icon, color: data.color, size: 22),
+      borderRadius: AppRadius.lgBorder,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpace.lg),
+        decoration: BoxDecoration(
+          color: data.isPrimaryInvert ? surfaceMuted : surface,
+          borderRadius: AppRadius.lgBorder,
+          border: Border.all(
+            color: data.isPrimaryInvert ? fg.withValues(alpha: 0.65) : outline,
+            width: data.isPrimaryInvert ? 1.4 : 1.0,
           ),
-          const SizedBox(width: AppSpace.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  data.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.subtitle.copyWith(
-                    color: AppColors.textPrimary(context),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: data.isPrimaryInvert ? fg : surfaceMuted,
+                    borderRadius: AppRadius.smBorder,
+                    border: Border.all(color: outline),
+                  ),
+                  child: Icon(
+                    data.icon,
+                    color: data.isPrimaryInvert ? onPrimary : fg,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  data.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary(context),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.sm,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: data.isPrimaryInvert ? fg : surfaceMuted,
+                    borderRadius: AppRadius.pillBorder,
+                    border: Border.all(color: outline),
+                  ),
+                  child: Text(
+                    data.badge,
+                    style: AppTypography.caption.copyWith(
+                      color: data.isPrimaryInvert ? onPrimary : fg,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpace.md),
+            Text(
+              data.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.subtitle.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              data.subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildIssueSummaryCard(
+  Widget _buildQuickPill(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final fg = AppColors.textPrimary(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: AppRadius.pillBorder,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md,
+          vertical: AppSpace.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface(context),
+          borderRadius: AppRadius.pillBorder,
+          border: Border.all(color: AppColors.outline(context)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: fg),
+            const SizedBox(width: AppSpace.xs),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCleanLatestIssueBanner(
     BuildContext context,
     CommunityIssue issue,
-    CommunityIssueService service,
   ) {
+    final fg = AppColors.textPrimary(context);
+    final muted = AppColors.textSecondary(context);
     return AppCard(
       onTap: () => MainNavigationScreen.switchToTab(context, 1),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppColors.surfaceMuted(context),
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.outline(context)),
             ),
             child: Icon(
               Icons.location_on_outlined,
               size: 20,
-              color: AppColors.primary(context),
+              color: fg,
             ),
           ),
           const SizedBox(width: AppSpace.md),
@@ -576,97 +662,31 @@ class HomeScreen extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      issue.category.toUpperCase(),
+                      'LATEST REPORT • ${issue.category.toUpperCase()}',
                       style: AppTypography.caption.copyWith(
-                        color: AppColors.primary(context),
+                        color: fg,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const Spacer(),
                     Text(
                       _formatDate(issue.createdAt),
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary(context),
-                      ),
+                      style: AppTypography.caption.copyWith(color: muted),
                     ),
                   ],
-                ),
-                const SizedBox(height: AppSpace.xs),
-                Text(
-                  issue.title,
-                  style: AppTypography.subtitle.copyWith(
-                    color: AppColors.textPrimary(context),
-                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  issue.address,
+                  issue.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary(context),
-                  ),
-                ),
-                const SizedBox(height: AppSpace.sm),
-                Wrap(
-                  spacing: AppSpace.sm,
-                  runSpacing: AppSpace.xs,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    StatusChip.fromIssueStatus(issue.status),
-                    if (issue.aiAnalysis != null)
-                      StatusChip(
-                        label: issue.aiAnalysis!.councilTicketId,
-                        kind: StatusChipKind.info,
-                        icon: Icons.confirmation_number_outlined,
-                      ),
-                    PopupMenuButton<IssueStatus>(
-                      tooltip: 'Change issue status',
-                      onSelected: (status) =>
-                          service.updateStatus(issue.id, status),
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
-                          value: IssueStatus.pending,
-                          child: Text('Mark Pending'),
-                        ),
-                        PopupMenuItem(
-                          value: IssueStatus.inProgress,
-                          child: Text('Mark In Progress'),
-                        ),
-                        PopupMenuItem(
-                          value: IssueStatus.resolved,
-                          child: Text('Mark Resolved'),
-                        ),
-                      ],
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpace.xs,
-                          vertical: 2,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Change status',
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textSecondary(context),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_drop_down_rounded,
-                              size: 18,
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  style: AppTypography.subtitle.copyWith(color: fg),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: AppSpace.sm),
+          StatusChip.fromIssueStatus(issue.status),
         ],
       ),
     );
@@ -674,17 +694,19 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _QuickActionData {
+  final String badge;
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color color;
+  final bool isPrimaryInvert;
   final VoidCallback onTap;
 
   const _QuickActionData({
+    required this.badge,
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.color,
+    this.isPrimaryInvert = false,
     required this.onTap,
   });
 }
