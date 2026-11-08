@@ -11,12 +11,15 @@ import '../services/clock_service.dart';
 import '../services/community_issue_service.dart';
 import '../services/currency_service.dart';
 import '../services/notification_service.dart';
+import '../services/subscription_service.dart';
+import '../services/theme_service.dart';
 import '../services/trip_history_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/instagram_feed_section.dart';
+import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'hotel_detail_screen.dart';
 import 'itinerary_screen.dart';
@@ -278,6 +281,9 @@ class _MapScreenState extends State<MapScreen> {
 // ============================================================================
 // MINIMAL BLACK & WHITE PRIMITIVES FOR TOP UTILITY PAGES
 // (Chat, Calendar, World Clock & Notifications)
+// Light Mode: Pure White BG + Black Text + Solid Black Buttons with White Text
+// Dark Mode:  Pure Black BG + White Text + Solid White/Black Monochrome Buttons
+// Zero Extra Color — Clean Minimal & Premium
 // ============================================================================
 class _MinimalMonochromeScaffold extends StatelessWidget {
   final String title;
@@ -292,31 +298,53 @@ class _MinimalMonochromeScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeService>().isDarkMode;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final dividerColor = isDark ? Colors.white24 : Colors.black12;
+
     return Theme(
-      data: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: const ColorScheme.light(
-          primary: Colors.black,
-          onPrimary: Colors.white,
-          surface: Colors.white,
-          onSurface: Colors.black,
-        ),
+      data: (isDark ? ThemeData.dark() : ThemeData.light()).copyWith(
+        scaffoldBackgroundColor: bg,
+        colorScheme: isDark
+            ? const ColorScheme.dark(
+                primary: Colors.white,
+                onPrimary: Colors.black,
+                surface: Colors.black,
+                onSurface: Colors.white,
+              )
+            : const ColorScheme.light(
+                primary: Colors.black,
+                onPrimary: Colors.white,
+                surface: Colors.white,
+                onSurface: Colors.black,
+              ),
       ),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: bg,
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
+          backgroundColor: bg,
+          foregroundColor: fg,
           elevation: 0,
           scrolledUnderElevation: 0,
           title: Text(
             title,
-            style: AppTypography.title.copyWith(color: Colors.black),
+            style: AppTypography.title.copyWith(color: fg),
           ),
-          actions: actions,
+          actions: [
+            IconButton(
+              tooltip: 'Toggle Light / Dark Mode',
+              onPressed: () => context.read<ThemeService>().toggleTheme(),
+              icon: Icon(
+                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                color: fg,
+              ),
+            ),
+            ...?actions,
+          ],
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1),
-            child: Container(height: 1, color: Colors.black12),
+            child: Container(height: 1, color: dividerColor),
           ),
         ),
         body: Center(
@@ -345,6 +373,17 @@ class _MinimalBlackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // In Light Mode: Solid Black button + White text (or White outlined with Black text)
+    // In Dark Mode:  Solid White button + Black text (or Black outlined with White text)
+    final Color fill = outlined
+        ? (isDark ? Colors.black : Colors.white)
+        : (isDark ? Colors.white : Colors.black);
+    final Color textCol = outlined
+        ? (isDark ? Colors.white : Colors.black)
+        : (isDark ? Colors.black : Colors.white);
+    final Color borderCol = isDark ? Colors.white : Colors.black;
+
     return InkWell(
       onTap: onPressed,
       borderRadius: AppRadius.mdBorder,
@@ -354,9 +393,9 @@ class _MinimalBlackButton extends StatelessWidget {
           vertical: AppSpace.md,
         ),
         decoration: BoxDecoration(
-          color: outlined ? Colors.white : Colors.black,
+          color: fill,
           borderRadius: AppRadius.mdBorder,
-          border: Border.all(color: Colors.black, width: 1.2),
+          border: Border.all(color: borderCol, width: 1.2),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -365,19 +404,87 @@ class _MinimalBlackButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 16,
-                color: outlined ? Colors.black : Colors.white,
+                color: textCol,
               ),
               const SizedBox(width: AppSpace.xs),
             ],
             Text(
               label,
               style: AppTypography.caption.copyWith(
-                color: outlined ? Colors.black : Colors.white,
+                color: textCol,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MinimalPremiumStrip extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _MinimalPremiumStrip({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sub = context.watch<SubscriptionService>();
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final border = isDark ? Colors.white24 : Colors.black26;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpace.lg),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: AppRadius.mdBorder,
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: fg,
+              borderRadius: AppRadius.smBorder,
+            ),
+            child: Icon(
+              Icons.workspace_premium_rounded,
+              size: 20,
+              color: bg,
+            ),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.bodyStrong.copyWith(color: fg),
+                ),
+                Text(
+                  '${sub.currentPlanName} • $subtitle',
+                  style: AppTypography.caption.copyWith(color: muted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          _MinimalBlackButton(
+            label: sub.isProOrHigher ? 'Pro Active' : 'Upgrade Pro',
+            onPressed: () => PremiumStoreModal.show(context),
+          ),
+        ],
       ),
     );
   }
@@ -426,21 +533,28 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
     final titleCtrl = TextEditingController();
     final timeCtrl = TextEditingController(text: '09:00 AM');
     final locCtrl = TextEditingController(text: 'Colombo / Nintavur');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: bg,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.lgBorder,
+          side: BorderSide(color: isDark ? Colors.white24 : Colors.black12),
+        ),
         title: Text(
           'Add Schedule Item',
-          style: AppTypography.title.copyWith(color: Colors.black),
+          style: AppTypography.title.copyWith(color: fg),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleCtrl,
-              style: AppTypography.body.copyWith(color: Colors.black),
+              style: AppTypography.body.copyWith(color: fg),
               decoration: const InputDecoration(
                 labelText: 'Activity Title',
                 hintText: 'e.g. Yala Safari Morning Drive',
@@ -449,13 +563,13 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
             const SizedBox(height: AppSpace.md),
             TextField(
               controller: timeCtrl,
-              style: AppTypography.body.copyWith(color: Colors.black),
+              style: AppTypography.body.copyWith(color: fg),
               decoration: const InputDecoration(labelText: 'Time'),
             ),
             const SizedBox(height: AppSpace.md),
             TextField(
               controller: locCtrl,
-              style: AppTypography.body.copyWith(color: Colors.black),
+              style: AppTypography.body.copyWith(color: fg),
               decoration: const InputDecoration(labelText: 'Location'),
             ),
           ],
@@ -489,6 +603,12 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeService>().isDarkMode;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final border = isDark ? Colors.white24 : Colors.black12;
+
     return _MinimalMonochromeScaffold(
       title: 'Calendar',
       actions: [
@@ -505,11 +625,15 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
+          const _MinimalPremiumStrip(
+            title: 'Smart Schedule & Priority SMS Reminders',
+            subtitle: 'Auto-sync flights, trains & municipal inspections',
+          ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: bg,
               borderRadius: AppRadius.lgBorder,
-              border: Border.all(color: Colors.black12),
+              border: Border.all(color: border),
             ),
             child: CalendarDatePicker(
               initialDate: _selectedDate,
@@ -524,11 +648,11 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
             children: [
               Text(
                 'Schedule for ${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                style: AppTypography.title.copyWith(color: Colors.black),
+                style: AppTypography.title.copyWith(color: fg),
               ),
               Text(
                 '${_events.length} items',
-                style: AppTypography.caption.copyWith(color: Colors.black54),
+                style: AppTypography.caption.copyWith(color: muted),
               ),
             ],
           ),
@@ -538,9 +662,9 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
               margin: const EdgeInsets.only(bottom: AppSpace.md),
               padding: const EdgeInsets.all(AppSpace.lg),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: bg,
                 borderRadius: AppRadius.mdBorder,
-                border: Border.all(color: Colors.black12),
+                border: Border.all(color: border),
               ),
               child: Row(
                 children: [
@@ -550,13 +674,13 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
                       vertical: AppSpace.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black,
+                      color: fg,
                       borderRadius: AppRadius.smBorder,
                     ),
                     child: Text(
                       ev['time']!,
                       style: AppTypography.caption.copyWith(
-                        color: Colors.white,
+                        color: bg,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -569,14 +693,14 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
                         Text(
                           ev['title']!,
                           style: AppTypography.subtitle.copyWith(
-                            color: Colors.black,
+                            color: fg,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           ev['location']!,
                           style: AppTypography.caption.copyWith(
-                            color: Colors.black54,
+                            color: muted,
                           ),
                         ),
                       ],
@@ -588,14 +712,14 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: bg,
                       borderRadius: AppRadius.smBorder,
-                      border: Border.all(color: Colors.black26),
+                      border: Border.all(color: border),
                     ),
                     child: Text(
                       ev['type']!,
                       style: AppTypography.caption.copyWith(
-                        color: Colors.black,
+                        color: fg,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -632,6 +756,11 @@ class WorldClockScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final clockService = context.watch<ClockService>();
+    final isDark = context.watch<ThemeService>().isDarkMode;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final border = isDark ? Colors.white24 : Colors.black12;
 
     return _MinimalMonochromeScaffold(
       title: 'World Clock & Timer',
@@ -644,7 +773,7 @@ class WorldClockScreen extends StatelessWidget {
               onPressed: () {
                 showModalBottomSheet(
                   context: context,
-                  backgroundColor: Colors.white,
+                  backgroundColor: bg,
                   builder: (ctx) => ListView(
                     padding: AppSpace.pagePadding,
                     children: ClockEntry.availableZones.map((zone) {
@@ -653,13 +782,13 @@ class WorldClockScreen extends StatelessWidget {
                         title: Text(
                           '${zone.city}, ${zone.country}',
                           style: AppTypography.bodyStrong.copyWith(
-                            color: Colors.black,
+                            color: fg,
                           ),
                         ),
                         subtitle: Text(
                           zone.formattedOffset,
                           style: AppTypography.caption.copyWith(
-                            color: Colors.black54,
+                            color: muted,
                           ),
                         ),
                         trailing: _MinimalBlackButton(
@@ -681,14 +810,18 @@ class WorldClockScreen extends StatelessWidget {
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
+          const _MinimalPremiumStrip(
+            title: 'Multi-Zone Flight & Excursion Sync',
+            subtitle: 'Unlimited global time zones & automated transit alerts',
+          ),
           Text(
             'Time Zones',
-            style: AppTypography.title.copyWith(color: Colors.black),
+            style: AppTypography.title.copyWith(color: fg),
           ),
           const SizedBox(height: 4),
           Text(
             'Live global clocks synchronized with Colombo (UTC+05:30)',
-            style: AppTypography.caption.copyWith(color: Colors.black54),
+            style: AppTypography.caption.copyWith(color: muted),
           ),
           const SizedBox(height: AppSpace.md),
           ...clockService.clocks.asMap().entries.map((entry) {
@@ -698,9 +831,9 @@ class WorldClockScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: AppSpace.md),
               padding: const EdgeInsets.all(AppSpace.lg),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: bg,
                 borderRadius: AppRadius.mdBorder,
-                border: Border.all(color: Colors.black12),
+                border: Border.all(color: border),
               ),
               child: Row(
                 children: [
@@ -713,13 +846,13 @@ class WorldClockScreen extends StatelessWidget {
                         Text(
                           clock.city,
                           style: AppTypography.title.copyWith(
-                            color: Colors.black,
+                            color: fg,
                           ),
                         ),
                         Text(
                           '${clock.country} • ${clock.formattedOffset}',
                           style: AppTypography.caption.copyWith(
-                            color: Colors.black54,
+                            color: muted,
                           ),
                         ),
                       ],
@@ -731,24 +864,24 @@ class WorldClockScreen extends StatelessWidget {
                       vertical: AppSpace.sm,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black,
+                      color: fg,
                       borderRadius: AppRadius.smBorder,
                     ),
                     child: Text(
                       _formatClockTime(clock.currentTime),
                       style: AppTypography.subtitle.copyWith(
                         fontFamily: 'monospace',
-                        color: Colors.white,
+                        color: bg,
                       ),
                     ),
                   ),
                   if (idx > 0) ...[
                     const SizedBox(width: AppSpace.xs),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close_rounded,
                         size: 18,
-                        color: Colors.black,
+                        color: fg,
                       ),
                       onPressed: () => clockService.removeClock(idx),
                     ),
@@ -760,20 +893,20 @@ class WorldClockScreen extends StatelessWidget {
           const SizedBox(height: AppSpace.xl),
           Text(
             'Countdown Timer',
-            style: AppTypography.title.copyWith(color: Colors.black),
+            style: AppTypography.title.copyWith(color: fg),
           ),
           const SizedBox(height: 4),
           Text(
             'Minimal excursion & transit timer',
-            style: AppTypography.caption.copyWith(color: Colors.black54),
+            style: AppTypography.caption.copyWith(color: muted),
           ),
           const SizedBox(height: AppSpace.md),
           Container(
             padding: const EdgeInsets.all(AppSpace.xl),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: bg,
               borderRadius: AppRadius.lgBorder,
-              border: Border.all(color: Colors.black12),
+              border: Border.all(color: border),
             ),
             child: Column(
               children: [
@@ -781,7 +914,7 @@ class WorldClockScreen extends StatelessWidget {
                   _formatDuration(clockService.timerRemaining),
                   style: AppTypography.display.copyWith(
                     fontFamily: 'monospace',
-                    color: Colors.black,
+                    color: fg,
                   ),
                 ),
                 const SizedBox(height: AppSpace.lg),
@@ -935,6 +1068,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
   Widget build(BuildContext context) {
     final activeThread = _threads[_selectedThread];
     final messages = activeThread['messages'] as List<Map<String, dynamic>>;
+    final isDark = context.watch<ThemeService>().isDarkMode;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final border = isDark ? Colors.white24 : Colors.black12;
 
     return _MinimalMonochromeScaffold(
       title: 'Realtime Chat',
@@ -943,6 +1081,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const _MinimalPremiumStrip(
+              title: '24/7 Priority Concierge & Verified Guide Chat',
+              subtitle: 'Instant municipal engineer & local guide line',
+            ),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -965,9 +1107,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
               child: Container(
                 padding: const EdgeInsets.all(AppSpace.lg),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: bg,
                   borderRadius: AppRadius.lgBorder,
-                  border: Border.all(color: Colors.black12),
+                  border: Border.all(color: border),
                 ),
                 child: Column(
                   children: [
@@ -976,15 +1118,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         Container(
                           width: 40,
                           height: 40,
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
+                          decoration: BoxDecoration(
+                            color: fg,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text(
                               (activeThread['name'] as String)[0],
                               style: AppTypography.bodyStrong.copyWith(
-                                color: Colors.white,
+                                color: bg,
                               ),
                             ),
                           ),
@@ -997,13 +1139,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               Text(
                                 activeThread['name'] as String,
                                 style: AppTypography.subtitle.copyWith(
-                                  color: Colors.black,
+                                  color: fg,
                                 ),
                               ),
                               Text(
                                 activeThread['role'] as String,
                                 style: AppTypography.caption.copyWith(
-                                  color: Colors.black54,
+                                  color: muted,
                                 ),
                               ),
                             ],
@@ -1015,13 +1157,13 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black,
+                            color: fg,
                             borderRadius: AppRadius.smBorder,
                           ),
                           child: Text(
                             'ONLINE',
                             style: AppTypography.caption.copyWith(
-                              color: Colors.white,
+                              color: bg,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -1029,7 +1171,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ],
                     ),
                     const SizedBox(height: AppSpace.md),
-                    Container(height: 1, color: Colors.black12),
+                    Container(height: 1, color: border),
                     Expanded(
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(
@@ -1050,14 +1192,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
                               padding: const EdgeInsets.all(AppSpace.md),
                               constraints: const BoxConstraints(maxWidth: 420),
                               decoration: BoxDecoration(
-                                color: isMe ? Colors.black : Colors.white,
+                                color: isMe ? fg : bg,
                                 borderRadius: AppRadius.mdBorder,
-                                border: Border.all(color: Colors.black),
+                                border: Border.all(color: fg),
                               ),
                               child: Text(
                                 m['text'] as String,
                                 style: AppTypography.body.copyWith(
-                                  color: isMe ? Colors.white : Colors.black,
+                                  color: isMe ? bg : fg,
                                 ),
                               ),
                             ),
@@ -1072,30 +1214,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
                             controller: _msgCtrl,
                             onSubmitted: (_) => _sendMessage(),
                             style: AppTypography.body.copyWith(
-                              color: Colors.black,
+                              color: fg,
                             ),
                             decoration: InputDecoration(
                               hintText: 'Write a message...',
                               hintStyle: AppTypography.body.copyWith(
-                                color: Colors.black54,
+                                color: muted,
                               ),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: bg,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: AppSpace.md,
                                 vertical: AppSpace.md,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: AppRadius.mdBorder,
-                                borderSide: const BorderSide(
-                                  color: Colors.black26,
-                                ),
+                                borderSide: BorderSide(color: border),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: AppRadius.mdBorder,
-                                borderSide: const BorderSide(
-                                  color: Colors.black26,
-                                ),
+                                borderSide: BorderSide(color: border),
                               ),
                             ),
                           ),
@@ -1533,13 +1671,19 @@ class GuidesScreen extends StatelessWidget {
 }
 
 // ============================================================================
-// 9. NOTIFICATIONS & SYSTEM INBOX SCREEN (ULTRA-MINIMAL WHITE / BLACK)
+// 9. NOTIFICATIONS & SYSTEM INBOX SCREEN (CLEAN MINIMAL BLACK & WHITE)
 // ============================================================================
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeService>().isDarkMode;
+    final bg = isDark ? Colors.black : Colors.white;
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final border = isDark ? Colors.white24 : Colors.black12;
+
     final notifService = context.watch<NotificationService>();
     final items = notifService.notifications;
 
@@ -1561,7 +1705,7 @@ class NotificationsScreen extends StatelessWidget {
               onPressed: notifService.clearAll,
             ),
           ),
-          const SizedBox(width: AppSpace.md),
+          const SizedBox(width: AppSpace.xs),
         ],
       ],
       body: items.isEmpty
@@ -1575,26 +1719,26 @@ class NotificationsScreen extends StatelessWidget {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: bg,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black26),
+                        border: Border.all(color: fg),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.notifications_none_rounded,
                         size: 30,
-                        color: Colors.black,
+                        color: fg,
                       ),
                     ),
                     const SizedBox(height: AppSpace.lg),
                     Text(
                       'No notifications yet',
-                      style: AppTypography.title.copyWith(color: Colors.black),
+                      style: AppTypography.title.copyWith(color: fg),
                     ),
                     const SizedBox(height: AppSpace.xs),
                     Text(
                       'Your civic alerts, work order updates, and travel reminders will appear here.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.body.copyWith(color: Colors.black54),
+                      style: AppTypography.body.copyWith(color: muted),
                     ),
                     const SizedBox(height: AppSpace.lg),
                     _MinimalBlackButton(
@@ -1615,9 +1759,16 @@ class NotificationsScreen extends StatelessWidget {
             )
           : ListView.builder(
               padding: AppSpace.pagePadding,
-              itemCount: items.length,
+              itemCount: items.length + 1,
               itemBuilder: (context, idx) {
-                final n = items[idx];
+                if (idx == 0) {
+                  return const _MinimalPremiumStrip(
+                    title: 'Priority Civic Alert Stream',
+                    subtitle:
+                        'Instant push alerts for emergency dispatches & Smart Bus ETA.',
+                  );
+                }
+                final n = items[idx - 1];
                 return InkWell(
                   onTap: () => notifService.markRead(n.id),
                   borderRadius: AppRadius.mdBorder,
@@ -1625,10 +1776,10 @@ class NotificationsScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: AppSpace.md),
                     padding: const EdgeInsets.all(AppSpace.lg),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: bg,
                       borderRadius: AppRadius.mdBorder,
                       border: Border.all(
-                        color: n.isRead ? Colors.black12 : Colors.black,
+                        color: n.isRead ? border : fg,
                         width: n.isRead ? 1 : 1.5,
                       ),
                     ),
@@ -1638,16 +1789,16 @@ class NotificationsScreen extends StatelessWidget {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: n.isRead ? Colors.white : Colors.black,
+                            color: n.isRead ? bg : fg,
                             borderRadius: AppRadius.smBorder,
-                            border: Border.all(color: Colors.black),
+                            border: Border.all(color: fg),
                           ),
                           child: Icon(
                             n.type == NotificationType.alert
                                 ? Icons.warning_amber_rounded
                                 : Icons.notifications_outlined,
                             size: 20,
-                            color: n.isRead ? Colors.black : Colors.white,
+                            color: n.isRead ? fg : bg,
                           ),
                         ),
                         const SizedBox(width: AppSpace.md),
@@ -1658,14 +1809,14 @@ class NotificationsScreen extends StatelessWidget {
                               Text(
                                 n.title,
                                 style: AppTypography.subtitle.copyWith(
-                                  color: Colors.black,
+                                  color: fg,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 n.body,
                                 style: AppTypography.body.copyWith(
-                                  color: Colors.black54,
+                                  color: muted,
                                 ),
                               ),
                             ],
@@ -1678,13 +1829,13 @@ class NotificationsScreen extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black,
+                              color: fg,
                               borderRadius: AppRadius.smBorder,
                             ),
                             child: Text(
                               'NEW',
                               style: AppTypography.caption.copyWith(
-                                color: Colors.white,
+                                color: bg,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),

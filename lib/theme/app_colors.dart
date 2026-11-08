@@ -10,17 +10,17 @@ class AppColors {
   static const Color onPrimaryLight = Color(0xFFFFFFFF);
   static const Color onPrimaryDark = Color(0xFF0B1220);
 
-  // Surfaces & Backgrounds
-  static const Color backgroundLight = Color(0xFFF6F8FB);
-  static const Color backgroundDark = Color(0xFF0B0F16);
+  // Surfaces & Backgrounds (Clean Minimal True-Black Dark Mode & Pure White Light Mode)
+  static const Color backgroundLight = Color(0xFFFFFFFF);
+  static const Color backgroundDark = Color(0xFF000000);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF151A23);
-  static const Color surfaceMutedLight = Color(0xFFF1F5F9);
-  static const Color surfaceMutedDark = Color(0xFF1E2634);
+  static const Color surfaceDark = Color(0xFF0A0A0A);
+  static const Color surfaceMutedLight = Color(0xFFF4F4F5);
+  static const Color surfaceMutedDark = Color(0xFF141414);
 
   // Borders & Dividers
-  static const Color outlineLight = Color(0xFFE5E7EB);
-  static const Color outlineDark = Color(0xFF263041);
+  static const Color outlineLight = Color(0xFFE4E4E7);
+  static const Color outlineDark = Color(0xFF27272A);
 
   // Text Hierarchy
   static const Color textPrimaryLight = Color(0xFF0F172A);

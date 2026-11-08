@@ -12,17 +12,25 @@ class AppTopUtilities extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeService>().isDarkMode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final unread = context.watch<NotificationService>().unreadCount;
+
+    final boxBg = isDark ? Colors.black : Colors.white;
+    final boxBorder = isDark ? Colors.white24 : Colors.black12;
+    final iconColor = isDark ? Colors.white : Colors.black;
+    final badgeBg = isDark ? Colors.white : Colors.black;
+    final badgeFg = isDark ? Colors.black : Colors.white;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpace.md),
       child: Row(
         children: [
           _buildUtilityButton(
-            context,
             tooltip: 'Realtime Chat',
             icon: Icons.chat_bubble_outline_rounded,
+            boxBg: boxBg,
+            boxBorder: boxBorder,
+            iconColor: iconColor,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ChatListScreen()),
@@ -30,16 +38,20 @@ class AppTopUtilities extends StatelessWidget {
           ),
           const SizedBox(width: AppSpace.sm),
           _buildUtilityButton(
-            context,
-            tooltip: 'Toggle Theme',
+            tooltip: 'Toggle Light / Dark Mode',
             icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            boxBg: boxBg,
+            boxBorder: boxBorder,
+            iconColor: iconColor,
             onTap: () => context.read<ThemeService>().toggleTheme(),
           ),
           const SizedBox(width: AppSpace.sm),
           _buildUtilityButton(
-            context,
             tooltip: 'Schedule Calendar',
             icon: Icons.calendar_month_outlined,
+            boxBg: boxBg,
+            boxBorder: boxBorder,
+            iconColor: iconColor,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -49,9 +61,11 @@ class AppTopUtilities extends StatelessWidget {
           ),
           const SizedBox(width: AppSpace.sm),
           _buildUtilityButton(
-            context,
             tooltip: 'World Clock & Timer',
             icon: Icons.access_time_outlined,
+            boxBg: boxBg,
+            boxBorder: boxBorder,
+            iconColor: iconColor,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const WorldClockScreen()),
@@ -67,7 +81,12 @@ class AppTopUtilities extends StatelessWidget {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                _buildIconBox(Icons.notifications_outlined),
+                _buildIconBox(
+                  Icons.notifications_outlined,
+                  boxBg: boxBg,
+                  boxBorder: boxBorder,
+                  iconColor: iconColor,
+                ),
                 if (unread > 0)
                   Positioned(
                     top: -4,
@@ -77,14 +96,15 @@ class AppTopUtilities extends StatelessWidget {
                         horizontal: 5,
                         vertical: 1,
                       ),
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
+                      decoration: BoxDecoration(
+                        color: badgeBg,
                         shape: BoxShape.circle,
+                        border: Border.all(color: boxBg, width: 1.5),
                       ),
                       child: Text(
                         unread > 9 ? '9+' : '$unread',
                         style: AppTypography.caption.copyWith(
-                          color: Colors.white,
+                          color: badgeFg,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -98,10 +118,12 @@ class AppTopUtilities extends StatelessWidget {
     );
   }
 
-  Widget _buildUtilityButton(
-    BuildContext context, {
+  Widget _buildUtilityButton({
     required String tooltip,
     required IconData icon,
+    required Color boxBg,
+    required Color boxBorder,
+    required Color iconColor,
     required VoidCallback onTap,
   }) {
     return Tooltip(
@@ -109,24 +131,34 @@ class AppTopUtilities extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: AppRadius.mdBorder,
-        child: _buildIconBox(icon),
+        child: _buildIconBox(
+          icon,
+          boxBg: boxBg,
+          boxBorder: boxBorder,
+          iconColor: iconColor,
+        ),
       ),
     );
   }
 
-  Widget _buildIconBox(IconData icon) {
+  Widget _buildIconBox(
+    IconData icon, {
+    required Color boxBg,
+    required Color boxBorder,
+    required Color iconColor,
+  }) {
     return Container(
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: boxBg,
         borderRadius: AppRadius.mdBorder,
-        border: Border.all(color: Colors.black12),
+        border: Border.all(color: boxBorder),
       ),
       child: Icon(
         icon,
         size: 19,
-        color: Colors.black,
+        color: iconColor,
       ),
     );
   }
