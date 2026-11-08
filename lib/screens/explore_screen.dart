@@ -5,6 +5,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
@@ -203,6 +204,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: _buildProvinceCard(context, prov),
             ),
           ),
+          const SizedBox(height: AppSpace.xl),
+          const InstagramFeedSection(showStoriesRow: true),
         ],
       ),
     );
@@ -555,3 +558,4 @@ class ExploreCoverWeatherCard extends StatelessWidget {
     );
   }
 }
+

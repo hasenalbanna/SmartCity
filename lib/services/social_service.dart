@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -99,41 +100,55 @@ class SocialService extends ChangeNotifier {
       ),
     ]);
 
-    // Seed sample posts
+    // Seed sample posts with 100% reliable local high-res assets (no 404 Unsplash URLs)
     _userPosts.addAll([
       UserPost(
         id: 'post_1',
         placeId: 'city_center',
-        placeName: 'City Center Plaza',
+        placeName: 'Nintavur Smart Transit Plaza',
         userId: 'user_alex',
         userName: 'Alex M.',
-        userAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-        caption: 'The newly upgraded smart transit hub is now fully operational! Very smooth commute today.',
-        photoUrls: [
-          'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=800',
-        ],
+        userAvatar: '',
+        caption:
+            'The newly upgraded smart transit hub and solar street lighting along Main Street are now fully operational! Very smooth commute today. #SmartCity #Nintavur',
+        photoUrls: ['assets/western province/galle-face.jpg'],
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        likedBy: ['local_user_1', 'user_sarah'],
-        commentsCount: 3,
-        latitude: 6.9271,
-        longitude: 79.8612,
+        likedBy: ['local_user_1', 'user_sarah', 'user_david'],
+        commentsCount: 4,
+        latitude: 7.3486,
+        longitude: 81.8494,
       ),
       UserPost(
         id: 'post_2',
         placeId: 'green_park',
-        placeName: 'Eco Central Park',
+        placeName: 'Addappalam Eco Coastal Park',
         userId: 'user_sarah',
         userName: 'Sarah K.',
-        userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-        caption: 'Solar charging stations and high-speed public Wi-Fi working great throughout the park gardens.',
-        photoUrls: [
-          'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800',
-        ],
+        userAvatar: '',
+        caption:
+            'Morning walk by the cleaned coastal embankment! Thanks to the municipal crew for resolving the drainage report in under 4 hours. 🌊🌴 #CleanCoast #CivicPride',
+        photoUrls: ['assets/southern province/mirissa beach.jpg'],
         createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-        likedBy: ['user_alex'],
-        commentsCount: 1,
-        latitude: 6.9319,
-        longitude: 79.8478,
+        likedBy: ['user_alex', 'local_user_1'],
+        commentsCount: 2,
+        latitude: 7.3510,
+        longitude: 81.8560,
+      ),
+      UserPost(
+        id: 'post_3',
+        placeId: 'heritage_hub',
+        placeName: 'Central Cultural & Tech Hub',
+        userId: 'user_david',
+        userName: 'David R.',
+        userAvatar: '',
+        caption:
+            'Testing out the new Falcon AI voice guardian and live bus ETA boards with the community engineering team! 🚀 #FalconAI #SmartTransit',
+        photoUrls: ['assets/central province/sigiriya.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 9)),
+        likedBy: ['user_alex', 'user_sarah'],
+        commentsCount: 5,
+        latitude: 7.3440,
+        longitude: 81.8420,
       ),
     ]);
 
@@ -235,8 +250,9 @@ class SocialService extends ChangeNotifier {
   }
 
   Future<List<String>> uploadPostImages(List<Uint8List> imageBytes) async {
-    // Local image handler (returns placeholder for uploaded images)
-    return imageBytes.map((_) => 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?w=800').toList();
+    return imageBytes
+        .map((bytes) => 'data:image/jpeg;base64,${base64Encode(bytes)}')
+        .toList();
   }
 
   Future<void> addUserPost({

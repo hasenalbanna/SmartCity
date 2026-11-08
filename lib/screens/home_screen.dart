@@ -15,6 +15,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
+import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
@@ -437,6 +438,9 @@ class HomeScreen extends StatelessWidget {
                     child: _buildIssueSummaryCard(context, issue, issueService),
                   ),
                 ),
+          // 8. Instagram-Style Citizen Social Feed (User Posts, Likes, Comments, Stories)
+          const SizedBox(height: AppSpace.xl),
+          const InstagramFeedSection(maxPosts: 3, showStoriesRow: true),
         ],
       ),
     );
