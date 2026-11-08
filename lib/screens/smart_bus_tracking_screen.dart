@@ -9,6 +9,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/premium_store_modal.dart';
+import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 
 class SmartBusTrackingScreen extends StatefulWidget {
@@ -75,6 +76,7 @@ class _SmartBusTrackingScreenState extends State<SmartBusTrackingScreen> {
     }
 
     return AppScaffold(
+      drawer: const SmartCityDrawer(),
       appBar: AppBar(
         title: Row(
           children: [

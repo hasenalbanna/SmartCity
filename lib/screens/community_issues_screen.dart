@@ -14,6 +14,7 @@ import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/falcon_ai_disaster_panel.dart';
 import '../widgets/premium_store_modal.dart';
+import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 import 'report_issue_wizard_screen.dart';
 
@@ -86,6 +87,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     }).toList();
 
     return AppScaffold(
+      drawer: const SmartCityDrawer(),
       floatingActionButton: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -160,6 +162,13 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
       color: AppColors.surface(context),
       child: Row(
         children: [
+          Builder(
+            builder: (scaffoldContext) => IconButton(
+              tooltip: 'Open All Pages Menu',
+              onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
+              icon: const Icon(Icons.menu_rounded),
+            ),
+          ),
           Text(
             'Hello, $userName',
             style: AppTypography.title.copyWith(

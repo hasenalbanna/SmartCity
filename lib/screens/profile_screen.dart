@@ -15,6 +15,7 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/premium_store_modal.dart';
+import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'login_screen.dart';
@@ -188,6 +189,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final progress = (civicPoints / nextTierPoints).clamp(0.0, 1.0);
 
     return AppScaffold(
+      drawer: const SmartCityDrawer(),
       appBar: AppBar(
         title: const Text('Citizen Profile & Civic Hub'),
         actions: [

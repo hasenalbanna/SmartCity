@@ -18,6 +18,7 @@ import '../widgets/ai_insights_section.dart';
 import '../widgets/emergency_beacon_modal.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
+import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'explore_screen.dart';
@@ -62,6 +63,7 @@ class HomeScreen extends StatelessWidget {
               : 'AL');
 
     return AppScaffold(
+      drawer: const SmartCityDrawer(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
@@ -84,10 +86,31 @@ class HomeScreen extends StatelessWidget {
           96,
         ),
         children: [
-          // 1. Header: Greeting + Pro Plan Pill + Theme Toggle
+          // 1. Header: 3-Line Left-Side Toggle Bar Button + Greeting + Pro Plan Pill + Theme Toggle
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Builder(
+                builder: (scaffoldContext) => InkWell(
+                  onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
+                  borderRadius: AppRadius.pillBorder,
+                  child: Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface(context),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.outline(context)),
+                    ),
+                    child: Icon(
+                      Icons.menu_rounded,
+                      size: 22,
+                      color: AppColors.textPrimary(context),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

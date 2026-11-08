@@ -236,5 +236,36 @@ Goal: drive both counts toward zero outside `lib/theme/`.
 - Inspiration: Citizen app, Google Maps transit, GOV.UK design system
 
 ---
-*Written 2026-11-08 for Smart City. No code was changed; this document is the plan. Tell me which phase to start and I will implement it.*
+
+## 12. Complete 24-Page System & UI Architecture Directory (`SmartCityDrawer`)
+
+All **24 system pages and interactive modules** across the application are organized into **6 Architectural Categories** inside the **Left-Side Category Toggle Bar (`lib/widgets/smart_city_drawer.dart`)**, accessible from the **3-line Hamburger Menu Button (`☰`)** on `HomeScreen`, `CommunityIssuesScreen`, `SmartBusTrackingScreen`, `ProfileScreen`, and `MainNavigationScreen`:
+
+| Category | # | Page / Module Name | Source File | Description |
+|----------|---|--------------------|-------------|-------------|
+| **1. Core Civic & SOS** | 1 | **Smart City Home Dashboard** | `lib/screens/home_screen.dart` | Live telemetry, Explore weather cover card, AI Insights & Instagram citizen feed |
+| **1. Core Civic & SOS** | 2 | **Citizen Issue & Disaster Reports** | `lib/screens/community_issues_screen.dart` | 2-Mode Hub: Local Municipal Issues & Falcon AI Voice Guardian |
+| **1. Core Civic & SOS** | 3 | **4-Step Issue Wizard & Falcon SOS** | `lib/screens/report_issue_wizard_screen.dart` | AI Vision hazard intake, GPS pin & `"Hey Falcon, wake up"` voice dispatch |
+| **1. Core Civic & SOS** | 4 | **Civic Alerts & Weather Radar** | `lib/screens/civic_alerts_screen.dart` | 117 DMC monsoon warnings, flood telemetry & council work orders |
+| **1. Core Civic & SOS** | 5 | **System Notifications & Inbox** | `lib/screens/system_feature_screens.dart` | Real-time work order updates & travel reminders (`NotificationsScreen`) |
+| **2. Smart Transit & Map** | 6 | **Smart Bus Live Radar (Routes 22 & 48)** | `lib/screens/smart_bus_tracking_screen.dart` | Real-time bus GPS telemetry, seat occupancy & ETA countdown |
+| **2. Smart Transit & Map** | 7 | **Interactive Island & Smart City Map** | `lib/screens/system_feature_screens.dart` | Full-screen OpenStreetMap with UNESCO heritage & civic issue pins (`MapScreen`) |
+| **2. Smart Transit & Map** | 8 | **Live OSRM Route & Drive Engine** | `lib/screens/itinerary_screen.dart` | Multi-stop road routing, vehicle speed & fuel cost estimator |
+| **3. Ceylon Explorer & AI** | 9 | **Explore Smart Regions & Provinces** | `lib/screens/explore_screen.dart` | Weather cover card, Must-See landmarks & 9 Sri Lanka provinces |
+| **3. Ceylon Explorer & AI** | 10 | **Ceylon Explorer — AI Trip Planner** | `lib/screens/itinerary_screen.dart` | Unified 4-in-1 Route Engine, Hotels, SIM Advisor & Expense Splitter |
+| **3. Ceylon Explorer & AI** | 11 | **AI Travel Itinerary Generator** | `lib/screens/ai_travel_planner_screen.dart` | Custom day-by-day Sri Lanka itinerary by USD budget & interests |
+| **3. Ceylon Explorer & AI** | 12 | **Find Your Perfect Stay (Hotels)** | `lib/screens/hotel_booking_screen.dart` | Booking.com-style hotel explorer, interactive map & `HotelDetailScreen` |
+| **3. Ceylon Explorer & AI** | 13 | **AI SIM Card & Coverage Advisor** | `lib/screens/sim_recommendation_screen.dart` | Dialog, Mobitel, Airtel & Hutch tourist eSIM/5G coverage matcher |
+| **3. Ceylon Explorer & AI** | 14 | **Certified Local Tour Guides** | `lib/screens/system_feature_screens.dart` | Verified cultural, wildlife safari, surfing & hiking specialists (`GuidesScreen`) |
+| **4. Social, Chat & Logs** | 15 | **Locals by AI — Instagram Feed** | `lib/screens/system_feature_screens.dart` | Full-screen citizen stories, photo uploads, likes & comments (`CommunityFeedScreen`) |
+| **4. Social, Chat & Logs** | 16 | **Realtime Citizen & Guide Chat** | `lib/screens/system_feature_screens.dart` | Direct messaging with municipal dispatch & verified guides (`ChatListScreen`) |
+| **4. Social, Chat & Logs** | 17 | **Trip Journal & Field Memories** | `lib/screens/system_feature_screens.dart` | Personal travel diary, route photos & distance archive (`TripJournalScreen`) |
+| **4. Social, Chat & Logs** | 18 | **Saved Trips, Places & Stays** | `lib/screens/system_feature_screens.dart` | Bookmarked routes, heritage landmarks & luxury stays (`SavedScreen`) |
+| **5. Time & Schedule** | 19 | **Travel & Civic Schedule Calendar** | `lib/screens/system_feature_screens.dart` | 7-day timeline for excursions, trains & ward inspections (`ScheduleCalendarScreen`) |
+| **5. Time & Schedule** | 20 | **World Clock & Travel Timer** | `lib/screens/system_feature_screens.dart` | Colombo (UTC+5:30) multi-zone clock & excursion timer (`WorldClockScreen`) |
+| **6. Account & Control** | 21 | **Citizen Profile & Civic Hub** | `lib/screens/profile_screen.dart` | Digital Citizen ID, Smart Transit Pass wallet & civic evidence vault |
+| **6. Account & Control** | 22 | **Settings & Smart City Control Center** | `lib/screens/settings_screen.dart` | 2-column 11-Language grid, 6-Currency converter, Theme & Falcon AI calibration |
+| **6. Account & Control** | 23 | **Smart City Pro & Revenue Storefront** | `lib/widgets/premium_store_modal.dart` | Falcon Shield+ Pro, Insurance Claim PDFs & Sponsored Map Pins |
+| **6. Account & Control** | 24 | **Emergency SOS Beacon & Hotlines** | `lib/widgets/emergency_beacon_modal.dart` | 1990 Suwa Seriya, 117 DMC & instant GPS distress beacon |
+
 

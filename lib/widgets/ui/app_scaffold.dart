@@ -5,6 +5,7 @@ class AppScaffold extends StatelessWidget {
   final PreferredSizeWidget? appBar;
   final Widget body;
   final Widget? floatingActionButton;
+  final Widget? drawer;
   final double maxWidth;
   final bool safeArea;
 
@@ -13,6 +14,7 @@ class AppScaffold extends StatelessWidget {
     this.appBar,
     required this.body,
     this.floatingActionButton,
+    this.drawer,
     this.maxWidth = 1100,
     this.safeArea = true,
   });
@@ -33,6 +35,7 @@ class AppScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background(context),
       appBar: appBar,
+      drawer: drawer,
       body: content,
       floatingActionButton: floatingActionButton,
     );

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
 import '../services/community_issue_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/smart_city_drawer.dart';
 import 'community_issues_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
@@ -63,12 +64,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final isExtended = width >= 1024;
       return Scaffold(
         backgroundColor: AppColors.background(context),
+        drawer: const SmartCityDrawer(),
         body: Row(
           children: [
             NavigationRail(
               extended: isExtended,
               selectedIndex: _currentIndex,
               onDestinationSelected: setTab,
+              leading: Builder(
+                builder: (scaffoldContext) => IconButton(
+                  tooltip: 'All 24 System Pages (Category Menu)',
+                  onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
+                  icon: const Icon(Icons.menu_rounded),
+                ),
+              ),
               labelType: isExtended
                   ? NavigationRailLabelType.none
                   : NavigationRailLabelType.all,
