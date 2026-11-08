@@ -28,6 +28,8 @@ import 'world_clock_screen.dart';
 import 'hotel_booking_screen.dart';
 import 'ai_travel_planner_screen.dart';
 import 'settings_screen.dart';
+import 'community_issues_screen.dart';
+import 'smart_bus_tracking_screen.dart';
 import 'drive_setup_screen.dart' as drive_setup_screen;
 
 class HomeScreen extends StatelessWidget {
@@ -489,6 +491,32 @@ class HomeScreen extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
+                              _buildQuickActionButton(
+                                context,
+                                Icons.report_problem_outlined,
+                                'Citizen Reports',
+                                const Color(0xFFEF4444), // Vibrant Red
+                                () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const CommunityIssuesScreen(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _buildQuickActionButton(
+                                context,
+                                Icons.directions_bus_filled_outlined,
+                                'Smart Buses',
+                                const Color(0xFF2563EB), // Vibrant Blue
+                                () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SmartBusTrackingScreen(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
                               _buildQuickActionButton(
                                 context,
                                 Icons.auto_awesome,
@@ -1000,6 +1028,18 @@ class HomeScreen extends StatelessWidget {
               leading: const Icon(Icons.home_outlined),
               title: const Text('Home'),
               onTap: () => Navigator.pop(context),
+            ),
+            _drawerItem(
+              context,
+              Icons.report_problem_outlined,
+              'Citizen Issue Reports',
+              const CommunityIssuesScreen(),
+            ),
+            _drawerItem(
+              context,
+              Icons.directions_bus_outlined,
+              'Smart Bus Tracking',
+              const SmartBusTrackingScreen(),
             ),
             _drawerItem(
               context,

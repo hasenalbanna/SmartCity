@@ -14,6 +14,8 @@ import 'services/notification_service.dart';
 import 'services/weather_service.dart';
 import 'services/trip_history_service.dart';
 import 'services/currency_service.dart';
+import 'services/community_issue_service.dart';
+import 'services/smart_bus_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,6 +69,8 @@ class SmartCityApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WeatherService()),
         ChangeNotifierProvider(create: (_) => TripHistoryService()),
         ChangeNotifierProvider(create: (_) => CurrencyService()),
+        ChangeNotifierProvider(create: (_) => CommunityIssueService()),
+        ChangeNotifierProvider(create: (_) => SmartBusService()),
       ],
       child: Consumer2<LocalizationService, ThemeService>(
         builder: (context, localization, themeService, child) {
