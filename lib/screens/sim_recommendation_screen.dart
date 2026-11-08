@@ -531,3 +531,4 @@ class _SimRecommendationViewState extends State<SimRecommendationView> {
     );
   }
 }
+

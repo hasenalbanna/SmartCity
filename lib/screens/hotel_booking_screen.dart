@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/hotel.dart';
-import '../services/hotel_booking_service.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../data/hotels_data.dart' as booking_data;
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/ui/ui.dart';
+import 'hotel_detail_screen.dart';
 
 class HotelBookingScreen extends StatelessWidget {
   final String? nearPlace;
@@ -24,87 +26,160 @@ class HotelBookingScreen extends StatelessWidget {
   }
 }
 
-/// Reusable Hotel Finder & Booking view that can be displayed standalone or
-/// embedded directly inside [ItineraryScreen].
+/// Booking.com-style Hotel Explorer & Reservation View embedded inside
+/// [ItineraryScreen] and [HotelListScreen].
 class HotelBookingView extends StatefulWidget {
   final String? nearPlace;
+  final LatLng? initialLocationCenter;
 
-  const HotelBookingView({super.key, this.nearPlace});
+  const HotelBookingView({
+    super.key,
+    this.nearPlace,
+    this.initialLocationCenter,
+  });
 
   @override
   State<HotelBookingView> createState() => _HotelBookingViewState();
 }
 
 class _HotelBookingViewState extends State<HotelBookingView> {
-  final HotelBookingService _service = HotelBookingService();
+  final MapController _mapController = MapController();
 
-  String _selectedLocation = 'All';
+  String _selectedCity = 'All';
+  String _selectedFilter = 'All';
+  bool _showMap = true;
   RangeValues _priceRange = const RangeValues(0, 500);
-  List<Hotel> _hotels = [];
+  booking_data.Hotel? _selectedMapHotel;
 
-  static const List<String> _locations = [
+  static const List<String> _cities = [
     'All',
     'Sigiriya',
     'Kandy',
     'Galle',
     'Ella',
     'Mirissa',
-    'Yala',
+    'Colombo',
+    'Nuwara Eliya',
+    'Arugam Bay',
+    'Trincomalee',
+    'Negombo',
+  ];
+
+  static const List<String> _tierFilters = [
+    'All',
+    'Top Rated',
+    'Budget',
+    'Luxury',
   ];
 
   @override
   void initState() {
     super.initState();
     if (widget.nearPlace != null) {
-      _selectedLocation = widget.nearPlace!;
+      final matched = _cities.firstWhere(
+        (c) =>
+            c.toLowerCase() == widget.nearPlace!.toLowerCase() ||
+            widget.nearPlace!.toLowerCase().contains(c.toLowerCase()),
+        orElse: () => 'All',
+      );
+      _selectedCity = matched;
     }
-    _filterHotels();
   }
 
-  void _filterHotels() {
-    List<Hotel> results;
-    if (_selectedLocation != 'All') {
-      results = _service.getHotelsNearPlace(_selectedLocation);
+  int _estimatedPriceUsd(booking_data.Hotel hotel) {
+    final dollarCount =
+        hotel.priceRange.runes.where((r) => r == 36).length; // '$'
+    final ratingBonus = ((hotel.rating - 8.0) * 35).round().clamp(0, 120);
+    switch (dollarCount) {
+      case 1:
+        return 45 + (ratingBonus ~/ 2);
+      case 2:
+        return 95 + ratingBonus;
+      case 3:
+        return 185 + ratingBonus;
+      default:
+        return 250 + ratingBonus;
+    }
+  }
+
+  String _tierBadgeLabel(booking_data.Hotel hotel) {
+    final dollarCount = hotel.priceRange.runes.where((r) => r == 36).length;
+    if (dollarCount >= 3) return 'luxury';
+    if (dollarCount == 2) return 'mid-range';
+    return 'budget';
+  }
+
+  List<booking_data.Hotel> get _filteredHotels {
+    List<booking_data.Hotel> list;
+    if (_selectedCity == 'All') {
+      list = booking_data.allHotels;
     } else {
-      results = _service.getAllHotels();
+      list = booking_data.getHotelsForCity(_selectedCity);
+      if (list.isEmpty) {
+        list = booking_data.allHotels;
+      }
     }
 
-    results = results
-        .where(
-          (h) =>
-              h.pricePerNight >= _priceRange.start &&
-              h.pricePerNight <= _priceRange.end,
-        )
-        .toList();
+    if (_selectedFilter == 'Top Rated') {
+      list = list.where((h) => h.rating >= 9.0).toList();
+    } else if (_selectedFilter == 'Budget') {
+      list = list
+          .where((h) => h.priceRange == '\$' || h.priceRange == '\$\$')
+          .toList();
+    } else if (_selectedFilter == 'Luxury') {
+      list = list.where((h) => h.priceRange.contains('\$\$\$')).toList();
+    }
 
-    setState(() => _hotels = results);
+    list = list.where((h) {
+      final price = _estimatedPriceUsd(h);
+      return price >= _priceRange.start && price <= _priceRange.end;
+    }).toList();
+
+    return list;
   }
 
-  String _localFallbackAsset(String location) {
-    final loc = location.toLowerCase();
-    if (loc.contains('sigiriya')) return 'assets/images/sigiriya.jpg';
-    if (loc.contains('kandy')) {
+  LatLng get _mapCenter {
+    if (_selectedMapHotel != null) return _selectedMapHotel!.location;
+    if (widget.initialLocationCenter != null) {
+      return widget.initialLocationCenter!;
+    }
+    final list = _filteredHotels;
+    if (list.isNotEmpty) return list.first.location;
+    return const LatLng(7.8731, 80.7718);
+  }
+
+  String _localFallbackAsset(String city) {
+    final c = city.toLowerCase();
+    if (c.contains('sigiriya')) return 'assets/images/sigiriya.jpg';
+    if (c.contains('kandy')) {
       return 'assets/central province/temple of tooth.jpg';
     }
-    if (loc.contains('galle')) return 'assets/southern province/galle fort.jpg';
-    if (loc.contains('ella')) return 'assets/images/nine_arch_bridge.jpg';
-    if (loc.contains('mirissa')) {
+    if (c.contains('galle')) return 'assets/southern province/galle fort.jpg';
+    if (c.contains('ella')) return 'assets/images/nine_arch_bridge.jpg';
+    if (c.contains('mirissa')) {
       return 'assets/southern province/mirissa beach.jpg';
     }
-    if (loc.contains('yala')) return 'assets/images/yala_leopard.jpg';
+    if (c.contains('arugam') || c.contains('trinco')) {
+      return 'assets/eastern province/arugam bay.jpg';
+    }
+    if (c.contains('nuwara')) {
+      return 'assets/central province/nuwara eliya tea country.jpg';
+    }
     return 'assets/western province/galle-face.jpg';
   }
 
   @override
   Widget build(BuildContext context) {
+    final hotels = _filteredHotels;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Hero Header
+        // 1. Hero Header Banner ("Find Your Perfect Stay" + Booking.com Verified Badge)
         ClipRRect(
           borderRadius: AppRadius.lgBorder,
           child: SizedBox(
-            height: 118,
+            height: 128,
             width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
@@ -119,7 +194,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.black.withValues(alpha: 0.72),
+                        Colors.black.withValues(alpha: 0.78),
                         Colors.black.withValues(alpha: 0.45),
                       ],
                     ),
@@ -127,22 +202,39 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpace.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Row(
                     children: [
-                      Text(
-                        'Find Your Perfect Stay',
-                        style: AppTypography.display.copyWith(
-                          color: Colors.white,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const StatusChip(
+                              label: 'BOOKING.COM PARTNER',
+                              kind: StatusChipKind.info,
+                              icon: Icons.verified_rounded,
+                            ),
+                            const SizedBox(height: AppSpace.xs),
+                            Text(
+                              'Find Your Perfect Stay',
+                              style: AppTypography.display.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              '${hotels.length} hotels & resorts available across Sri Lanka',
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_hotels.length} curated hotels & eco-resorts available',
-                        style: AppTypography.body.copyWith(
-                          color: Colors.white70,
-                        ),
+                      AppButton(
+                        label: _showMap ? 'Hide Map' : 'Show Map',
+                        icon: Icons.map_outlined,
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => setState(() => _showMap = !_showMap),
                       ),
                     ],
                   ),
@@ -151,23 +243,44 @@ class _HotelBookingViewState extends State<HotelBookingView> {
             ),
           ),
         ),
-        const SizedBox(height: AppSpace.lg),
+        const SizedBox(height: AppSpace.md),
 
-        // Location Filter Pills
+        // 2. City Pills Row (All, Sigiriya, Kandy, Galle, Ella, Mirissa, etc.)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: _locations.map((location) {
-              final isSelected = _selectedLocation == location;
+            children: _cities.map((city) {
+              final isSelected = _selectedCity == city;
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpace.sm),
                 child: ChoiceChip(
                   selected: isSelected,
-                  label: Text(location),
+                  label: Text(city),
                   onSelected: (_) {
-                    setState(() => _selectedLocation = location);
-                    _filterHotels();
+                    setState(() {
+                      _selectedCity = city;
+                      _selectedMapHotel = null;
+                    });
                   },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: AppSpace.sm),
+
+        // 3. Booking.com Style Filter Row (All, Top Rated, Budget, Luxury)
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: _tierFilters.map((filter) {
+              final isSelected = _selectedFilter == filter;
+              return Padding(
+                padding: const EdgeInsets.only(right: AppSpace.sm),
+                child: FilterChip(
+                  selected: isSelected,
+                  label: Text(filter),
+                  onSelected: (_) => setState(() => _selectedFilter = filter),
                 ),
               );
             }).toList(),
@@ -175,7 +288,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
         ),
         const SizedBox(height: AppSpace.md),
 
-        // Price Range Slider Card
+        // 4. Price Range Slider Card ($0 - $500)
         AppCard(
           padding: const EdgeInsets.all(AppSpace.lg),
           child: Column(
@@ -207,66 +320,213 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                 divisions: 50,
                 activeColor: AppColors.primary(context),
                 onChanged: (values) => setState(() => _priceRange = values),
-                onChangeEnd: (_) => _filterHotels(),
               ),
             ],
           ),
         ),
-        const SizedBox(height: AppSpace.lg),
+        const SizedBox(height: AppSpace.md),
 
-        if (_hotels.isEmpty)
+        // 5. Booking.com Interactive Map with Live Hotel Pins
+        if (_showMap && hotels.isNotEmpty) ...[
+          ClipRRect(
+            borderRadius: AppRadius.lgBorder,
+            child: SizedBox(
+              height: 220,
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _mapCenter,
+                      initialZoom: _selectedCity == 'All' ? 7.4 : 12.5,
+                      onTap: (_, __) =>
+                          setState(() => _selectedMapHotel = null),
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.smartcity.app',
+                      ),
+                      MarkerLayer(
+                        markers: hotels.map((hotel) {
+                          final isSelected = _selectedMapHotel?.id == hotel.id;
+                          return Marker(
+                            point: hotel.location,
+                            width: isSelected ? 92 : 56,
+                            height: 36,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedMapHotel = hotel);
+                                _mapController.move(hotel.location, 13.5);
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.xs,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? AppColors.warning(context)
+                                      : AppColors.primary(context),
+                                  borderRadius: AppRadius.pillBorder,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Text(
+                                  '★ ${hotel.rating}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.caption.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                  if (_selectedMapHotel != null)
+                    Positioned(
+                      left: AppSpace.md,
+                      right: AppSpace.md,
+                      bottom: AppSpace.md,
+                      child: AppCard(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  HotelDetailScreen(hotel: _selectedMapHotel!),
+                            ),
+                          );
+                        },
+                        padding: const EdgeInsets.all(AppSpace.sm),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: AppRadius.smBorder,
+                              child: _buildHotelPhoto(
+                                _selectedMapHotel!,
+                                width: 56,
+                                height: 56,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _selectedMapHotel!.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.subtitle.copyWith(
+                                      color: AppColors.textPrimary(context),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_selectedMapHotel!.rating} ${_selectedMapHotel!.ratingText} • ${_selectedMapHotel!.city}',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.primary(context),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right_rounded),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpace.lg),
+        ],
+
+        // 6. Hotel Cards List (Booking.com Rating Score + Amenities + Show Prices / Book Now)
+        if (hotels.isEmpty)
           const EmptyState(
             icon: Icons.hotel_outlined,
-            title: 'No hotels match your filter',
+            title: 'No properties match your filter',
             subtitle: 'Try widening the price range or selecting All cities.',
           )
         else
-          ..._hotels.map(
+          ...hotels.map(
             (hotel) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpace.lg),
-              child: _buildHotelCard(context, hotel),
+              child: _buildBookingComHotelCard(context, hotel),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildHotelImage(Hotel hotel, {double height = 175}) {
-    final fallbackAsset = _localFallbackAsset(hotel.location);
+  Widget _buildHotelPhoto(
+    booking_data.Hotel hotel, {
+    double width = double.infinity,
+    double height = 175,
+  }) {
+    final fallbackAsset = _localFallbackAsset(hotel.city);
     return Image.network(
       hotel.imageUrl,
+      width: width,
       height: height,
-      width: double.infinity,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Image.asset(
         fallbackAsset,
+        width: width,
         height: height,
-        width: double.infinity,
         fit: BoxFit.cover,
       ),
     );
   }
 
-  Widget _buildHotelCard(BuildContext context, Hotel hotel) {
+  Widget _buildBookingComHotelCard(
+    BuildContext context,
+    booking_data.Hotel hotel,
+  ) {
+    final priceUsd = _estimatedPriceUsd(hotel);
+    final tierBadge = _tierBadgeLabel(hotel);
+
     return AppCard(
-      onTap: () => _showHotelDetails(context, hotel),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HotelDetailScreen(hotel: hotel),
+          ),
+        );
+      },
       padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top Hero Photo with Category Pill & Booking.com Score Badge
           Stack(
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(AppRadius.lg),
                 ),
-                child: _buildHotelImage(hotel, height: 175),
+                child: _buildHotelPhoto(hotel, height: 175),
               ),
               Positioned(
                 top: AppSpace.md,
                 left: AppSpace.md,
                 child: StatusChip(
-                  label: hotel.category,
+                  label: tierBadge,
                   kind: StatusChipKind.info,
                 ),
               ),
@@ -279,7 +539,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.72),
+                    color: Colors.black.withValues(alpha: 0.78),
                     borderRadius: AppRadius.smBorder,
                   ),
                   child: Row(
@@ -292,7 +552,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        hotel.rating.toStringAsFixed(1),
+                        '${hotel.rating.toStringAsFixed(1)} • ${hotel.ratingText}',
                         style: AppTypography.caption.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
@@ -304,6 +564,8 @@ class _HotelBookingViewState extends State<HotelBookingView> {
               ),
             ],
           ),
+
+          // Card Body: Name, Distance from center, Review Count, Amenities, Price & CTAs
           Padding(
             padding: const EdgeInsets.all(AppSpace.lg),
             child: Column(
@@ -325,10 +587,14 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                       color: AppColors.textSecondary(context),
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      hotel.location,
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.textSecondary(context),
+                    Expanded(
+                      child: Text(
+                        '${hotel.city} • ${hotel.distanceFromCenter} km from center • ${hotel.reviewCount} reviews',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondary(context),
+                        ),
                       ),
                     ),
                   ],
@@ -365,23 +631,41 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '\$${hotel.pricePerNight.round()}',
+                          '\$$priceUsd',
                           style: AppTypography.display.copyWith(
                             color: AppColors.primary(context),
                           ),
                         ),
                         Text(
-                          'per night',
+                          'per night • ${hotel.priceRange}',
                           style: AppTypography.caption.copyWith(
                             color: AppColors.textSecondary(context),
                           ),
                         ),
                       ],
                     ),
-                    AppButton(
-                      label: 'Book Now',
-                      icon: Icons.bolt_rounded,
-                      onPressed: () => _showBookingSheet(context, hotel),
+                    Row(
+                      children: [
+                        AppButton(
+                          label: 'Show Prices',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => HotelDetailScreen(hotel: hotel),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        AppButton(
+                          label: 'Book Now',
+                          icon: Icons.bolt_rounded,
+                          onPressed: () =>
+                              _showBookingSheet(context, hotel, priceUsd),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -393,95 +677,11 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     );
   }
 
-  void _showHotelDetails(BuildContext context, Hotel hotel) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-      ),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.72,
-        maxChildSize: 0.94,
-        minChildSize: 0.5,
-        builder: (_, scrollController) => ListView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(AppSpace.xl),
-          children: [
-            ClipRRect(
-              borderRadius: AppRadius.lgBorder,
-              child: _buildHotelImage(hotel, height: 210),
-            ),
-            const SizedBox(height: AppSpace.md),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    hotel.name,
-                    style: AppTypography.display.copyWith(
-                      color: AppColors.textPrimary(ctx),
-                    ),
-                  ),
-                ),
-                StatusChip(
-                  label: '${hotel.rating} ★',
-                  kind: StatusChipKind.resolved,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpace.xs),
-            Text(
-              '${hotel.location} • Near ${hotel.nearbyPlace}',
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textSecondary(ctx),
-              ),
-            ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              hotel.description,
-              style: AppTypography.body.copyWith(
-                color: AppColors.textSecondary(ctx),
-              ),
-            ),
-            const SizedBox(height: AppSpace.lg),
-            Text(
-              'Amenities',
-              style: AppTypography.title.copyWith(
-                color: AppColors.textPrimary(ctx),
-              ),
-            ),
-            const SizedBox(height: AppSpace.sm),
-            Wrap(
-              spacing: AppSpace.sm,
-              runSpacing: AppSpace.sm,
-              children: hotel.amenities
-                  .map(
-                    (a) => StatusChip(
-                      label: a,
-                      kind: StatusChipKind.info,
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: AppSpace.xl),
-            AppButton(
-              label: 'Book Stay (\$${hotel.pricePerNight.round()}/night)',
-              icon: Icons.hotel_rounded,
-              fullWidth: true,
-              onPressed: () {
-                Navigator.pop(ctx);
-                _showBookingSheet(context, hotel);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showBookingSheet(BuildContext context, Hotel hotel) {
+  void _showBookingSheet(
+    BuildContext context,
+    booking_data.Hotel hotel,
+    int priceUsd,
+  ) {
     DateTime checkIn = DateTime.now().add(const Duration(days: 1));
     DateTime checkOut = DateTime.now().add(const Duration(days: 3));
     int guests = 2;
@@ -498,7 +698,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
             final nights = checkOut.difference(checkIn).inDays.clamp(1, 30);
-            final total = hotel.pricePerNight * nights * rooms;
+            final total = priceUsd * nights * rooms;
 
             return Padding(
               padding: EdgeInsets.only(
@@ -519,7 +719,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                   ),
                   const SizedBox(height: AppSpace.xs),
                   Text(
-                    '${hotel.location} • \$${hotel.pricePerNight.round()} per night',
+                    '${hotel.city} • ${hotel.rating} ${hotel.ratingText} • \$$priceUsd per night',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textSecondary(ctx),
                     ),
@@ -614,7 +814,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                           ),
                         ),
                         Text(
-                          'Total: \$${total.round()}',
+                          'Total: \$$total',
                           style: AppTypography.title.copyWith(
                             color: AppColors.primary(ctx),
                             fontWeight: FontWeight.w900,
@@ -625,7 +825,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                   ),
                   const SizedBox(height: AppSpace.lg),
                   AppButton(
-                    label: 'Confirm Booking (\$${total.round()})',
+                    label: 'Confirm Booking (\$$total)',
                     icon: Icons.check_circle_outline_rounded,
                     fullWidth: true,
                     onPressed: () {
@@ -652,22 +852,22 @@ class _HotelBookingViewState extends State<HotelBookingView> {
 
   void _confirmBooking(
     BuildContext context,
-    Hotel hotel,
+    booking_data.Hotel hotel,
     DateTime checkIn,
     DateTime checkOut,
     int guests,
     int rooms,
-    double total,
+    int total,
   ) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Booking Confirmed!'),
         content: Text(
-          '${hotel.name} (${hotel.location})\n'
+          '${hotel.name} (${hotel.city})\n'
           '${checkIn.day}/${checkIn.month}/${checkIn.year} – ${checkOut.day}/${checkOut.month}/${checkOut.year}\n'
           '$guests Guests • $rooms Room(s)\n'
-          'Total Paid: \$${total.round()}',
+          'Total Paid: \$$total',
         ),
         actions: [
           AppButton(

@@ -22,6 +22,7 @@ import '../theme/app_typography.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'hotel_booking_screen.dart';
+import 'hotel_list_screen.dart';
 import 'sim_recommendation_screen.dart';
 
 class ItineraryScreen extends StatefulWidget {
@@ -1578,6 +1579,24 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: AppSpace.lg),
+            AppButton(
+              label: 'Explore Nearby Hotels (Booking.com Style)',
+              icon: Icons.hotel_rounded,
+              fullWidth: true,
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HotelListScreen(
+                      cityName: place.name,
+                      cityLocation: _placeCoordinates[place.name],
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),
