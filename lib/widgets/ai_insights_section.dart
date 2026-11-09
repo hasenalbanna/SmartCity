@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -83,8 +85,62 @@ class AiInsightsSection extends StatelessWidget {
     ),
   ];
 
+  static const List<AiInsightItem> usInsights = [
+    AiInsightItem(
+      category: 'Best Time to Visit',
+      location: 'Central Park & Midtown',
+      recommendation: '7:30 AM - Beat the morning rush',
+      detailedForecast:
+          'Falcon AI pedestrian sensors indicate 68% lower foot traffic across Central Park Promenade before 8:30 AM. Clear sky conditions and mild morning breeze.',
+      imagePath: 'assets/cover.png',
+      icon: Icons.access_time_filled_rounded,
+      confidenceBadge: '98% AI Match',
+    ),
+    AiInsightItem(
+      category: 'Weather Alert',
+      location: 'New York Metro Area',
+      recommendation: 'Clear skies • Moderate 21°C',
+      detailedForecast:
+          'Hudson River coastal telemetry confirms calm winds (12 km/h) and optimal visibility across Brooklyn Bridge and Manhattan transit corridors.',
+      imagePath: 'assets/cover.png',
+      icon: Icons.wb_sunny_rounded,
+      confidenceBadge: 'Live Radar',
+    ),
+    AiInsightItem(
+      category: 'Transit Update',
+      location: 'Manhattan & Queens Line',
+      recommendation: 'Express shuttles on schedule',
+      detailedForecast:
+          'Subway and city bus telemetry reporting 99.4% on-time performance across Atlantic Ave and Grand Central terminals.',
+      imagePath: 'assets/cover.png',
+      icon: Icons.directions_bus_rounded,
+      confidenceBadge: 'Smart Transit',
+    ),
+    AiInsightItem(
+      category: 'Civic Priority',
+      location: 'Brooklyn Civic Corridor',
+      recommendation: 'Zero active flood alerts',
+      detailedForecast:
+          'Drainage pumps and municipal storm sensors operating normally across Kings County municipal district.',
+      imagePath: 'assets/cover.png',
+      icon: Icons.check_circle_rounded,
+      confidenceBadge: '99% Clear',
+    ),
+  ];
+
+  static List<AiInsightItem> getInsights(String country) {
+    final c = country.toLowerCase();
+    if (c.contains('united states') || c.contains('america') || c.contains('usa') || c == 'us') {
+      return usInsights;
+    }
+    return insights;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final activeList = getInsights(auth.userCountry);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -92,17 +148,17 @@ class AiInsightsSection extends StatelessWidget {
           title: 'AI Insights',
           subtitle: 'Real-time Falcon AI crowd, weather & cultural intelligence',
           actionLabel: 'See All',
-          onAction: () => _showAllInsightsModal(context),
+          onAction: () => _showAllInsightsModal(context, activeList),
         ),
         const SizedBox(height: AppSpace.md),
         SizedBox(
           height: 196,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: insights.length,
+            itemCount: activeList.length,
             separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
             itemBuilder: (context, index) {
-              final item = insights[index];
+              final item = activeList[index];
               return _AiInsightPhotoCard(
                 item: item,
                 onTap: () => _showInsightDetailModal(context, item),
@@ -229,7 +285,7 @@ class AiInsightsSection extends StatelessWidget {
     );
   }
 
-  void _showAllInsightsModal(BuildContext context) {
+  void _showAllInsightsModal(BuildContext context, List<AiInsightItem> list) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -270,7 +326,7 @@ class AiInsightsSection extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppSpace.md),
-                ...insights.map(
+                ...list.map(
                   (item) => Padding(
                     padding: const EdgeInsets.only(bottom: AppSpace.md),
                     child: SizedBox(

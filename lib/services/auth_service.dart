@@ -34,6 +34,9 @@ class AuthService extends ChangeNotifier {
   // Application pepper for additional defense-in-depth
   static const String _pepper = 'SmartCity_App_Pepper_#9vK2!z8';
 
+  String _activeCountry = 'United States';
+  String _activeCity = 'New York';
+
   AuthService() {
     _loadUserFromPrefs();
   }
@@ -41,10 +44,38 @@ class AuthService extends ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
   String? get lastError => _lastError;
-  String get userCountry => _currentUser?.country ?? 'Sri Lanka';
-  String get userCity => _currentUser?.city ?? 'Nintavur';
+  String get userCountry => _currentUser?.country ?? _activeCountry;
+  String get userCity => _currentUser?.city ?? _activeCity;
+
+  Future<void> loginAsGuest({
+    required String country,
+    required String city,
+    String? username,
+  }) async {
+    _activeCountry = country;
+    _activeCity = city;
+    final prefs = await SharedPreferences.getInstance();
+    final uid = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+    final uname = username?.trim().isNotEmpty == true ? username!.trim() : 'Guest Citizen';
+
+    await prefs.setString('local_user_id', uid);
+    await prefs.setString('local_username', uname);
+    await prefs.setString('local_user_country', country);
+    await prefs.setString('local_user_city', city);
+
+    _currentUser = User(
+      id: uid,
+      username: uname,
+      createdAt: DateTime.now(),
+      country: country,
+      city: city,
+    );
+    notifyListeners();
+  }
 
   Future<void> updateRegion(String country, String city) async {
+    _activeCountry = country;
+    _activeCity = city;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('local_user_country', country);
     await prefs.setString('local_user_city', city);
@@ -56,25 +87,39 @@ class AuthService extends ChangeNotifier {
         country: country,
         city: city,
       );
-      notifyListeners();
+    } else {
+      _currentUser = User(
+        id: 'guest_${DateTime.now().millisecondsSinceEpoch}',
+        username: 'Guest Citizen',
+        createdAt: DateTime.now(),
+        country: country,
+        city: city,
+      );
     }
+    notifyListeners();
   }
 
   Future<void> _loadUserFromPrefs() async {
     if (_initialized) return;
     try {
       final prefs = await SharedPreferences.getInstance();
+      final savedCountry = prefs.getString('local_user_country');
+      final savedCity = prefs.getString('local_user_city');
+      if (savedCountry != null && savedCountry.isNotEmpty) {
+        _activeCountry = savedCountry;
+      }
+      if (savedCity != null && savedCity.isNotEmpty) {
+        _activeCity = savedCity;
+      }
       final savedId = prefs.getString('local_user_id');
       final savedName = prefs.getString('local_username');
-      final savedCountry = prefs.getString('local_user_country') ?? 'Sri Lanka';
-      final savedCity = prefs.getString('local_user_city') ?? 'Nintavur';
       if (savedId != null && savedName != null) {
         _currentUser = User(
           id: savedId,
           username: savedName,
           createdAt: DateTime.now(),
-          country: savedCountry,
-          city: savedCity,
+          country: _activeCountry,
+          city: _activeCity,
         );
         notifyListeners();
       }

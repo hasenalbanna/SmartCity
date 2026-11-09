@@ -33,13 +33,28 @@ class _LoginScreenState extends State<LoginScreen> {
     return clean.length >= 3 && clean.length <= 30 && RegExp(r'^[a-z0-9_.]+$').hasMatch(clean);
   }
 
-  String _selectedCountry = 'Sri Lanka';
-  String _selectedCity = 'Nintavur';
+  String _selectedCountry = 'United States';
+  String _selectedCity = 'New York';
 
   bool _isRegisterMode = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final auth = context.read<AuthService>();
+        setState(() {
+          _selectedCountry = auth.userCountry;
+          _selectedCity = auth.userCity;
+          _customAreaController.text = auth.userCity;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -129,20 +144,34 @@ class _LoginScreenState extends State<LoginScreen> {
         ? _customAreaController.text.trim()
         : _selectedCity;
 
-    await auth.updateRegion(_selectedCountry, area);
-    profile.updateProfile(
-      displayName: 'Guest Citizen',
-      bio: 'Exploring Smart City Worldwide',
-      location: '$area, $_selectedCountry',
-    );
-    final country = GlobalRegions.findCountry(_selectedCountry);
-    social.syncCurrentUser(
-      uid: 'guest_${DateTime.now().millisecondsSinceEpoch}',
-      username: 'guest_citizen',
-      displayName: 'Guest Citizen',
-      country: _selectedCountry,
+    final resolvedCountry = GlobalRegions.findCountry(_selectedCountry);
+    final guestHandle = _usernameController.text.trim().isNotEmpty
+        ? _cleanHandle(_usernameController.text)
+        : 'guest_citizen';
+    final guestName = _usernameController.text.trim().isNotEmpty
+        ? _usernameController.text.trim()
+        : 'Guest Citizen';
+
+    await auth.loginAsGuest(
+      country: resolvedCountry.name,
       city: area,
-      countryFlag: country.flag,
+      username: guestName,
+    );
+
+    profile.updateProfile(
+      displayName: guestName,
+      bio: 'Exploring Smart City Worldwide',
+      location: '$area, ${resolvedCountry.name}',
+    );
+
+    social.syncCurrentUser(
+      uid: auth.currentUser?.id ??
+          'guest_${DateTime.now().millisecondsSinceEpoch}',
+      username: guestHandle,
+      displayName: guestName,
+      country: resolvedCountry.name,
+      city: area,
+      countryFlag: resolvedCountry.flag,
     );
 
     if (!mounted) return;

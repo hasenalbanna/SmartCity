@@ -19,6 +19,7 @@ class CountryRegion {
   final double maxLng;
   final List<CityLocation> cities;
   final List<LatLng> boundary;
+  final List<String> aliases;
 
   const CountryRegion({
     required this.code,
@@ -32,6 +33,7 @@ class CountryRegion {
     required this.maxLng,
     required this.cities,
     required this.boundary,
+    this.aliases = const [],
   });
 
   bool containsCoordinates(LatLng point) {
@@ -84,6 +86,7 @@ class GlobalRegions {
       code: 'GB',
       name: 'United Kingdom',
       flag: '🇬🇧',
+      aliases: ['uk', 'great britain', 'britain', 'england', 'scotland', 'wales', 'u.k.'],
       center: LatLng(51.5074, -0.1278),
       defaultZoom: 13.0,
       minLat: 49.80,
@@ -113,6 +116,16 @@ class GlobalRegions {
       code: 'US',
       name: 'United States',
       flag: '🇺🇸',
+      aliases: [
+        'america',
+        'usa',
+        'united states of america',
+        'u.s.',
+        'u.s.a.',
+        'us',
+        'the states',
+        'american',
+      ],
       center: LatLng(40.7128, -74.0060),
       defaultZoom: 12.8,
       minLat: 24.50,
@@ -337,11 +350,15 @@ class GlobalRegions {
 
   static CountryRegion findCountry(String query) {
     final q = query.trim().toLowerCase();
+    if (q.isEmpty) return defaultCountry;
     return countries.firstWhere(
       (c) =>
           c.name.toLowerCase() == q ||
           c.code.toLowerCase() == q ||
-          c.name.toLowerCase().contains(q),
+          c.aliases.any((a) => a.toLowerCase() == q || q == a.toLowerCase()) ||
+          c.name.toLowerCase().contains(q) ||
+          q.contains(c.name.toLowerCase()) ||
+          c.aliases.any((a) => q.contains(a.toLowerCase()) || a.toLowerCase().contains(q)),
       orElse: () => defaultCountry,
     );
   }

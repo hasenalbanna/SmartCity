@@ -32,6 +32,27 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
   String _selectedFilter = 'All';
   bool _isGlobalScope = false; // false = My Country/City, true = Worldwide
   final Set<String> _expandedAiCards = {};
+  String? _lastLoadedCountry;
+  String? _lastLoadedCity;
+
+  void _checkAndMoveMap(
+    LatLng coords,
+    double zoom,
+    String country,
+    String city,
+  ) {
+    if (_lastLoadedCountry != country || _lastLoadedCity != city) {
+      _lastLoadedCountry = country;
+      _lastLoadedCity = city;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isGlobalScope) {
+          try {
+            _mapController.move(coords, zoom);
+          } catch (_) {}
+        }
+      });
+    }
+  }
 
   static const List<String> _filters = [
     'All',
@@ -202,6 +223,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     final userCity = auth.userCity;
     final countryRegion = GlobalRegions.findCountry(userCountry);
     final userCoords = GlobalRegions.resolveLocation(userCountry, userCity);
+    _checkAndMoveMap(userCoords, countryRegion.defaultZoom, userCountry, userCity);
 
     final userName = auth.currentUser?.username.isNotEmpty == true
         ? auth.currentUser!.username
