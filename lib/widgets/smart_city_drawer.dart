@@ -348,11 +348,11 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
     final fg = isDark ? Colors.white : Colors.black;
     final muted = isDark ? Colors.white70 : Colors.black54;
     final glassBorder = isDark
-        ? Colors.white.withValues(alpha: 0.16)
-        : Colors.black.withValues(alpha: 0.12);
+        ? Colors.white.withValues(alpha: 0.12)
+        : Colors.black.withValues(alpha: 0.08);
     final glassTileFill = isDark
-        ? Colors.white.withValues(alpha: 0.07)
-        : Colors.black.withValues(alpha: 0.04);
+        ? Colors.white.withValues(alpha: 0.035)
+        : Colors.black.withValues(alpha: 0.025);
 
     final userName = profile.displayName.isNotEmpty
         ? profile.displayName
@@ -387,7 +387,7 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
           right: Radius.circular(28),
         ),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -395,19 +395,24 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        Colors.black.withValues(alpha: 0.58),
-                        Colors.black.withValues(alpha: 0.76),
+                        Colors.white.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.20),
                       ]
                     : [
-                        Colors.white.withValues(alpha: 0.72),
-                        Colors.white.withValues(alpha: 0.88),
+                        Colors.white.withValues(alpha: 0.35),
+                        Colors.white.withValues(alpha: 0.55),
                       ],
               ),
               borderRadius: const BorderRadius.horizontal(
                 right: Radius.circular(28),
               ),
               border: Border(
-                right: BorderSide(color: glassBorder, width: 1.2),
+                right: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : Colors.black.withValues(alpha: 0.08),
+                  width: 1.0,
+                ),
               ),
             ),
             child: SafeArea(
@@ -428,14 +433,17 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                           width: 38,
                           height: 38,
                           decoration: BoxDecoration(
-                            color: fg,
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.12)
+                                : Colors.black.withValues(alpha: 0.08),
                             shape: BoxShape.circle,
+                            border: Border.all(color: glassBorder),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             avatarLetter,
                             style: AppTypography.subtitle.copyWith(
-                              color: isDark ? Colors.black : Colors.white,
+                              color: fg,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -522,14 +530,21 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                                 vertical: AppSpace.sm,
                               ),
                               decoration: BoxDecoration(
-                                color: fg,
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.14)
+                                    : Colors.black.withValues(alpha: 0.10),
                                 borderRadius: AppRadius.mdBorder,
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.24)
+                                      : Colors.black.withValues(alpha: 0.15),
+                                ),
                               ),
                               alignment: Alignment.center,
                               child: Text(
                                 'Pro Store',
                                 style: AppTypography.caption.copyWith(
-                                  color: isDark ? Colors.black : Colors.white,
+                                  color: fg,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -620,12 +635,16 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
               decoration: BoxDecoration(
                 color: isExpanded
                     ? (isDark
-                        ? Colors.white.withValues(alpha: 0.14)
-                        : Colors.black.withValues(alpha: 0.08))
+                        ? Colors.white.withValues(alpha: 0.09)
+                        : Colors.black.withValues(alpha: 0.05))
                     : glassTileFill,
                 borderRadius: AppRadius.mdBorder,
                 border: Border.all(
-                  color: isExpanded ? fg.withValues(alpha: 0.45) : glassBorder,
+                  color: isExpanded
+                      ? (isDark
+                          ? Colors.white.withValues(alpha: 0.28)
+                          : Colors.black.withValues(alpha: 0.15))
+                      : glassBorder,
                 ),
               ),
               child: Row(
@@ -634,16 +653,20 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                     width: 34,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: isExpanded ? fg : glassTileFill,
+                      color: isExpanded
+                          ? (isDark
+                              ? Colors.white.withValues(alpha: 0.20)
+                              : Colors.black.withValues(alpha: 0.12))
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.03)),
                       borderRadius: AppRadius.smBorder,
                       border: Border.all(color: glassBorder),
                     ),
                     child: Icon(
                       meta.icon,
                       size: 17,
-                      color: isExpanded
-                          ? (isDark ? Colors.black : Colors.white)
-                          : fg,
+                      color: fg,
                     ),
                   ),
                   const SizedBox(width: AppSpace.sm),
@@ -697,9 +720,15 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                           vertical: AppSpace.sm,
                         ),
                         decoration: BoxDecoration(
-                          color: glassTileFill,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.03)
+                              : Colors.black.withValues(alpha: 0.02),
                           borderRadius: AppRadius.smBorder,
-                          border: Border.all(color: glassBorder),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.05),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -723,13 +752,15 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: fg,
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.20)
+                                      : Colors.black.withValues(alpha: 0.12),
                                   borderRadius: AppRadius.pillBorder,
                                 ),
                                 child: Text(
                                   item.badge!,
                                   style: AppTypography.caption.copyWith(
-                                    color: isDark ? Colors.black : Colors.white,
+                                    color: fg,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),

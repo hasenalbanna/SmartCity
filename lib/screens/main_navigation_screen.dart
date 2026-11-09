@@ -64,6 +64,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       final isExtended = width >= 1024;
       return Scaffold(
         backgroundColor: AppColors.background(context),
+        drawerScrimColor: Colors.black.withValues(alpha: 0.20),
         drawer: const SmartCityDrawer(),
         body: Row(
           children: [

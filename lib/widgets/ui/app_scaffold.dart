@@ -34,6 +34,7 @@ class AppScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
+      drawerScrimColor: Colors.black.withValues(alpha: 0.20),
       appBar: appBar,
       drawer: drawer,
       body: DecoratedBox(
