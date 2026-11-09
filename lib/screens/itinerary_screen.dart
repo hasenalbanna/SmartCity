@@ -18,10 +18,12 @@ import '../services/auth_service.dart';
 import '../services/currency_service.dart';
 import '../services/global_destination_service.dart';
 import '../services/localization_service.dart';
+import '../services/subscription_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
+import '../widgets/feature_unlock_modal.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'hotel_booking_screen.dart';
@@ -1649,6 +1651,15 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   }
 
   Future<void> _generatePlan() async {
+    final sub = Provider.of<SubscriptionService>(context, listen: false);
+    if (_stayDays > 2 && !sub.canAccessFeature(PremiumFeature.unlimitedAiItineraries)) {
+      final unlocked = await FeatureUnlockModal.show(
+        context,
+        feature: PremiumFeature.unlimitedAiItineraries,
+      );
+      if (!unlocked || !mounted) return;
+    }
+
     final prefs =
         _airportProvincePriority[_selectedAirportCode] ?? const <String>[];
     final dailyBudget = _budgetUsd / _stayDays;
@@ -2073,6 +2084,15 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   }
 
   Future<void> _exportAsPdf() async {
+    final sub = Provider.of<SubscriptionService>(context, listen: false);
+    if (!sub.canAccessFeature(PremiumFeature.unlimitedAiItineraries)) {
+      final unlocked = await FeatureUnlockModal.show(
+        context,
+        feature: PremiumFeature.unlimitedAiItineraries,
+      );
+      if (!unlocked || !mounted) return;
+    }
+
     final doc = pw.Document();
     final text = _tripPlanText();
     if (text.isEmpty) return;

@@ -14,6 +14,7 @@ import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/emergency_beacon_modal.dart';
+import '../widgets/feature_unlock_modal.dart';
 import '../widgets/premium_store_modal.dart';
 import '../widgets/ui/ui.dart';
 import 'login_screen.dart';
@@ -1168,7 +1169,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 value: _wakeWordEnabled,
-                onChanged: (v) => setState(() => _wakeWordEnabled = v),
+                onChanged: (v) async {
+                  if (v) {
+                    final sub = context.read<SubscriptionService>();
+                    if (!sub.canAccessFeature(PremiumFeature.falconVoiceGuardian)) {
+                      final unlocked = await FeatureUnlockModal.show(
+                        context,
+                        feature: PremiumFeature.falconVoiceGuardian,
+                      );
+                      if (!unlocked || !mounted) return;
+                    }
+                  }
+                  setState(() => _wakeWordEnabled = v);
+                },
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,

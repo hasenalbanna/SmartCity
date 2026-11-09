@@ -9,11 +9,13 @@ import '../models/community_issue.dart';
 import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
 import '../services/geocoding_service.dart';
+import '../services/subscription_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import '../widgets/falcon_ai_disaster_panel.dart';
+import '../widgets/feature_unlock_modal.dart';
 import '../widgets/ui/ui.dart';
 
 class ReportCategory {
@@ -307,6 +309,32 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
           ],
         ),
         actions: [
+          AppButton(
+            label: '📑 Certified Insurer Claim PDF Dossier',
+            variant: AppButtonVariant.secondary,
+            icon: Icons.description_outlined,
+            onPressed: () async {
+              final sub = context.read<SubscriptionService>();
+              if (!sub.canAccessFeature(PremiumFeature.certifiedInsuranceDossier)) {
+                final unlocked = await FeatureUnlockModal.show(
+                  context,
+                  feature: PremiumFeature.certifiedInsuranceDossier,
+                );
+                if (!unlocked || !mounted) return;
+              }
+              sub.consumeInsuranceDossier();
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Generated Certified Claim Dossier #${ai?.councilTicketId ?? "CW-2026-NIN-001"} with SHA-256 Stamp!',
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: AppSpace.xs),
           AppButton(
             label: 'Done',
             onPressed: () {
