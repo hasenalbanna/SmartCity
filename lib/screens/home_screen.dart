@@ -99,9 +99,15 @@ class HomeScreen extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: surface,
+                          color: AppColors.isDark(context)
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
                           borderRadius: AppRadius.mdBorder,
-                          border: Border.all(color: outline),
+                          border: Border.all(
+                            color: AppColors.isDark(context)
+                                ? Colors.white.withValues(alpha: 0.15)
+                                : Colors.black.withValues(alpha: 0.1),
+                          ),
                         ),
                         child: Icon(
                           Icons.menu_rounded,
@@ -287,7 +293,10 @@ class HomeScreen extends StatelessWidget {
                   title: isCompact ? 'Smart Bus' : 'Smart Bus Radar',
                   subtitle: isCompact ? 'Live ETA' : 'Routes 22 & 48 live ETA',
                   icon: Icons.directions_bus_filled_rounded,
-                  onTap: () => MainNavigationScreen.switchToTab(context, 2),
+                  onTap: () => MainNavigationScreen.switchToTab(
+                    context,
+                    MainNavigationScreen.tabSmartBus,
+                  ),
                 ),
                 _QuickActionData(
                   badge: isCompact ? 'SOS AI' : 'FALCON AI',
@@ -388,7 +397,10 @@ class HomeScreen extends StatelessWidget {
             title: 'Live City Pulse',
             subtitle: 'Real-time national & global smart city status at a glance',
             actionLabel: 'All Reports (${issues.length})',
-            onAction: () => MainNavigationScreen.switchToTab(context, 1),
+            onAction: () => MainNavigationScreen.switchToTab(
+              context,
+              MainNavigationScreen.tabReports,
+            ),
           ),
           const SizedBox(height: AppSpace.md),
           Row(
@@ -399,7 +411,10 @@ class HomeScreen extends StatelessWidget {
                   value: '$openIssuesCount',
                   icon: Icons.report_problem_outlined,
                   accentColor: fg,
-                  onTap: () => MainNavigationScreen.switchToTab(context, 1),
+                  onTap: () => MainNavigationScreen.switchToTab(
+                    context,
+                    MainNavigationScreen.tabReports,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpace.md),
@@ -409,7 +424,10 @@ class HomeScreen extends StatelessWidget {
                   value: '$busesCount',
                   icon: Icons.directions_bus_outlined,
                   accentColor: fg,
-                  onTap: () => MainNavigationScreen.switchToTab(context, 2),
+                  onTap: () => MainNavigationScreen.switchToTab(
+                    context,
+                    MainNavigationScreen.tabSmartBus,
+                  ),
                 ),
               ),
               const SizedBox(width: AppSpace.md),
@@ -437,10 +455,14 @@ class HomeScreen extends StatelessWidget {
           ],
 
           // ===================================================================
-          // ZONE 6: SOCIAL PROOF — LOCALS BY AI (COMPACT PREVIEW)
+          // ZONE 6: CITIZEN COMMUNITY TRAVEL GRID (MAP PATHS & STORIES)
           // ===================================================================
           const SizedBox(height: AppSpace.xl),
-          const InstagramFeedSection(maxPosts: 2, showStoriesRow: true),
+          const InstagramFeedSection(
+            maxPosts: 4,
+            showStoriesRow: true,
+            preferGrid: true,
+          ),
 
           // ===================================================================
           // ZONE 7: EXECUTIVE MONOCHROME PRO STOREFRONT CARD AT FOOTER
@@ -712,7 +734,10 @@ class HomeScreen extends StatelessWidget {
     final fg = AppColors.textPrimary(context);
     final muted = AppColors.textSecondary(context);
     return AppCard(
-      onTap: () => MainNavigationScreen.switchToTab(context, 1),
+      onTap: () => MainNavigationScreen.switchToTab(
+        context,
+        MainNavigationScreen.tabReports,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpace.md,
         vertical: AppSpace.sm,
@@ -739,26 +764,14 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'LATEST REPORT • ${issue.category.toUpperCase()}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(
-                          color: fg,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '• ${_formatDate(issue.createdAt)}',
-                      maxLines: 1,
-                      style: AppTypography.caption.copyWith(color: muted),
-                    ),
-                  ],
+                Text(
+                  'LATEST REPORT • ${issue.category.toUpperCase()} • ${_formatDate(issue.createdAt)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    color: muted,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(

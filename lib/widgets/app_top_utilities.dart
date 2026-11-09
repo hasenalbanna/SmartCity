@@ -19,9 +19,10 @@ class AppTopUtilities extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final unread = context.watch<NotificationService>().unreadCount;
-    final isCompact = MediaQuery.sizeOf(context).width < 430;
-    final gap = isCompact ? 4.0 : AppSpace.sm;
-    final boxSize = isCompact ? 34.0 : 42.0;
+    final screenW = MediaQuery.sizeOf(context).width;
+    final isCompact = screenW < 440;
+    final gap = screenW < 370 ? 3.0 : (isCompact ? 4.0 : AppSpace.sm);
+    final boxSize = screenW < 370 ? 30.0 : (isCompact ? 34.0 : 40.0);
 
     final boxBg = isDark ? Colors.black : Colors.white;
     final boxBorder = isDark ? Colors.white24 : Colors.black12;
@@ -31,9 +32,9 @@ class AppTopUtilities extends StatelessWidget {
 
     return Padding(
       padding: padding,
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerRight,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

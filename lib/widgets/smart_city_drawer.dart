@@ -188,10 +188,15 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
       // 3. Social, Chat & Saved (4 Pages)
       _DrawerPageItem(
         id: 'social_feed',
-        title: 'Locals by AI Feed',
+        title: 'Global Citizen Community Hub',
         category: '3. Social, Chat & Saved',
-        icon: Icons.photo_camera_back_rounded,
-        onNavigate: (ctx) => _pushScreen(ctx, const CommunityFeedScreen()),
+        icon: Icons.people_alt_rounded,
+        badge: 'TAB 2',
+        onNavigate: (ctx) => _switchOrPush(
+          ctx,
+          MainNavigationScreen.tabCommunity,
+          null,
+        ),
       ),
       _DrawerPageItem(
         id: 'realtime_chat',
@@ -222,8 +227,11 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
         category: '4. Civic Reports & SOS',
         icon: Icons.report_problem_rounded,
         badge: pendingIssues > 0 ? '$pendingIssues' : null,
-        onNavigate: (ctx) =>
-            _switchOrPush(ctx, 1, const CommunityIssuesScreen()),
+        onNavigate: (ctx) => _switchOrPush(
+          ctx,
+          MainNavigationScreen.tabReports,
+          const CommunityIssuesScreen(),
+        ),
       ),
       _DrawerPageItem(
         id: 'report_wizard',
@@ -281,14 +289,22 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
         title: 'Smart City Home',
         category: '6. Profile & Settings',
         icon: Icons.home_rounded,
-        onNavigate: (ctx) => _switchOrPush(ctx, 0, null),
+        onNavigate: (ctx) => _switchOrPush(
+          ctx,
+          MainNavigationScreen.tabHome,
+          null,
+        ),
       ),
       _DrawerPageItem(
         id: 'profile',
         title: 'Citizen Profile & ID',
         category: '6. Profile & Settings',
         icon: Icons.person_rounded,
-        onNavigate: (ctx) => _switchOrPush(ctx, 3, const ProfileScreen()),
+        onNavigate: (ctx) => _switchOrPush(
+          ctx,
+          MainNavigationScreen.tabProfile,
+          const ProfileScreen(),
+        ),
       ),
       _DrawerPageItem(
         id: 'settings',
@@ -378,16 +394,16 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
     }
 
     return Drawer(
-      width: 262,
+      width: 250,
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       child: ClipRRect(
         borderRadius: const BorderRadius.horizontal(
-          right: Radius.circular(28),
+          right: Radius.circular(26),
         ),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -395,22 +411,22 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
                 end: Alignment.bottomRight,
                 colors: isDark
                     ? [
-                        Colors.white.withValues(alpha: 0.05),
-                        Colors.black.withValues(alpha: 0.20),
+                        Colors.black.withValues(alpha: 0.50),
+                        Colors.black.withValues(alpha: 0.70),
                       ]
                     : [
-                        Colors.white.withValues(alpha: 0.35),
-                        Colors.white.withValues(alpha: 0.55),
+                        Colors.white.withValues(alpha: 0.65),
+                        Colors.white.withValues(alpha: 0.82),
                       ],
               ),
               borderRadius: const BorderRadius.horizontal(
-                right: Radius.circular(28),
+                right: Radius.circular(26),
               ),
               border: Border(
                 right: BorderSide(
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : Colors.black.withValues(alpha: 0.08),
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : Colors.black.withValues(alpha: 0.10),
                   width: 1.0,
                 ),
               ),

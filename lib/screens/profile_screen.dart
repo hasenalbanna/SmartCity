@@ -381,14 +381,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   value: '$totalReports',
                   icon: Icons.assignment_outlined,
                   accentColor: AppColors.primary(context),
-                  onTap: () => MainNavigationScreen.switchToTab(context, 1),
+                  onTap: () => MainNavigationScreen.switchToTab(
+                    context,
+                    MainNavigationScreen.tabReports,
+                  ),
                 ),
                 StatTile(
                   label: 'Resolved',
                   value: '$resolvedReports',
                   icon: Icons.check_circle_outline_rounded,
                   accentColor: AppColors.success(context),
-                  onTap: () => MainNavigationScreen.switchToTab(context, 1),
+                  onTap: () => MainNavigationScreen.switchToTab(
+                    context,
+                    MainNavigationScreen.tabReports,
+                  ),
                 ),
                 StatTile(
                   label: 'AI Verified',
@@ -537,7 +543,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       onPressed: () {
                         busService.selectRoute(route.id);
-                        MainNavigationScreen.switchToTab(context, 2);
+                        MainNavigationScreen.switchToTab(
+                          context,
+                          MainNavigationScreen.tabSmartBus,
+                        );
                       },
                     );
                   }).toList(),
@@ -566,7 +575,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 (issue) => Padding(
                   padding: const EdgeInsets.only(bottom: AppSpace.md),
                   child: AppCard(
-                    onTap: () => MainNavigationScreen.switchToTab(context, 1),
+                    onTap: () => MainNavigationScreen.switchToTab(
+                      context,
+                      MainNavigationScreen.tabReports,
+                    ),
                     child: Row(
                       children: [
                         Expanded(

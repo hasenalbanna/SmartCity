@@ -71,13 +71,40 @@ class SocialService extends ChangeNotifier {
   }
 
   void _seedInitialData() {
-    // Seed sample travelers
+    // Seed global & local registered citizens and travelers
     _travelers.addAll([
+      const TravelerProfile(
+        uid: 'user_albanna',
+        username: 'albanna',
+        displayName: 'AL Banna',
+        avatarUrl: '',
+        bio: 'Senior Civic Steward & Global Smart City Lead Contributor',
+        country: 'Sri Lanka',
+        city: 'Nintavur',
+        countryFlag: '🇱🇰',
+        followersCount: 512,
+        placesTraveledCount: 14,
+        routesSharedCount: 6,
+        isVerified: true,
+        recentRoute: 'Colombo Lotus Tower ➔ Galle Face ➔ Nintavur Hub',
+        locationSharingEnabled: true,
+        latitude: 7.3486,
+        longitude: 81.8494,
+      ),
       const TravelerProfile(
         uid: 'user_alex',
         username: 'alex_smart',
         displayName: 'Alex M.',
-        avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+        avatarUrl: '',
+        bio: 'Full-Stack Smart City Engineer & Tea Country Explorer',
+        country: 'Sri Lanka',
+        city: 'Colombo',
+        countryFlag: '🇱🇰',
+        followersCount: 284,
+        placesTraveledCount: 11,
+        routesSharedCount: 4,
+        isVerified: true,
+        recentRoute: 'Sigiriya Rock Fortress ➔ Dambulla ➔ Kandy',
         locationSharingEnabled: true,
         latitude: 6.9271,
         longitude: 79.8612,
@@ -86,7 +113,16 @@ class SocialService extends ChangeNotifier {
         uid: 'user_sarah',
         username: 'sarah_city',
         displayName: 'Sarah K.',
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        avatarUrl: '',
+        bio: 'Coastal Ecosystem Monitor & High-Altitude Backpacker',
+        country: 'Sri Lanka',
+        city: 'Galle',
+        countryFlag: '🇱🇰',
+        followersCount: 390,
+        placesTraveledCount: 19,
+        routesSharedCount: 7,
+        isVerified: true,
+        recentRoute: 'Ella Station ➔ Demodara Nine Arch ➔ Little Adam Peak',
         locationSharingEnabled: true,
         latitude: 6.9319,
         longitude: 79.8478,
@@ -95,60 +131,185 @@ class SocialService extends ChangeNotifier {
         uid: 'user_david',
         username: 'david_transit',
         displayName: 'David R.',
-        avatarUrl: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=150',
+        avatarUrl: '',
+        bio: 'Transit Route Optimizer & Heritage Trail Documenter',
+        country: 'Sri Lanka',
+        city: 'Kandy',
+        countryFlag: '🇱🇰',
+        followersCount: 195,
+        placesTraveledCount: 8,
+        routesSharedCount: 3,
+        isVerified: true,
+        recentRoute: 'Mirissa Beach ➔ Galle Dutch Fort ➔ Bentota',
         locationSharingEnabled: false,
+      ),
+      const TravelerProfile(
+        uid: 'user_elena',
+        username: 'elena_tokyo',
+        displayName: 'Elena Sato',
+        avatarUrl: '',
+        bio: 'Tokyo Smart Mobility Urbanist & Mountain Route Trailblazer',
+        country: 'Japan',
+        city: 'Tokyo',
+        countryFlag: '🇯🇵',
+        followersCount: 640,
+        placesTraveledCount: 22,
+        routesSharedCount: 9,
+        isVerified: true,
+        recentRoute: 'Shinjuku Station ➔ Lake Ashi ➔ Mt. Fuji 5th Station',
+        locationSharingEnabled: true,
+        latitude: 35.6762,
+        longitude: 139.6503,
+      ),
+      const TravelerProfile(
+        uid: 'user_marcus',
+        username: 'marcus_london',
+        displayName: 'Marcus Davies',
+        avatarUrl: '',
+        bio: 'Civic Infrastructure Auditor & Historic Trail Hiker',
+        country: 'United Kingdom',
+        city: 'London',
+        countryFlag: '🇬🇧',
+        followersCount: 410,
+        placesTraveledCount: 16,
+        routesSharedCount: 5,
+        isVerified: true,
+        recentRoute: 'London Tower Bridge ➔ Oxford Bodleian ➔ Cotswolds',
+        locationSharingEnabled: true,
+        latitude: 51.5074,
+        longitude: -0.1278,
+      ),
+      const TravelerProfile(
+        uid: 'user_amira',
+        username: 'amira_dubai',
+        displayName: 'Amira Al-Mansoor',
+        avatarUrl: '',
+        bio: 'Next-Gen Autonomous City Researcher & Desert Route Mapper',
+        country: 'United Arab Emirates',
+        city: 'Dubai',
+        countryFlag: '🇦🇪',
+        followersCount: 325,
+        placesTraveledCount: 12,
+        routesSharedCount: 4,
+        isVerified: true,
+        recentRoute: 'Downtown Dubai ➔ Al Qudra Lakes ➔ Hatta Dam',
+        locationSharingEnabled: true,
+        latitude: 25.2048,
+        longitude: 55.2708,
       ),
     ]);
 
-    // Seed sample posts with 100% reliable local high-res assets (no 404 Unsplash URLs)
+    // Seed sample travel journeys with real map paths
     _userPosts.addAll([
       UserPost(
         id: 'post_1',
-        placeId: 'city_center',
-        placeName: 'Nintavur Smart Transit Plaza',
+        placeId: 'sigiriya_kandy',
+        placeName: 'Sigiriya Rock Fortress & Golden Caves',
         userId: 'user_alex',
         userName: 'Alex M.',
+        userHandle: '@alex_smart',
         userAvatar: '',
         caption:
-            'The newly upgraded smart transit hub and solar street lighting along Main Street are now fully operational! Very smooth commute today. #SmartCity #Nintavur',
-        photoUrls: ['assets/western province/galle-face.jpg'],
+            'Traveled from Colombo up to Sigiriya Fortress via Dambulla! Sunrise climb at 6:00 AM beat the heat and crowds. Map path logged below. 🦁🌄 #Sigiriya #TravelRoute',
+        photoUrls: ['assets/central province/sigiriya.jpg'],
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        likedBy: ['local_user_1', 'user_sarah', 'user_david'],
-        commentsCount: 4,
-        latitude: 7.3486,
-        longitude: 81.8494,
+        likedBy: ['local_user_1', 'user_sarah', 'user_david', 'user_elena'],
+        commentsCount: 6,
+        latitude: 7.9570,
+        longitude: 80.7603,
+        routeSummary: 'Sigiriya Rock ➔ Dambulla Cave ➔ Kandy Lake',
+        routeStops: ['Sigiriya', 'Dambulla', 'Kandy'],
+        distanceKm: 92.4,
+        country: 'Sri Lanka',
+        city: 'Sigiriya',
       ),
       UserPost(
         id: 'post_2',
-        placeId: 'green_park',
-        placeName: 'Addappalam Eco Coastal Park',
+        placeId: 'ella_gap',
+        placeName: 'Demodara Nine Arch Bridge & Ella Rock',
         userId: 'user_sarah',
         userName: 'Sarah K.',
+        userHandle: '@sarah_city',
         userAvatar: '',
         caption:
-            'Morning walk by the cleaned coastal embankment! Thanks to the municipal crew for resolving the drainage report in under 4 hours. 🌊🌴 #CleanCoast #CivicPride',
-        photoUrls: ['assets/southern province/mirissa beach.jpg'],
+            'Epic scenic journey through Ella! Caught the blue express train over Demodara Bridge then trekked to Little Adam\'s Peak. Highly recommend this walking path. 🚂⛰️ #Ella #NineArch',
+        photoUrls: ['assets/uva province/ella-rock.jpg'],
         createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-        likedBy: ['user_alex', 'local_user_1'],
-        commentsCount: 2,
-        latitude: 7.3510,
-        longitude: 81.8560,
+        likedBy: ['user_alex', 'local_user_1', 'user_marcus'],
+        commentsCount: 8,
+        latitude: 6.8728,
+        longitude: 81.0466,
+        routeSummary: 'Ella Station ➔ Demodara Bridge ➔ Little Adam Peak',
+        routeStops: ['Ella Station', 'Demodara Bridge', 'Little Adam Peak'],
+        distanceKm: 18.6,
+        country: 'Sri Lanka',
+        city: 'Ella',
       ),
       UserPost(
         id: 'post_3',
-        placeId: 'heritage_hub',
-        placeName: 'Central Cultural & Tech Hub',
+        placeId: 'galle_coast',
+        placeName: 'Galle Dutch Fort & LightHouse Ramparts',
         userId: 'user_david',
         userName: 'David R.',
+        userHandle: '@david_transit',
         userAvatar: '',
         caption:
-            'Testing out the new Falcon AI voice guardian and live bus ETA boards with the community engineering team! 🚀 #FalconAI #SmartTransit',
-        photoUrls: ['assets/central province/sigiriya.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 9)),
-        likedBy: ['user_alex', 'user_sarah'],
-        commentsCount: 5,
-        latitude: 7.3440,
-        longitude: 81.8420,
+            'Sunset stroll along the centuries-old ocean ramparts of Galle Fort. Clean cobblestone streets, zero traffic congestion, pure coastal magic. 🌊🏰 #GalleFort #HeritagePath',
+        photoUrls: ['assets/southern province/galle-fort.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+        likedBy: ['user_alex', 'user_sarah', 'user_albanna'],
+        commentsCount: 4,
+        latitude: 6.0328,
+        longitude: 80.2170,
+        routeSummary: 'Mirissa Bay ➔ Galle Dutch Fort ➔ Bentota Beach',
+        routeStops: ['Mirissa', 'Galle Fort', 'Bentota'],
+        distanceKm: 74.2,
+        country: 'Sri Lanka',
+        city: 'Galle',
+      ),
+      UserPost(
+        id: 'post_4',
+        placeId: 'colombo_nintavur',
+        placeName: 'Lotus Tower & Eastern Smart Highway',
+        userId: 'user_albanna',
+        userName: 'AL Banna',
+        userHandle: '@albanna',
+        userAvatar: '',
+        caption:
+            'Cross-island telemetry expedition: Started at Colombo Lotus Tower, traveled east through the central hills, arriving at Nintavur Coastal Hub. All civic sensors active! 📡🇱🇰 #IslandRoute',
+        photoUrls: ['assets/western province/lotus-tower.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+        likedBy: ['user_alex', 'user_sarah', 'user_elena', 'user_david'],
+        commentsCount: 9,
+        latitude: 6.9298,
+        longitude: 79.8592,
+        routeSummary: 'Lotus Tower ➔ Kandy Corridor ➔ Nintavur Hub',
+        routeStops: ['Lotus Tower', 'Kandy Corridor', 'Nintavur Hub'],
+        distanceKm: 320.5,
+        country: 'Sri Lanka',
+        city: 'Nintavur',
+      ),
+      UserPost(
+        id: 'post_5',
+        placeId: 'tokyo_fuji',
+        placeName: 'Mount Fuji & Hakone Crater Lake',
+        userId: 'user_elena',
+        userName: 'Elena Sato',
+        userHandle: '@elena_tokyo',
+        userAvatar: '',
+        caption:
+            'Took the Romancecar from Shinjuku out to Hakone, sailed across Lake Ashi, and reached Mount Fuji 5th Station. Clear skies and stunning peak vistas! 🗻🚄 #FujiPath #JapanTravel',
+        photoUrls: ['assets/western province/galle-face.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 18)),
+        likedBy: ['user_albanna', 'user_alex', 'user_marcus'],
+        commentsCount: 11,
+        latitude: 35.3606,
+        longitude: 138.7274,
+        routeSummary: 'Shinjuku ➔ Hakone Lake ➔ Mt. Fuji 5th Station',
+        routeStops: ['Shinjuku', 'Hakone', 'Mt. Fuji'],
+        distanceKm: 138.0,
+        country: 'Japan',
+        city: 'Tokyo',
       ),
     ]);
 
@@ -255,6 +416,45 @@ class SocialService extends ChangeNotifier {
         .toList();
   }
 
+  void syncCurrentUser({
+    required String uid,
+    required String username,
+    required String displayName,
+    String country = 'Sri Lanka',
+    String city = 'Nintavur',
+    String countryFlag = '🇱🇰',
+  }) {
+    final cleanUsername = username.replaceAll('@', '').trim().toLowerCase();
+    final existingIdx = _travelers.indexWhere(
+      (t) => t.username.toLowerCase() == cleanUsername || t.uid == uid,
+    );
+    final profile = TravelerProfile(
+      uid: uid,
+      username: cleanUsername,
+      displayName: displayName.isNotEmpty ? displayName : cleanUsername,
+      avatarUrl: '',
+      bio: 'Verified Citizen & Global Smart City Steward',
+      country: country,
+      city: city,
+      countryFlag: countryFlag,
+      followersCount: 180,
+      placesTraveledCount: 7,
+      routesSharedCount: 3,
+      isVerified: true,
+      recentRoute: '$city Corridor ➔ Smart City Civic Hub',
+      locationSharingEnabled: true,
+    );
+
+    if (existingIdx >= 0) {
+      _travelers[existingIdx] = profile;
+    } else {
+      _travelers.insert(0, profile);
+    }
+    _currentUserId = uid;
+    _currentUserName = displayName.isNotEmpty ? displayName : cleanUsername;
+    notifyListeners();
+  }
+
   Future<void> addUserPost({
     required String placeId,
     required String placeName,
@@ -262,6 +462,11 @@ class SocialService extends ChangeNotifier {
     required List<String> photoUrls,
     double? latitude,
     double? longitude,
+    String? routeSummary,
+    List<String>? routeStops,
+    double? distanceKm,
+    String? country,
+    String? city,
   }) async {
     final uid = currentUserId;
 
@@ -277,6 +482,11 @@ class SocialService extends ChangeNotifier {
       createdAt: DateTime.now(),
       latitude: latitude,
       longitude: longitude,
+      routeSummary: routeSummary,
+      routeStops: routeStops,
+      distanceKm: distanceKm,
+      country: country,
+      city: city,
     );
 
     _userPosts.insert(0, newPost);
@@ -304,22 +514,7 @@ class SocialService extends ChangeNotifier {
       }
     }
 
-    _userPosts[index] = UserPost(
-      id: post.id,
-      placeId: post.placeId,
-      placeName: post.placeName,
-      userId: post.userId,
-      userName: post.userName,
-      userAvatar: post.userAvatar,
-      caption: post.caption,
-      photoUrls: post.photoUrls,
-      createdAt: post.createdAt,
-      likedBy: liked,
-      commentsCount: post.commentsCount,
-      latitude: post.latitude,
-      longitude: post.longitude,
-    );
-
+    _userPosts[index] = post.copyWith(likedBy: liked);
     notifyListeners();
   }
 
@@ -347,22 +542,7 @@ class SocialService extends ChangeNotifier {
     final index = _userPosts.indexWhere((p) => p.id == postId);
     if (index != -1) {
       final p = _userPosts[index];
-      _userPosts[index] = UserPost(
-        id: p.id,
-        placeId: p.placeId,
-        placeName: p.placeName,
-        userId: p.userId,
-        userName: p.userName,
-        userAvatar: p.userAvatar,
-        caption: p.caption,
-        photoUrls: p.photoUrls,
-        createdAt: p.createdAt,
-        likedBy: p.likedBy,
-        commentsCount: p.commentsCount + 1,
-        latitude: p.latitude,
-        longitude: p.longitude,
-      );
-
+      _userPosts[index] = p.copyWith(commentsCount: p.commentsCount + 1);
       if (p.userId != uid) {
         _addNotification(
           recipientId: p.userId,

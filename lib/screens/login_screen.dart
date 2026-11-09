@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../data/global_regions_data.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
+import '../services/social_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -22,6 +23,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _customAreaController =
       TextEditingController(text: 'Nintavur');
+
+  String _cleanHandle(String raw) {
+    return raw.trim().replaceAll('@', '').toLowerCase();
+  }
+
+  bool _isHandleValid(String raw) {
+    final clean = _cleanHandle(raw);
+    return clean.length >= 3 && clean.length <= 30 && RegExp(r'^[a-z0-9_.]+$').hasMatch(clean);
+  }
 
   String _selectedCountry = 'Sri Lanka';
   String _selectedCity = 'Nintavur';
@@ -89,6 +99,17 @@ class _LoginScreenState extends State<LoginScreen> {
         bio: profile.bio,
         location: '$area, $_selectedCountry',
       );
+      final social = context.read<SocialService>();
+      final country = GlobalRegions.findCountry(_selectedCountry);
+      final user = auth.currentUser;
+      social.syncCurrentUser(
+        uid: user?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
+        username: username,
+        displayName: username,
+        country: _selectedCountry,
+        city: area,
+        countryFlag: country.flag,
+      );
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const MainNavigationScreen()),
       );
@@ -103,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _continueAsGuest() async {
     final auth = context.read<AuthService>();
     final profile = context.read<ProfileService>();
+    final social = context.read<SocialService>();
     final area = _customAreaController.text.trim().isNotEmpty
         ? _customAreaController.text.trim()
         : _selectedCity;
@@ -112,6 +134,15 @@ class _LoginScreenState extends State<LoginScreen> {
       displayName: 'Guest Citizen',
       bio: 'Exploring Smart City Worldwide',
       location: '$area, $_selectedCountry',
+    );
+    final country = GlobalRegions.findCountry(_selectedCountry);
+    social.syncCurrentUser(
+      uid: 'guest_${DateTime.now().millisecondsSinceEpoch}',
+      username: 'guest_citizen',
+      displayName: 'Guest Citizen',
+      country: _selectedCountry,
+      city: area,
+      countryFlag: country.flag,
     );
 
     if (!mounted) return;
@@ -396,12 +427,94 @@ class _LoginScreenState extends State<LoginScreen> {
                       }).toList(),
                     ),
                     const SizedBox(height: AppSpace.lg),
-                    AppTextField(
-                      controller: _usernameController,
-                      label: 'Username or Email',
-                      hint: 'e.g. al_banna',
-                      isRequired: true,
-                      prefixIcon: const Icon(Icons.person_outline_rounded),
+                    // Instagram-Style Unique Public Handle (@username) Section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: AppSpace.xs,
+                          runSpacing: 4,
+                          children: [
+                            Text(
+                              'Citizen Handle (@username)',
+                              style: AppTypography.caption.copyWith(
+                                color: AppColors.textSecondary(context),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceMuted(context),
+                                borderRadius: AppRadius.pillBorder,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.public_rounded,
+                                    size: 11,
+                                    color: AppColors.primary(context),
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Public Identity',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.primary(context),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.xs),
+                        AppTextField(
+                          controller: _usernameController,
+                          label: 'Unique Handle (@username)',
+                          hint: 'e.g. albanna, traveler_jane',
+                          isRequired: true,
+                          prefixIcon: const Icon(Icons.alternate_email_rounded),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                        if (_usernameController.text.trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                _isHandleValid(_usernameController.text)
+                                    ? Icons.check_circle_rounded
+                                    : Icons.info_outline_rounded,
+                                size: 14,
+                                color: _isHandleValid(_usernameController.text)
+                                    ? AppColors.success(context)
+                                    : AppColors.warning(context),
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  _isHandleValid(_usernameController.text)
+                                      ? '✓ @${_cleanHandle(_usernameController.text)} is your community handle & life journey tag'
+                                      : 'Handle must be 3-30 letters, numbers, or underscores',
+                                  style: AppTypography.caption.copyWith(
+                                    color: _isHandleValid(_usernameController.text)
+                                        ? AppColors.success(context)
+                                        : AppColors.warning(context),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: AppSpace.lg),
                     AppTextField(

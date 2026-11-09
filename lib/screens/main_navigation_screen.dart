@@ -4,6 +4,7 @@ import '../models/community_issue.dart';
 import '../services/community_issue_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/smart_city_drawer.dart';
+import 'community_hub_screen.dart';
 import 'community_issues_screen.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
@@ -14,8 +15,15 @@ class MainNavigationScreen extends StatefulWidget {
 
   const MainNavigationScreen({super.key, this.initialIndex = 0});
 
+  /// Primary Navigation Tab Constants:
+  static const int tabHome = 0;
+  static const int tabCommunity = 1;
+  static const int tabReports = 2;
+  static const int tabSmartBus = 3;
+  static const int tabProfile = 4;
+
   /// Allows child screens to switch the active primary navigation tab:
-  /// 0 = Home, 1 = Reports, 2 = Smart Bus, 3 = Profile
+  /// 0 = Home, 1 = Community, 2 = Reports, 3 = Smart Bus, 4 = Profile
   static void switchToTab(BuildContext context, int index) {
     final state = context.findAncestorStateOfType<_MainNavigationScreenState>();
     state?.setTab(index);
@@ -30,6 +38,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   static const List<Widget> _screens = [
     HomeScreen(),
+    CommunityHubScreen(),
     CommunityIssuesScreen(),
     SmartBusTrackingScreen(),
     ProfileScreen(),
@@ -88,6 +97,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   selectedIcon: Icon(Icons.home_rounded),
                   label: Text('Home'),
                 ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.people_alt_outlined),
+                  selectedIcon: Icon(Icons.people_alt_rounded),
+                  label: Text('Community'),
+                ),
                 NavigationRailDestination(
                   icon: Badge(
                     isLabelVisible: pendingCount > 0,
@@ -143,6 +157,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home_rounded),
               label: 'Home',
+            ),
+            const NavigationDestination(
+              icon: Icon(Icons.people_alt_outlined),
+              selectedIcon: Icon(Icons.people_alt_rounded),
+              label: 'Community',
             ),
             NavigationDestination(
               icon: Badge(

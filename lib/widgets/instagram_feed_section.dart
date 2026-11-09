@@ -15,11 +15,13 @@ import 'ui/ui.dart';
 class InstagramFeedSection extends StatelessWidget {
   final int? maxPosts;
   final bool showStoriesRow;
+  final bool preferGrid;
 
   const InstagramFeedSection({
     super.key,
     this.maxPosts,
     this.showStoriesRow = true,
+    this.preferGrid = false,
   });
 
   static const List<_StoryUser> _stories = [
@@ -163,14 +165,266 @@ class InstagramFeedSection extends StatelessWidget {
           const SizedBox(height: AppSpace.md),
         ],
 
-        // Instagram Vertical Post Cards
-        ...visiblePosts.map(
-          (post) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpace.lg),
-            child: InstagramPostCard(post: post),
+        // Instagram Vertical Post Cards or Travel Grid with Map Route Paths
+        if (preferGrid)
+          _buildTravelGrid(context, visiblePosts)
+        else
+          ...visiblePosts.map(
+            (post) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpace.lg),
+              child: InstagramPostCard(post: post),
+            ),
           ),
-        ),
       ],
+    );
+  }
+
+  Widget _buildTravelGrid(BuildContext context, List<UserPost> posts) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: posts.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: AppSpace.sm,
+            mainAxisSpacing: AppSpace.sm,
+            childAspectRatio: 0.82,
+          ),
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return _TravelGridTile(post: post);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _TravelGridTile extends StatelessWidget {
+  final UserPost post;
+
+  const _TravelGridTile({required this.post});
+
+  Widget _buildPostImage(String url) {
+    if (url.startsWith('data:image')) {
+      try {
+        final commaIdx = url.indexOf(',');
+        final bytes = base64Decode(url.substring(commaIdx + 1));
+        return Image.memory(bytes, fit: BoxFit.cover);
+      } catch (_) {}
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) =>
+            Image.asset('assets/cover.png', fit: BoxFit.cover),
+      );
+    }
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) =>
+          Image.asset('assets/cover.png', fit: BoxFit.cover),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final handle = post.userHandle.isNotEmpty
+        ? (post.userHandle.startsWith('@') ? post.userHandle : '@${post.userHandle}')
+        : '@${post.authorName.toLowerCase().replaceAll(' ', '_')}';
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const FullInstagramFeedScreen(),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: AppRadius.mdBorder,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background Image
+            _buildPostImage(post.imageUrl),
+
+            // Top scrim gradient + Author Handle
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.75),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 9,
+                      backgroundColor: Colors.white24,
+                      backgroundImage: (post.authorAvatar.isNotEmpty &&
+                              !post.authorAvatar.startsWith('data:'))
+                          ? NetworkImage(post.authorAvatar)
+                          : null,
+                      child: post.authorAvatar.isEmpty
+                          ? Text(
+                              post.authorName.isNotEmpty
+                                  ? post.authorName[0].toUpperCase()
+                                  : 'U',
+                              style: AppTypography.caption.copyWith(
+                                color: Colors.white,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        handle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Middle: Map Route Path Badge (if route exists)
+            if (post.routeSummary != null && post.routeSummary!.isNotEmpty)
+              Positioned(
+                left: 6,
+                right: 6,
+                bottom: 34,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: AppRadius.smBorder,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.route_rounded,
+                        size: 11,
+                        color: Colors.cyanAccent,
+                      ),
+                      const SizedBox(width: 3),
+                      Expanded(
+                        child: Text(
+                          post.routeSummary!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      if (post.distanceKm != null && post.distanceKm! > 0) ...[
+                        const SizedBox(width: 2),
+                        Text(
+                          '${post.distanceKm!.round()}km',
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.cyanAccent,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+
+            // Bottom gradient + Location / Likes
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.sm,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.85),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        post.location,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.favorite_rounded,
+                          size: 11,
+                          color: Colors.redAccent,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${post.likes}',
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -265,9 +519,10 @@ class InstagramPostCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '@${post.userName}',
+                            post.userHandle,
                             style: AppTypography.bodyStrong.copyWith(
                               color: AppColors.textPrimary(context),
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
                           const SizedBox(width: AppSpace.xs),
@@ -299,13 +554,77 @@ class InstagramPostCard extends StatelessWidget {
             ),
           ),
 
-          // 2. Post Photo (Double-tap to Like)
+          // 2. Post Photo with Traveled Map Path Badge
           GestureDetector(
             onDoubleTap: () => social.togglePostLike(post.id),
-            child: SizedBox(
-              width: double.infinity,
-              height: 290,
-              child: _buildPostPhoto(context, photoUrl),
+            child: Stack(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 290,
+                  child: _buildPostPhoto(context, photoUrl),
+                ),
+                if (post.routeSummary != null && post.routeSummary!.isNotEmpty)
+                  Positioned(
+                    bottom: AppSpace.sm,
+                    left: AppSpace.sm,
+                    right: AppSpace.sm,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.82),
+                        borderRadius: AppRadius.smBorder,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.20),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.alt_route_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '🗺️ ${post.routeSummary!}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          if (post.distanceKm != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary(context),
+                                borderRadius: AppRadius.pillBorder,
+                              ),
+                              child: Text(
+                                '${post.distanceKm} km',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
 
