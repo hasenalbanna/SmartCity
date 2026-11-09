@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _customAreaController =
-      TextEditingController(text: 'Nintavur');
+      TextEditingController(text: 'New York');
 
   String _cleanHandle(String raw) {
     return raw.trim().replaceAll('@', '').toLowerCase();
@@ -107,21 +107,21 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      await auth.updateRegion(_selectedCountry, area);
+      final country = GlobalRegions.findCountry(_selectedCountry);
+      await auth.updateRegion(country.name, area);
       if (!mounted) return;
       profile.updateProfile(
         displayName: username,
         bio: profile.bio,
-        location: '$area, $_selectedCountry',
+        location: '$area, ${country.name}',
       );
       final social = context.read<SocialService>();
-      final country = GlobalRegions.findCountry(_selectedCountry);
       final user = auth.currentUser;
       social.syncCurrentUser(
         uid: user?.id ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
         username: username,
         displayName: username,
-        country: _selectedCountry,
+        country: country.name,
         city: area,
         countryFlag: country.flag,
       );

@@ -53,10 +53,30 @@ class WeatherService extends ChangeNotifier {
   DateTime? _lastUpdated;
   bool _isLoading = false;
   String _currentLabel = 'Current Location';
+  String _preferredCity = 'New York';
+  double _fallbackLat = 40.7128;
+  double _fallbackLon = -74.0060;
   Timer? _timer;
 
   WeatherService() {
     _bootstrap();
+  }
+
+  void setPreferredLocation({
+    required String city,
+    required double latitude,
+    required double longitude,
+  }) {
+    if (_preferredCity == city &&
+        _fallbackLat == latitude &&
+        _fallbackLon == longitude) {
+      return;
+    }
+    _preferredCity = city;
+    _fallbackLat = latitude;
+    _fallbackLon = longitude;
+    _currentLabel = city;
+    refreshNow();
   }
 
   WeatherPoint? get currentWeather => _currentWeather;
@@ -114,11 +134,11 @@ class WeatherService extends ChangeNotifier {
   }
 
   Future<(double, double)> _resolveUserCoord() async {
-    const fallback = (6.9271, 79.8612); // Colombo
+    final fallback = (_fallbackLat, _fallbackLon);
     try {
       final enabled = await Geolocator.isLocationServiceEnabled();
       if (!enabled) {
-        _currentLabel = 'Colombo';
+        _currentLabel = _preferredCity;
         return fallback;
       }
 
@@ -128,7 +148,7 @@ class WeatherService extends ChangeNotifier {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        _currentLabel = 'Colombo';
+        _currentLabel = _preferredCity;
         return fallback;
       }
 
@@ -138,7 +158,7 @@ class WeatherService extends ChangeNotifier {
       _currentLabel = 'Current Location';
       return (position.latitude, position.longitude);
     } catch (_) {
-      _currentLabel = 'Colombo';
+      _currentLabel = _preferredCity;
       return fallback;
     }
   }

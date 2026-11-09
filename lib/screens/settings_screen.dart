@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
 import '../services/auth_service.dart';
 import '../services/currency_service.dart';
 import '../services/falcon_ai_service.dart';
+import '../services/global_destination_service.dart';
 import '../services/localization_service.dart';
 import '../services/profile_service.dart';
 import '../services/subscription_service.dart';
@@ -63,14 +65,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     'System',
   ];
 
-  static const List<String> _wards = [
-    'Ward 01 — Nintavur North',
-    'Ward 02 — Hospital Road',
-    'Ward 03 — Town Central',
-    'Ward 04 — Addappalam',
-    'Ward 05 — Coastal Belt',
-  ];
-
   static const Map<String, Map<String, String>> _languageMeta = {
     'en': {'flag': '🇬🇧', 'native': 'English', 'sub': 'United Kingdom / US'},
     'si': {'flag': '🇱🇰', 'native': 'සිංහල', 'sub': 'Sinhala • Sri Lanka'},
@@ -119,6 +113,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         : (auth.currentUser?.username.isNotEmpty == true
               ? auth.currentUser!.username
               : 'AL Banna');
+
+    final exp = GlobalDestinationService.getExperience(auth.userCountry);
+    final wards = exp.municipalDistricts;
+    if (!wards.contains(_selectedWard)) {
+      _selectedWard = wards.first;
+    }
 
     return AppScaffold(
       appBar: AppBar(
@@ -1267,6 +1267,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildNotificationsSection(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+    final exp = GlobalDestinationService.getExperience(auth.userCountry);
+    final wards = exp.municipalDistricts;
+    if (!wards.contains(_selectedWard)) {
+      _selectedWard = wards.first;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1301,7 +1309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: DropdownButton<String>(
                     value: _selectedWard,
                     borderRadius: AppRadius.mdBorder,
-                    items: _wards
+                    items: wards
                         .map((w) => DropdownMenuItem(value: w, child: Text(w)))
                         .toList(),
                     onChanged: (v) {
@@ -1317,13 +1325,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: AppColors.warning(context),
                 ),
                 title: Text(
-                  'Monsoon & Coastal Surge Warnings (117 DMC)',
+                  'Severe Weather & Flood Alerts (${countryRegion.name})',
                   style: AppTypography.bodyStrong.copyWith(
                     color: AppColors.textPrimary(context),
                   ),
                 ),
                 subtitle: Text(
-                  'Instant red/amber weather broadcasts for $_selectedWard',
+                  'Instant storm and municipal warnings for $_selectedWard',
                   style: AppTypography.caption.copyWith(
                     color: AppColors.textSecondary(context),
                   ),
@@ -1405,6 +1413,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     BuildContext context,
     AuthService auth,
   ) {
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1448,7 +1457,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: AppSpace.sm),
               Text(
-                'Caches Nintavur, Sigiriya, Kandy, Ella & Galle Fort map tiles for offline navigation during monsoon outages.',
+                'Caches ${auth.userCity} & ${countryRegion.name} map tiles for offline navigation during network outages.',
                 style: AppTypography.caption.copyWith(
                   color: AppColors.textSecondary(context),
                 ),
@@ -1459,15 +1468,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 runSpacing: AppSpace.sm,
                 children: [
                   AppButton(
-                    label: 'Sync Sri Lanka Offline Pack',
+                    label: 'Sync ${countryRegion.name} Offline Pack',
                     icon: Icons.cloud_download_outlined,
                     variant: AppButtonVariant.secondary,
                     onPressed: () {
                       setState(() => _cachedMb = 112.4);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Offline Map Pack synced (112.4 MB cached).',
+                            'Offline Map Pack synced for ${countryRegion.name} (112.4 MB cached).',
                           ),
                         ),
                       );

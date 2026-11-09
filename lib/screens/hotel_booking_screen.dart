@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
 import '../data/hotels_data.dart' as booking_data;
+import '../services/auth_service.dart';
+import '../services/global_destination_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -51,20 +55,6 @@ class _HotelBookingViewState extends State<HotelBookingView> {
   RangeValues _priceRange = const RangeValues(0, 500);
   booking_data.Hotel? _selectedMapHotel;
 
-  static const List<String> _cities = [
-    'All',
-    'Sigiriya',
-    'Kandy',
-    'Galle',
-    'Ella',
-    'Mirissa',
-    'Colombo',
-    'Nuwara Eliya',
-    'Arugam Bay',
-    'Trincomalee',
-    'Negombo',
-  ];
-
   static const List<String> _tierFilters = [
     'All',
     'Top Rated',
@@ -76,13 +66,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
   void initState() {
     super.initState();
     if (widget.nearPlace != null) {
-      final matched = _cities.firstWhere(
-        (c) =>
-            c.toLowerCase() == widget.nearPlace!.toLowerCase() ||
-            widget.nearPlace!.toLowerCase().contains(c.toLowerCase()),
-        orElse: () => 'All',
-      );
-      _selectedCity = matched;
+      _selectedCity = widget.nearPlace!;
     }
   }
 
@@ -109,15 +93,16 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     return 'budget';
   }
 
-  List<booking_data.Hotel> get _filteredHotels {
-    List<booking_data.Hotel> list;
-    if (_selectedCity == 'All') {
-      list = booking_data.allHotels;
-    } else {
-      list = booking_data.getHotelsForCity(_selectedCity);
-      if (list.isEmpty) {
-        list = booking_data.allHotels;
-      }
+  List<booking_data.Hotel> _resolveFilteredHotels(
+    String countryName,
+    CountryRegion region,
+  ) {
+    List<booking_data.Hotel> list = GlobalDestinationService.getHotels(
+      countryName,
+      city: _selectedCity,
+    );
+    if (list.isEmpty) {
+      list = GlobalDestinationService.getHotels(countryName);
     }
 
     if (_selectedFilter == 'Top Rated') {
@@ -138,14 +123,16 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     return list;
   }
 
-  LatLng get _mapCenter {
+  LatLng _resolveMapCenter(
+    List<booking_data.Hotel> list,
+    CountryRegion countryRegion,
+  ) {
     if (_selectedMapHotel != null) return _selectedMapHotel!.location;
     if (widget.initialLocationCenter != null) {
       return widget.initialLocationCenter!;
     }
-    final list = _filteredHotels;
     if (list.isNotEmpty) return list.first.location;
-    return const LatLng(7.8731, 80.7718);
+    return countryRegion.center;
   }
 
   String _localFallbackAsset(String city) {
@@ -165,12 +152,21 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     if (c.contains('nuwara')) {
       return 'assets/central province/nuwara eliya tea country.jpg';
     }
-    return 'assets/western province/galle-face.jpg';
+    return 'assets/cover.png';
   }
 
   @override
   Widget build(BuildContext context) {
-    final hotels = _filteredHotels;
+    final auth = context.watch<AuthService>();
+    final countryName = auth.userCountry;
+    final countryRegion = GlobalRegions.findCountry(countryName);
+    final availableCities = ['All', ...countryRegion.cities.map((c) => c.name)];
+    if (_selectedCity != 'All' && !availableCities.contains(_selectedCity)) {
+      _selectedCity = 'All';
+    }
+
+    final hotels = _resolveFilteredHotels(countryName, countryRegion);
+    final mapCenter = _resolveMapCenter(hotels, countryRegion);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +226,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                               ),
                             ),
                             Text(
-                              '${hotels.length} hotels & resorts available across Sri Lanka',
+                              '${hotels.length} hotels & resorts available across ${countryRegion.name}',
                               style: AppTypography.caption.copyWith(
                                 color: Colors.white70,
                               ),
@@ -253,11 +249,11 @@ class _HotelBookingViewState extends State<HotelBookingView> {
         ),
         const SizedBox(height: AppSpace.md),
 
-        // 2. City Pills Row (All, Sigiriya, Kandy, Galle, Ella, Mirissa, etc.)
+        // 2. City Pills Row (All, + country cities)
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children: _cities.map((city) {
+            children: availableCities.map((city) {
               final isSelected = _selectedCity == city;
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpace.sm),
@@ -345,8 +341,10 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                   FlutterMap(
                     mapController: _mapController,
                     options: MapOptions(
-                      initialCenter: _mapCenter,
-                      initialZoom: _selectedCity == 'All' ? 7.4 : 12.5,
+                      initialCenter: mapCenter,
+                      initialZoom: _selectedCity == 'All'
+                          ? (countryRegion.defaultZoom - 2.0).clamp(4.0, 13.0)
+                          : 12.5,
                       onTap: (_, __) =>
                           setState(() => _selectedMapHotel = null),
                     ),
@@ -470,7 +468,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
             children: [
               Expanded(
                 child: Text(
-                  '${_selectedCity == 'All' ? 'Sri Lanka' : _selectedCity}: ${hotels.length} properties found',
+                  '${_selectedCity == 'All' ? countryRegion.name : _selectedCity}: ${hotels.length} properties found',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.subtitle.copyWith(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/global_regions_data.dart';
 import '../models/community_issue.dart';
 import '../models/ai_hazard_analysis.dart';
 import 'ai_hazard_aggregator_service.dart';
@@ -32,18 +33,207 @@ class CommunityIssueService extends ChangeNotifier {
             _issues.add(CommunityIssue.fromJson(item));
           }
         }
+        _ensureGlobalSeeds();
+        await _saveToStorage();
       } else {
         _seedInitialIssues();
+        _ensureGlobalSeeds();
         await _saveToStorage();
       }
     } catch (e) {
       debugPrint('Error loading community issues: $e');
       if (_issues.isEmpty) {
         _seedInitialIssues();
+        _ensureGlobalSeeds();
       }
     }
     _initialized = true;
     notifyListeners();
+  }
+
+  void _ensureGlobalSeeds() {
+    final hasUs = _issues.any((i) =>
+        i.country.toLowerCase().contains('united states') ||
+        i.country.toLowerCase() == 'us' ||
+        i.address.toLowerCase().contains('united states') ||
+        i.address.toLowerCase().contains('new york'));
+
+    if (!hasUs) {
+      _issues.insertAll(0, [
+        CommunityIssue(
+          id: 'rep_us_1',
+          category: 'ROAD/POTHOLE',
+          categoryLocal: 'Roadway',
+          title: 'Deep pothole on 5th Avenue & 42nd St',
+          description: 'Road surface subsidence near library bus terminal causing transit slowing.',
+          address: '5th Ave & 42nd St, Manhattan, New York, NY 10018, United States',
+          location: const LatLng(40.7527, -73.9818),
+          country: 'United States',
+          city: 'New York',
+          status: IssueStatus.pending,
+          contactNumber: '+1 212-555-0199',
+          createdAt: DateTime.now().subtract(const Duration(hours: 4)),
+          aiAnalysis: AiHazardAnalysis(
+            confidenceScore: 0.96,
+            urgencyScore: 7.9,
+            routingChannel: AiRoutingChannel.councilTicket,
+            councilTicketId: 'CW-NYC-2026-8421',
+            locationMatch: true,
+            weatherCorrelated: true,
+            antiSpamPassed: true,
+            reasoning: 'Verified NYC DOT asphalt fracture. Priority municipal work order generated.',
+            visionDetection: 'Surface fracture depth ~12cm',
+            peopleAtRisk: 65,
+            estimatedResponseHours: 4,
+            processedAt: DateTime.now().subtract(const Duration(hours: 3)),
+          ),
+        ),
+        CommunityIssue(
+          id: 'rep_us_2',
+          category: 'STREET LIGHT',
+          categoryLocal: 'Lighting',
+          title: 'Streetlight outage along Central Park West',
+          description: 'Pedestrian walkway luminaires dark between 72nd and 74th streets.',
+          address: 'Central Park West & 72nd St, New York, NY 10023, United States',
+          location: const LatLng(40.7760, -73.9760),
+          country: 'United States',
+          city: 'New York',
+          status: IssueStatus.inProgress,
+          contactNumber: '+1 212-555-0144',
+          createdAt: DateTime.now().subtract(const Duration(hours: 10)),
+          aiAnalysis: AiHazardAnalysis(
+            confidenceScore: 0.92,
+            urgencyScore: 6.8,
+            routingChannel: AiRoutingChannel.councilTicket,
+            councilTicketId: 'CW-NYC-2026-8390',
+            locationMatch: true,
+            weatherCorrelated: false,
+            antiSpamPassed: true,
+            reasoning: 'Smart grid light failure correlated with municipal circuit telemetry.',
+            visionDetection: 'Luminaire circuit dark',
+            peopleAtRisk: 40,
+            estimatedResponseHours: 8,
+            processedAt: DateTime.now().subtract(const Duration(hours: 9)),
+          ),
+        ),
+        CommunityIssue(
+          id: 'rep_us_3',
+          category: 'DRAINAGE/FLOOD',
+          categoryLocal: 'Drainage',
+          title: 'Storm drain pooling near Brooklyn Promenade',
+          description: 'Sediment accumulation restricting storm drain runoff after sudden rainfall.',
+          address: 'Montague St, Brooklyn, New York, NY 11201, United States',
+          location: const LatLng(40.6958, -73.9965),
+          country: 'United States',
+          city: 'New York',
+          status: IssueStatus.resolved,
+          contactNumber: '+1 718-555-0182',
+          createdAt: DateTime.now().subtract(const Duration(days: 1)),
+          aiAnalysis: AiHazardAnalysis(
+            confidenceScore: 0.94,
+            urgencyScore: 7.2,
+            routingChannel: AiRoutingChannel.councilTicket,
+            councilTicketId: 'CW-NYC-2026-8210',
+            locationMatch: true,
+            weatherCorrelated: true,
+            antiSpamPassed: true,
+            reasoning: 'Drainage cleared by NYC DEP Bureau of Water & Sewer.',
+            visionDetection: 'Debris cleared from drainage grate',
+            peopleAtRisk: 28,
+            estimatedResponseHours: 3,
+            processedAt: DateTime.now().subtract(const Duration(hours: 18)),
+          ),
+        ),
+      ]);
+    }
+
+    final hasUk = _issues.any((i) =>
+        i.country.toLowerCase().contains('united kingdom') ||
+        i.country.toLowerCase() == 'gb' ||
+        i.address.toLowerCase().contains('london'));
+
+    if (!hasUk) {
+      _issues.add(
+        CommunityIssue(
+          id: 'rep_uk_1',
+          category: 'ROAD/POTHOLE',
+          categoryLocal: 'Highway',
+          title: 'Pavement wear on Westminster Bridge Road',
+          description: 'Cycle superhighway surface crack needs resurfacing.',
+          address: 'Westminster Bridge Rd, London SE1 7PB, United Kingdom',
+          location: const LatLng(51.5007, -0.1190),
+          country: 'United Kingdom',
+          city: 'London',
+          status: IssueStatus.pending,
+          contactNumber: '+44 20 7981 2222',
+          createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+        ),
+      );
+    }
+  }
+
+  List<CommunityIssue> getIssuesForRegion(String country, String city) {
+    final cQuery = country.trim().toLowerCase();
+    final cityQuery = city.trim().toLowerCase();
+
+    final matched = _issues.where((issue) {
+      final iCountry = issue.country.trim().toLowerCase();
+      final iCity = issue.city.trim().toLowerCase();
+      final iAddress = issue.address.trim().toLowerCase();
+
+      final countryMatches = iCountry == cQuery ||
+          iAddress.contains(cQuery) ||
+          cQuery.contains(iCountry) ||
+          (cQuery.contains('united states') &&
+              (iCountry.contains('united states') ||
+                  iCountry == 'us' ||
+                  iAddress.contains('united states') ||
+                  iAddress.contains('new york')));
+
+      final cityMatches = iCity == cityQuery ||
+          iAddress.contains(cityQuery) ||
+          cityQuery.contains(iCity);
+
+      return countryMatches || cityMatches;
+    }).toList();
+
+    if (matched.isNotEmpty) {
+      return matched;
+    }
+
+    // Dynamic fallback generation for newly registered countries/cities
+    final region = GlobalRegions.findCountry(country);
+    final coords = GlobalRegions.resolveLocation(country, city);
+    final fallbackIssue = CommunityIssue(
+      id: 'rep_dyn_${DateTime.now().millisecondsSinceEpoch}',
+      category: 'ROAD/POTHOLE',
+      categoryLocal: 'Roadway',
+      title: 'Pavement Maintenance on Central Corridor',
+      description: 'Minor road surface wear reported on central access route in $city.',
+      address: '$city Central Municipal Zone, ${region.name}',
+      location: coords,
+      country: region.name,
+      city: city,
+      status: IssueStatus.pending,
+      contactNumber: '+1 800-555-0100',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      aiAnalysis: AiHazardAnalysis(
+        confidenceScore: 0.93,
+        urgencyScore: 6.5,
+        routingChannel: AiRoutingChannel.councilTicket,
+        councilTicketId: 'CW-${region.code}-LOCAL-01',
+        locationMatch: true,
+        weatherCorrelated: false,
+        antiSpamPassed: true,
+        reasoning: 'Verified local infrastructure report. Municipal department notified.',
+        visionDetection: 'Surface fracture depth ~5cm',
+        peopleAtRisk: 20,
+        estimatedResponseHours: 6,
+        processedAt: DateTime.now().subtract(const Duration(hours: 1)),
+      ),
+    );
+    _issues.insert(0, fallbackIssue);
+    return [fallbackIssue];
   }
 
   void _seedInitialIssues() {

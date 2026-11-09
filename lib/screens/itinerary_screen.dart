@@ -13,7 +13,10 @@ import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/global_regions_data.dart';
+import '../services/auth_service.dart';
 import '../services/currency_service.dart';
+import '../services/global_destination_service.dart';
 import '../services/localization_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -469,15 +472,52 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
     setState(() => _isGenerating = false);
   }
 
+  List<_Airport> _getAirports(String countryQuery) {
+    final list = GlobalDestinationService.getAirports(countryQuery);
+    if (list.isEmpty) return _airports;
+    return list
+        .map(
+          (a) => _Airport(
+            code: a.code,
+            name: a.name,
+            city: a.city,
+            province: a.region,
+          ),
+        )
+        .toList();
+  }
+
+  List<_PlanPlace> _getCountryPlanPlaces(String countryQuery) {
+    final mustSee = GlobalDestinationService.getMustSeePlaces(countryQuery);
+    if (mustSee.isEmpty) return _famousPlaces;
+    final converted = mustSee.map((p) => _PlanPlace(
+      name: p.name,
+      province: p.city,
+      image: p.imageUrl,
+      avgCost: p.avgCostUsd,
+      popularity: (p.rating * 20).round(),
+      history: p.history,
+      visitTip: p.visitTip,
+    )).toList();
+    return [...converted, ..._famousPlaces];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+    final countryAirports = _getAirports(auth.userCountry);
+    if (!countryAirports.any((a) => a.code == _selectedAirportCode)) {
+      _selectedAirportCode = countryAirports.first.code;
+    }
+
     return AppScaffold(
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Ceylon Explorer',
+              '${countryRegion.name} Explorer',
               style: AppTypography.title.copyWith(
                 color: AppColors.textPrimary(context),
               ),
@@ -791,6 +831,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   Widget _buildPlannerInputCard(BuildContext context) {
     final currencyService = Provider.of<CurrencyService>(context);
     final locService = Provider.of<LocalizationService>(context);
+    final auth = Provider.of<AuthService>(context);
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+    final countryAirports = _getAirports(auth.userCountry);
+    final validAirport = countryAirports.any((a) => a.code == _selectedAirportCode)
+        ? _selectedAirportCode
+        : countryAirports.first.code;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpace.lg),
@@ -803,12 +849,12 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           ),
           const SizedBox(height: AppSpace.md),
           DropdownButtonFormField<String>(
-            initialValue: _selectedAirportCode,
-            decoration: const InputDecoration(
-              labelText: 'Arrival Airport (Sri Lanka)',
-              prefixIcon: Icon(Icons.flight_land_rounded),
+            initialValue: validAirport,
+            decoration: InputDecoration(
+              labelText: 'Arrival Airport (${countryRegion.name})',
+              prefixIcon: const Icon(Icons.flight_land_rounded),
             ),
-            items: _airports
+            items: countryAirports
                 .map(
                   (a) => DropdownMenuItem<String>(
                     value: a.code,
@@ -975,11 +1021,16 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   }
 
   Widget _buildRouteMapCard(BuildContext context) {
-    final airport = _airports.firstWhere((a) => a.code == _selectedAirportCode);
+    final auth = context.read<AuthService>();
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+    final airports = _getAirports(auth.userCountry);
+    final airport = airports.firstWhere(
+      (a) => a.code == _selectedAirportCode,
+      orElse: () => airports.first,
+    );
     final mapCenter = _routeStops.isNotEmpty
-        ? (_placeCoordinates[_routeStops.first.name] ??
-            const LatLng(7.8731, 80.7718))
-        : const LatLng(7.8731, 80.7718);
+        ? (_placeCoordinates[_routeStops.first.name] ?? countryRegion.center)
+        : countryRegion.center;
     final markers = _routeStops
         .where((p) => _placeCoordinates.containsKey(p.name))
         .map((p) {
@@ -1194,18 +1245,31 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           children: [
             ClipRRect(
               borderRadius: AppRadius.mdBorder,
-              child: Image.asset(
-                stop.place.image,
-                width: 82,
-                height: 82,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 82,
-                  height: 82,
-                  color: AppColors.surfaceMuted(context),
-                  child: const Icon(Icons.landscape_outlined),
-                ),
-              ),
+              child: stop.place.image.startsWith('http')
+                  ? Image.network(
+                      stop.place.image,
+                      width: 82,
+                      height: 82,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/cover.png',
+                        width: 82,
+                        height: 82,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      stop.place.image,
+                      width: 82,
+                      height: 82,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/cover.png',
+                        width: 82,
+                        height: 82,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
             const SizedBox(width: AppSpace.md),
             Expanded(
@@ -1488,17 +1552,31 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           children: [
             ClipRRect(
               borderRadius: AppRadius.lgBorder,
-              child: Image.asset(
-                place.image,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 220,
-                  color: AppColors.surfaceMuted(ctx),
-                  child: const Icon(Icons.terrain_rounded, size: 48),
-                ),
-              ),
+              child: place.image.startsWith('http')
+                  ? Image.network(
+                      place.image,
+                      width: double.infinity,
+                      height: 220,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/cover.png',
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Image.asset(
+                      place.image,
+                      width: double.infinity,
+                      height: 220,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Image.asset(
+                        'assets/cover.png',
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
             ),
             const SizedBox(height: AppSpace.md),
             Row(
@@ -1609,7 +1687,10 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
         _airportProvincePriority[_selectedAirportCode] ?? const <String>[];
     final dailyBudget = _budgetUsd / _stayDays;
 
-    List<_PlanPlace> candidates = _famousPlaces.where((p) {
+    final auth = Provider.of<AuthService>(context, listen: false);
+    final allPlaces = _getCountryPlanPlaces(auth.userCountry);
+
+    List<_PlanPlace> candidates = allPlaces.where((p) {
       if (_budgetUsd < 700) return p.avgCost <= 55;
       if (_budgetUsd < 1500) return p.avgCost <= 90;
       return true;
@@ -1669,7 +1750,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
     }
 
     if (chosen.isEmpty) {
-      chosen.addAll(_famousPlaces.take(min(neededStops, _famousPlaces.length)));
+      chosen.addAll(allPlaces.take(min(neededStops, allPlaces.length)));
     }
 
     var days = <_DayPlan>[];
@@ -1846,19 +1927,32 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
       case 'BTC':
         return const LatLng(7.7060, 81.6788);
       default:
-        return null;
+        try {
+          final auth = context.read<AuthService>();
+          final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+          return countryRegion.center;
+        } catch (_) {
+          return null;
+        }
     }
   }
 
   String _arrivalMode(String airportCode, String destinationProvince) {
-    final airport = _airports.firstWhere((a) => a.code == airportCode);
-    if (airport.province == destinationProvince) {
-      return 'Airport transfer + local taxi';
-    }
+    try {
+      final auth = context.read<AuthService>();
+      final airports = _getAirports(auth.userCountry);
+      final airport = airports.firstWhere(
+        (a) => a.code == airportCode,
+        orElse: () => airports.first,
+      );
+      if (airport.province == destinationProvince) {
+        return 'Airport transfer + local transit';
+      }
+    } catch (_) {}
     if (_budgetUsd / _stayDays > 200) {
       return 'Private cab transfer';
     }
-    return 'Train or intercity bus';
+    return 'Train or intercity express bus';
   }
 
   String _travelMode(
@@ -1961,8 +2055,10 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
 
   String _tripPlanText() {
     if (_generatedPlan.isEmpty) return '';
+    final auth = context.read<AuthService>();
+    final country = auth.userCountry;
     final buf = StringBuffer();
-    buf.writeln('Sri Lanka Ceylon Explorer Trip Plan - $_stayDays Days');
+    buf.writeln('$country Explorer Trip Plan - $_stayDays Days');
     buf.writeln(
       'Airport: $_selectedAirportCode  |  Budget: USD ${_budgetUsd.toStringAsFixed(0)}',
     );
@@ -1985,7 +2081,7 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
       buf.writeln();
     }
     buf.writeln('Estimated Total: USD ${_estimatedTotal.toStringAsFixed(0)}');
-    buf.writeln('Generated by Smart City & Ceylon Explorer AI');
+    buf.writeln('Generated by Smart City & $country Explorer AI');
     return buf.toString();
   }
 
@@ -2006,7 +2102,8 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
   Future<void> _shareTripNatively() async {
     final text = _tripPlanText();
     if (text.isEmpty) return;
-    await Share.share(text, subject: 'My Sri Lanka AI Itinerary');
+    final auth = context.read<AuthService>();
+    await Share.share(text, subject: 'My ${auth.userCountry} AI Itinerary');
   }
 
   Future<void> _exportAsPdf() async {

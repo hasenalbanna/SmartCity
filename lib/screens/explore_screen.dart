@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
+import '../services/auth_service.dart';
+import '../services/global_destination_service.dart';
 import '../services/weather_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -21,97 +24,8 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExplorePlace {
-  final String name;
-  final String tag;
-  final String imagePath;
-  final double rating;
-  final String summary;
-
-  const _ExplorePlace({
-    required this.name,
-    required this.tag,
-    required this.imagePath,
-    required this.rating,
-    required this.summary,
-  });
-}
-
-class _ProvinceCardData {
-  final String name;
-  final String coverImagePath;
-  final String hotspot;
-  final String tempLabel;
-  final String liveVisitors;
-
-  const _ProvinceCardData({
-    required this.name,
-    required this.coverImagePath,
-    required this.hotspot,
-    required this.tempLabel,
-    required this.liveVisitors,
-  });
-}
-
 class _ExploreScreenState extends State<ExploreScreen> {
   String _searchQuery = '';
-
-  static const List<_ExplorePlace> _mustSeePlaces = [
-    _ExplorePlace(
-      name: 'Sigiriya',
-      tag: 'Lion Rock',
-      imagePath: 'assets/images/sigiriya.jpg',
-      rating: 4.9,
-      summary:
-          'Ancient sky fortress with frescoes, mirror wall, and 360-degree views.',
-    ),
-    _ExplorePlace(
-      name: 'Galle Fort',
-      tag: 'Historic',
-      imagePath: 'assets/images/galle_fort.jpg',
-      rating: 4.8,
-      summary:
-          'UNESCO coastal fort city with colonial streets, cafes, and ramparts.',
-    ),
-    _ExplorePlace(
-      name: 'Temple of Tooth',
-      tag: 'Sacred',
-      imagePath: 'assets/central province/temple of tooth.jpg',
-      rating: 4.7,
-      summary: 'Revered cultural and spiritual complex in the heart of Kandy.',
-    ),
-  ];
-
-  static const List<_ProvinceCardData> _provinces = [
-    _ProvinceCardData(
-      name: 'Eastern Province (Trincomalee & Arugam Bay)',
-      coverImagePath: 'assets/PROVINCE COVER PHOTO/EASTERN.png',
-      hotspot: 'Smart Coastal Belt & Kumana National Park',
-      tempLabel: '29°C',
-      liveVisitors: '6,420 live',
-    ),
-    _ProvinceCardData(
-      name: 'Central Province',
-      coverImagePath: 'assets/PROVINCE COVER PHOTO/CENTRAL.png',
-      hotspot: 'Sigiriya & Kandy Cultural Route',
-      tempLabel: '22°C',
-      liveVisitors: '5,184 live',
-    ),
-    _ProvinceCardData(
-      name: 'Western Province',
-      coverImagePath: 'assets/PROVINCE COVER PHOTO/WESTERN.png',
-      hotspot: 'Colombo Smart Waterfront',
-      tempLabel: '25°C',
-      liveVisitors: '5,945 live',
-    ),
-    _ProvinceCardData(
-      name: 'Southern Province',
-      coverImagePath: 'assets/PROVINCE COVER PHOTO/SOTHERN.png',
-      hotspot: 'Galle Fort & Mirissa Coast',
-      tempLabel: '27°C',
-      liveVisitors: '4,890 live',
-    ),
-  ];
 
   @override
   void initState() {
@@ -125,12 +39,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredPlaces = _mustSeePlaces.where((p) {
+    final auth = context.watch<AuthService>();
+    final userCountry = auth.userCountry;
+    final countryRegion = GlobalRegions.findCountry(userCountry);
+    final exp = GlobalDestinationService.getExperience(userCountry);
+    final coords = GlobalRegions.resolveLocation(userCountry, auth.userCity);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<WeatherService>().setPreferredLocation(
+          city: auth.userCity,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        );
+      }
+    });
+
+    final places = exp.mustSeePlaces;
+    final filteredPlaces = places.where((p) {
       if (_searchQuery.trim().isEmpty) return true;
       final q = _searchQuery.toLowerCase();
       return p.name.toLowerCase().contains(q) ||
           p.tag.toLowerCase().contains(q);
     }).toList();
+
+    final regionCards = exp.regionCards;
 
     return AppScaffold(
       appBar: AppBar(
@@ -200,9 +133,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
           const SizedBox(height: AppSpace.xl),
 
           // Must-See Today
-          const SectionHeader(
-            title: 'Must-See Today',
-            subtitle: 'Top rated cultural & smart city landmarks',
+          SectionHeader(
+            title: 'Must-See in ${countryRegion.name}',
+            subtitle: 'Top rated cultural & smart landmarks',
           ),
           const SizedBox(height: AppSpace.md),
           SizedBox(
@@ -219,13 +152,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ),
           const SizedBox(height: AppSpace.xl),
 
-          // Explore Provinces
-          const SectionHeader(
-            title: 'Explore Provinces',
-            subtitle: 'Live regional weather & active visitor telemetry',
+          // Explore Regions & Metros
+          SectionHeader(
+            title: 'Explore ${countryRegion.name} Regions',
+            subtitle: 'Live regional weather & active telemetry',
           ),
           const SizedBox(height: AppSpace.md),
-          ..._provinces.map(
+          ...regionCards.map(
             (prov) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpace.md),
               child: _buildProvinceCard(context, prov),
@@ -244,7 +177,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _buildMustSeeCard(BuildContext context, _ExplorePlace place) {
+  Widget _buildMustSeeCard(BuildContext context, GlobalPlace place) {
     return SizedBox(
       width: 220,
       child: ClipRRect(
@@ -252,13 +185,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              place.imagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: AppColors.surfaceMuted(context),
-              ),
-            ),
+            place.imageUrl.startsWith('http')
+                ? Image.network(
+                    place.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/cover.png',
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    place.imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/cover.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -332,7 +275,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
-  Widget _buildProvinceCard(BuildContext context, _ProvinceCardData prov) {
+  Widget _buildProvinceCard(BuildContext context, GlobalRegionCard prov) {
     return ClipRRect(
       borderRadius: AppRadius.lgBorder,
       child: SizedBox(
@@ -340,14 +283,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              prov.coverImagePath,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Image.asset(
-                'assets/cover.png',
-                fit: BoxFit.cover,
-              ),
-            ),
+            prov.coverImageUrl.startsWith('http')
+                ? Image.network(
+                    prov.coverImageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/cover.png',
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : Image.asset(
+                    prov.coverImageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/cover.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -466,18 +418,21 @@ class ExploreCoverWeatherCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weather = context.watch<WeatherService>();
+    final auth = context.watch<AuthService>();
+    final userCountry = auth.userCountry;
+    final userCity = auth.userCity;
+    final countryRegion = GlobalRegions.findCountry(userCountry);
+    final exp = GlobalDestinationService.getExperience(userCountry);
     final point = weather.currentWeather;
-    final title = point == null
-        ? 'Current Location'
-        : (weather.currentLabel.isNotEmpty
-              ? weather.currentLabel
-              : 'Current Location');
+
+    final title = '$userCity, ${countryRegion.name}';
     final subtitle = point == null
-        ? 'Drizzle • Global & National Smart Hub'
-        : WeatherService.weatherLabel(point.weatherCode);
+        ? exp.tagline
+        : '${WeatherService.weatherLabel(point.weatherCode)} • ${exp.tagline}';
     final tempText = point == null
-        ? '25.8°C'
+        ? '24.5°C'
         : '${point.temperatureC.toStringAsFixed(1)}°C';
+    final coverImage = exp.coverImageUrl;
 
     return Semantics(
       label: 'Explore regions and live weather: $title, $subtitle, $tempText',
@@ -495,10 +450,23 @@ class ExploreCoverWeatherCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  'assets/cover.png',
-                  fit: BoxFit.cover,
-                ),
+                coverImage.startsWith('http')
+                    ? Image.network(
+                        coverImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/cover.png',
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        coverImage,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/cover.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(

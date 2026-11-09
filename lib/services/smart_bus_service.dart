@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/smart_bus.dart';
+import 'global_destination_service.dart';
 
 class SmartBusService extends ChangeNotifier {
   final List<BusRoute> _routes = [];
@@ -21,9 +23,66 @@ class SmartBusService extends ChangeNotifier {
           orElse: () => _routes.first,
         );
 
+  String? _currentCountry;
+
   SmartBusService() {
     _initRoutesAndBuses();
     startLiveTracking();
+  }
+
+  void updateForCountry(String countryName, String cityName) {
+    if (_currentCountry == countryName && _routes.isNotEmpty) return;
+    _currentCountry = countryName;
+
+    final transitData = GlobalDestinationService.getExperience(countryName).transitRoutes;
+    if (transitData.isEmpty) return;
+
+    _routes.clear();
+    _buses.clear();
+    _busWaypointIndices.clear();
+
+    for (int rIdx = 0; rIdx < transitData.length; rIdx++) {
+      final t = transitData[rIdx];
+      final stops = <BusStop>[];
+      for (int i = 0; i < t.stopNames.length; i++) {
+        final pt = (i < t.pathPoints.length) ? t.pathPoints[i] : t.pathPoints.last;
+        stops.add(BusStop(
+          id: '${t.id}_stop_$i',
+          name: t.stopNames[i],
+          location: pt,
+        ));
+      }
+
+      _routes.add(BusRoute(
+        id: t.id,
+        routeNumber: t.routeNumber,
+        origin: t.origin,
+        destination: t.destination,
+        colorHex: t.colorHex,
+        stops: stops,
+        pathPoints: t.pathPoints,
+        operatingHours: t.operatingHours,
+        frequencyMinutes: t.frequencyMinutes,
+        fareLkr: t.fareLocal,
+      ));
+
+      _buses.add(SmartBus(
+        id: 'bus_${t.id}_1',
+        routeId: t.id,
+        busNumber: '${countryName.substring(0, min(2, countryName.length)).toUpperCase()}-${1000 + rIdx}',
+        driverName: 'Transit Operator #${101 + rIdx}',
+        location: t.pathPoints.first,
+        speedKmH: 36.0,
+        nextStop: t.stopNames.length > 1 ? t.stopNames[1] : t.stopNames.first,
+        etaMinutes: 4,
+        occupancy: BusOccupancy.moderate,
+        isAirConditioned: true,
+      ));
+      _busWaypointIndices['bus_${t.id}_1'] = 0;
+    }
+
+    _selectedRouteId = _routes.first.id;
+    notifyListeners();
   }
 
   void _initRoutesAndBuses() {

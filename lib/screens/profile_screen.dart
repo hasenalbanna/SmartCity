@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
 import '../models/community_issue.dart';
 import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
@@ -90,7 +91,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showTopUpPassDialog(BuildContext context) {
+  void _showTopUpPassDialog(
+    BuildContext context,
+    String city,
+    CountryRegion countryRegion,
+  ) {
+    final isLkr = countryRegion.code == 'LK';
+    final currencySymbol = isLkr ? 'LKR' : '\$';
+    final amounts = isLkr ? [250.0, 500.0, 1000.0] : [5.0, 15.0, 30.0];
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -100,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select an instant reload amount for Nintavur Smart Bus routes 22 & 48:',
+              'Select an instant reload amount for $city Transit & Smart Bus network:',
               style: AppTypography.body.copyWith(
                 color: AppColors.textSecondary(context),
               ),
@@ -109,17 +118,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Wrap(
               spacing: AppSpace.sm,
               runSpacing: AppSpace.sm,
-              children: [250.0, 500.0, 1000.0].map((amount) {
+              children: amounts.map((amount) {
+                final displayLabel = isLkr
+                    ? '+ LKR ${amount.toInt()}'
+                    : '+ \$${amount.toStringAsFixed(0)}';
                 return AppButton(
-                  label: '+ LKR ${amount.toInt()}',
+                  label: displayLabel,
                   variant: AppButtonVariant.secondary,
                   onPressed: () {
-                    setState(() => _transitPassBalanceLkr += amount);
+                    final addedBalance = isLkr ? amount : amount * 250;
+                    setState(() => _transitPassBalanceLkr += addedBalance);
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Added LKR ${amount.toInt()} to your Smart Transit Pass.',
+                          'Added $currencySymbol ${amount.toInt()} to your Smart Transit Pass.',
                         ),
                       ),
                     );
@@ -149,6 +162,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final issueService = context.watch<CommunityIssueService>();
     final busService = context.watch<SmartBusService>();
     final notificationService = context.watch<NotificationService>();
+
+    final countryRegion = GlobalRegions.findCountry(auth.userCountry);
+    busService.updateForCountry(auth.userCountry, auth.userCity);
+    final cityPrefix = auth.userCity.length >= 3
+        ? auth.userCity.substring(0, 3).toUpperCase()
+        : auth.userCity.toUpperCase();
 
     final userName = profile.displayName.isNotEmpty
         ? profile.displayName
@@ -281,8 +300,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                               ),
-                              const StatusChip(
-                                label: 'ID: NIN-8492',
+                              StatusChip(
+                                label: 'ID: ${countryRegion.code}-$cityPrefix-8492',
                                 kind: StatusChipKind.info,
                                 icon: Icons.badge_outlined,
                               ),
@@ -465,9 +484,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // 3. Smart Transit Commuter Pass & Saved Routes
           SectionHeader(
             title: 'Smart Transit Pass & Commute',
-            subtitle: 'Contactless fare wallet & favorite Nintavur bus routes',
+            subtitle: 'Contactless fare wallet & favorite ${auth.userCity} transit routes',
             actionLabel: 'Top Up',
-            onAction: () => _showTopUpPassDialog(context),
+            onAction: () => _showTopUpPassDialog(context, auth.userCity, countryRegion),
           ),
           const SizedBox(height: AppSpace.md),
           AppCard(
@@ -500,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           Text(
-                            'Valid on Route 22 (Kalmunai) & Route 48 (Ampara)',
+                            'Valid across ${auth.userCity} & ${countryRegion.name} transit networks',
                             style: AppTypography.caption.copyWith(
                               color: AppColors.textSecondary(context),
                             ),
@@ -512,7 +531,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'LKR ${_transitPassBalanceLkr.toStringAsFixed(0)}',
+                          countryRegion.code == 'LK'
+                              ? 'LKR ${_transitPassBalanceLkr.toStringAsFixed(0)}'
+                              : '\$${(_transitPassBalanceLkr / 250).toStringAsFixed(2)}',
                           style: AppTypography.title.copyWith(
                             color: AppColors.success(context),
                           ),
@@ -532,6 +553,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   spacing: AppSpace.sm,
                   runSpacing: AppSpace.sm,
                   children: busService.routes.map((route) {
+                    final fareDisplay = countryRegion.code == 'LK'
+                        ? 'LKR ${route.fareLkr.toInt()}'
+                        : '\$${route.fareLkr.toStringAsFixed(2)}';
                     return ActionChip(
                       avatar: Icon(
                         Icons.directions_bus_outlined,
@@ -539,7 +563,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Color(route.colorHex),
                       ),
                       label: Text(
-                        '${route.displayName} • LKR ${route.fareLkr.toInt()}',
+                        '${route.displayName} • $fareDisplay',
                       ),
                       onPressed: () {
                         busService.selectRoute(route.id);

@@ -233,23 +233,9 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     final allIssues = issuesService.issues;
     final scopedIssues = _isGlobalScope
         ? allIssues
-        : allIssues.where((issue) {
-            if (issue.country.toLowerCase() == userCountry.toLowerCase()) {
-              return true;
-            }
-            if (issue.address.toLowerCase().contains(
-                  userCountry.toLowerCase(),
-                )) {
-              return true;
-            }
-            if (issue.city.toLowerCase() == userCity.toLowerCase()) {
-              return true;
-            }
-            return false;
-          }).toList();
+        : issuesService.getIssuesForRegion(userCountry, userCity);
 
-    final activeIssuesList =
-        scopedIssues.isNotEmpty ? scopedIssues : allIssues;
+    final activeIssuesList = scopedIssues;
 
     final filteredIssues = activeIssuesList.where((issue) {
       if (_selectedFilter == 'Pending') {
@@ -774,6 +760,13 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
               initialCenter:
                   _isGlobalScope ? const LatLng(20.0, 0.0) : userCoords,
               initialZoom: _isGlobalScope ? 1.8 : countryRegion.defaultZoom,
+              onMapReady: () {
+                if (!_isGlobalScope) {
+                  try {
+                    _mapController.move(userCoords, countryRegion.defaultZoom);
+                  } catch (_) {}
+                }
+              },
             ),
             children: [
               TileLayer(
@@ -954,6 +947,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     String userCity,
     String countryName,
   ) {
+    final countryRegion = GlobalRegions.findCountry(countryName);
     return Container(
       decoration: BoxDecoration(
         color: AppColors.background(context),
@@ -1033,12 +1027,12 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                         const SizedBox(height: AppSpace.md),
                     itemBuilder: (context, index) {
                       if (index == 0) {
-                        return const PremiumUpsellBanner(
+                        return PremiumUpsellBanner(
                           title:
                               'Vehicle Pothole or Flood Damage? Get Certified Claim PDF',
                           subtitle:
-                              'Download an official GPS + AI Vision verified forensic report accepted by Sri Lankan auto & property insurers.',
-                          priceBadge: 'LKR 450',
+                              'Download an official GPS + AI Vision verified forensic report accepted by ${countryRegion.name} auto & property municipal adjusters.',
+                          priceBadge: countryRegion.code == 'LK' ? 'LKR 450' : '\$4.50',
                           ctaLabel: 'Get Claim PDF',
                           icon: Icons.verified_outlined,
                         );
