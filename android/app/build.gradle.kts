@@ -19,7 +19,7 @@ val isReleaseTaskRequested = gradle.startParameter.taskNames.any {
 }
 
 android {
-    namespace = "com.smartcity.app"
+    namespace = "com.smartcity.civichub"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973"
 
@@ -34,7 +34,7 @@ android {
 
     defaultConfig {
         // Specify unique Application ID for Smart City.
-        applicationId = "com.smartcity.app"
+        applicationId = "com.smartcity.civichub"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

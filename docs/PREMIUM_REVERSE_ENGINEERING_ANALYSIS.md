@@ -125,3 +125,4 @@ Assuming a conservative **3.5% conversion rate** from free citizens to paid tier
 - **Projected Total Annual Recurring Revenue (ARR):** **$328,380 USD (~LKR 102 Million / year)**.
 
 This model funds municipal server infrastructure, private contractor repair SLAs, and continuous AI development while keeping essential public emergency services free for every citizen.
+
