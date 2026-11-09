@@ -15,7 +15,6 @@ import '../widgets/ai_insights_section.dart';
 import '../widgets/app_top_utilities.dart';
 import '../widgets/instagram_feed_section.dart';
 import '../widgets/premium_store_modal.dart';
-import '../widgets/smart_city_drawer.dart';
 import '../widgets/ui/ui.dart';
 import 'civic_alerts_screen.dart';
 import 'explore_screen.dart';
@@ -76,7 +75,6 @@ class HomeScreen extends StatelessWidget {
     final outline = AppColors.outline(context);
 
     return AppScaffold(
-      drawer: const SmartCityDrawer(),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AppSpace.lg,

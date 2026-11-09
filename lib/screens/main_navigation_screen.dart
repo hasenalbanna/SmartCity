@@ -126,6 +126,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background(context),
+      drawerScrimColor: Colors.black.withValues(alpha: 0.20),
+      drawer: const SmartCityDrawer(),
       body: body,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
