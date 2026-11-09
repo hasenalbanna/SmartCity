@@ -463,7 +463,35 @@ class _HotelBookingViewState extends State<HotelBookingView> {
           const SizedBox(height: AppSpace.lg),
         ],
 
-        // 6. Hotel Cards List (Booking.com Rating Score + Amenities + Show Prices / Book Now)
+        // 6. Hotel Cards List (Booking.com List Format)
+        if (hotels.isNotEmpty) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '${_selectedCity == 'All' ? 'Sri Lanka' : _selectedCity}: ${hotels.length} properties found',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.subtitle.copyWith(
+                    color: AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Text(
+                'Best match',
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textSecondary(context),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.sm),
+        ],
+
         if (hotels.isEmpty)
           const EmptyState(
             icon: Icons.hotel_outlined,
@@ -473,7 +501,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
         else
           ...hotels.map(
             (hotel) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSpace.lg),
+              padding: const EdgeInsets.only(bottom: AppSpace.md),
               child: _buildBookingComHotelCard(context, hotel),
             ),
           ),
@@ -507,6 +535,12 @@ class _HotelBookingViewState extends State<HotelBookingView> {
   ) {
     final priceUsd = _estimatedPriceUsd(hotel);
     final tierBadge = _tierBadgeLabel(hotel);
+    final primary = AppColors.primary(context);
+    final onPrimary = AppColors.onPrimary(context);
+    final textPrimary = AppColors.textPrimary(context);
+    final textSecondary = AppColors.textSecondary(context);
+    final border = AppColors.outline(context);
+    final success = AppColors.success(context);
 
     return AppCard(
       onTap: () {
@@ -517,179 +551,303 @@ class _HotelBookingViewState extends State<HotelBookingView> {
           ),
         );
       },
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Hero Photo with Category Pill & Booking.com Score Badge
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppRadius.lg),
-                ),
-                child: _buildHotelPhoto(hotel, height: 175),
-              ),
-              Positioned(
-                top: AppSpace.md,
-                left: AppSpace.md,
-                child: StatusChip(
-                  label: tierBadge,
-                  kind: StatusChipKind.info,
-                ),
-              ),
-              Positioned(
-                top: AppSpace.md,
-                right: AppSpace.md,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.sm,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.78),
-                    borderRadius: AppRadius.smBorder,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.star_rounded,
-                        color: AppColors.warning(context),
-                        size: 16,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${hotel.rating.toStringAsFixed(1)} • ${hotel.ratingText}',
-                        style: AppTypography.caption.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+      padding: const EdgeInsets.all(AppSpace.sm),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isCompact = constraints.maxWidth < 420;
+          final thumbWidth = isCompact ? 104.0 : 136.0;
+          final thumbHeight = isCompact ? 132.0 : 148.0;
 
-          // Card Body: Name, Distance from center, Review Count, Amenities, Price & CTAs
-          Padding(
-            padding: const EdgeInsets.all(AppSpace.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hotel.name,
-                  style: AppTypography.title.copyWith(
-                    color: AppColors.textPrimary(context),
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left: Booking.com Style Thumbnail Photo with Category Badge
+              ClipRRect(
+                borderRadius: AppRadius.mdBorder,
+                child: Stack(
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 15,
-                      color: AppColors.textSecondary(context),
+                    _buildHotelPhoto(
+                      hotel,
+                      width: thumbWidth,
+                      height: thumbHeight,
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        '${hotel.city} • ${hotel.distanceFromCenter} km from center • ${hotel.reviewCount} reviews',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary(context),
+                    Positioned(
+                      top: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.72),
+                          borderRadius: AppRadius.smBorder,
+                        ),
+                        child: Text(
+                          tierBadge.toUpperCase(),
+                          style: AppTypography.caption.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpace.sm),
-                Wrap(
-                  spacing: AppSpace.xs,
-                  runSpacing: AppSpace.xs,
-                  children: hotel.amenities.take(4).map((amenity) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.sm,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted(context),
-                        borderRadius: AppRadius.smBorder,
-                      ),
-                      child: Text(
-                        amenity,
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary(context),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: AppSpace.md),
-                SizedBox(
-                  width: double.infinity,
-                  child: Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: AppSpace.sm,
-                    runSpacing: AppSpace.sm,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '\$$priceUsd',
-                            style: AppTypography.display.copyWith(
-                              color: AppColors.primary(context),
-                            ),
-                          ),
-                          Text(
-                            'per night • ${hotel.priceRange}',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Wrap(
-                        spacing: AppSpace.xs,
-                        runSpacing: AppSpace.xs,
-                        children: [
-                          AppButton(
-                            label: 'Show Prices',
-                            variant: AppButtonVariant.secondary,
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      HotelDetailScreen(hotel: hotel),
+              ),
+              const SizedBox(width: AppSpace.sm),
+
+              // Right: Booking.com Structured Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Row 1: Title + Booking.com Score Pill
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                hotel.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.subtitle.copyWith(
+                                  color: textPrimary,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                              );
-                            },
+                              ),
+                              const SizedBox(height: 2),
+                              // Stars & Rating Text
+                              Row(
+                                children: [
+                                  for (int i = 0; i < 4; i++)
+                                    Icon(
+                                      Icons.star_rounded,
+                                      size: 13,
+                                      color: AppColors.warning(context),
+                                    ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      hotel.ratingText,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.caption.copyWith(
+                                        color: textSecondary,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                          AppButton(
-                            label: 'Book Now',
-                            icon: Icons.bolt_rounded,
-                            onPressed: () =>
-                                _showBookingSheet(context, hotel, priceUsd),
+                        ),
+                        const SizedBox(width: 6),
+                        // Booking.com Signature Score Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          decoration: BoxDecoration(
+                            color: primary,
+                            borderRadius: AppRadius.smBorder,
+                          ),
+                          child: Text(
+                            hotel.rating.toStringAsFixed(1),
+                            style: AppTypography.caption.copyWith(
+                              color: onPrimary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Row 2: Location & Distance
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 13,
+                          color: textSecondary,
+                        ),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            '${hotel.city} • ${hotel.distanceFromCenter} km from center',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption.copyWith(
+                              color: textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Row 3: Booking.com Signature Perk Tag
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 13,
+                          color: success,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Free cancellation • No prepayment',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.caption.copyWith(
+                              color: success,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Row 4: Top Amenities
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      children: hotel.amenities
+                          .take(isCompact ? 2 : 3)
+                          .map((amenity) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted(context),
+                            borderRadius: AppRadius.smBorder,
+                          ),
+                          child: Text(
+                            amenity,
+                            style: AppTypography.caption.copyWith(
+                              color: textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+
+                    // Row 5: Price & Action Buttons
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpace.xs,
+                      runSpacing: 4,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '\$$priceUsd',
+                              style: AppTypography.title.copyWith(
+                                color: primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            Text(
+                              '1 night • per room',
+                              style: AppTypography.caption.copyWith(
+                                color: textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        HotelDetailScreen(hotel: hotel),
+                                  ),
+                                );
+                              },
+                              borderRadius: AppRadius.smBorder,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceMuted(context),
+                                  border: Border.all(color: border),
+                                  borderRadius: AppRadius.smBorder,
+                                ),
+                                child: Text(
+                                  'Details',
+                                  style: AppTypography.caption.copyWith(
+                                    color: textPrimary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () =>
+                                  _showBookingSheet(context, hotel, priceUsd),
+                              borderRadius: AppRadius.smBorder,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpace.sm,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: primary,
+                                  borderRadius: AppRadius.smBorder,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.bolt_rounded,
+                                      size: 14,
+                                      color: onPrimary,
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'Book',
+                                      style: AppTypography.caption.copyWith(
+                                        color: onPrimary,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
