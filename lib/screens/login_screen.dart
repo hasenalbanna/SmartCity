@@ -75,19 +75,28 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Brand Mark
+              // Brand Mark — Sri Lanka Community Unity Logo on Pure White Badge
               Center(
                 child: Container(
-                  width: 64,
-                  height: 64,
+                  width: 96,
+                  height: 96,
+                  padding: const EdgeInsets.all(AppSpace.sm),
                   decoration: BoxDecoration(
-                    color: AppColors.primary(context),
-                    borderRadius: AppRadius.lgBorder,
-                  ),
-                  child: const Icon(
-                    Icons.location_city_rounded,
                     color: Colors.white,
-                    size: 34,
+                    borderRadius: AppRadius.lgBorder,
+                    border: Border.all(color: AppColors.outline(context)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: AppRadius.mdBorder,
+                    child: Image.asset(
+                      'assets/images/smart_city_logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.location_city_rounded,
+                        color: Colors.black,
+                        size: 40,
+                      ),
+                    ),
                   ),
                 ),
               ),

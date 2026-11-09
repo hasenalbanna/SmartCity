@@ -111,6 +111,24 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: AppSpace.xs),
+              Container(
+                width: 42,
+                height: 42,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(color: outline),
+                ),
+                child: ClipRRect(
+                  borderRadius: AppRadius.smBorder,
+                  child: Image.asset(
+                    'assets/images/smart_city_logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
               const SizedBox(width: AppSpace.sm),
               Expanded(
                 child: Column(
