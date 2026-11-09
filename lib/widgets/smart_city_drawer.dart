@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/community_issue.dart';
@@ -21,7 +22,6 @@ import '../services/currency_service.dart';
 import '../services/localization_service.dart';
 import '../services/notification_service.dart';
 import '../services/profile_service.dart';
-import '../services/subscription_service.dart';
 import '../services/theme_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -29,38 +29,41 @@ import '../theme/app_spacing.dart';
 import '../theme/app_typography.dart';
 import 'emergency_beacon_modal.dart';
 import 'premium_store_modal.dart';
-import 'ui/ui.dart';
+
+class _DrawerCategoryMeta {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const _DrawerCategoryMeta({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+}
 
 class _DrawerPageItem {
   final String id;
   final String title;
-  final String subtitle;
   final String category;
   final IconData icon;
   final String? badge;
-  final bool isDanger;
   final void Function(BuildContext context) onNavigate;
 
   const _DrawerPageItem({
     required this.id,
     required this.title,
-    required this.subtitle,
     required this.category,
     required this.icon,
     this.badge,
-    this.isDanger = false,
     required this.onNavigate,
   });
 }
 
-/// Psychologically Ordered 24-Page Navigation Drawer:
-/// Ordered by User Preference & Frequency of Engagement:
-/// 1. Explore, AI Trip & Stays (Most Loved Aspirational & Travel Experiences)
-/// 2. Smart Transit & Live Maps (Daily Habitual Mobility & GPS)
-/// 3. Social Feed, Chat & Saved (Community Connection & Memories)
-/// 4. Civic Reports & Falcon SOS (Safety, Hazard Reporting & Emergency)
-/// 5. Minimal B&W Utilities (Fast Personal Tools: Notifications, Calendar, Clock)
-/// 6. Profile, Settings & Pro Store (Account, 11 Languages, 6 Currencies & Store)
+/// Compact Liquid-Glass Transparent Left Drawer (`width: 266`):
+/// - Shows ONLY the 6 architectural categories by default.
+/// - Tapping any category smoothly expands/collapses its pages.
+/// - Uses BackdropFilter blur + translucent liquid glass surfaces.
 class SmartCityDrawer extends StatefulWidget {
   const SmartCityDrawer({super.key});
 
@@ -69,18 +72,40 @@ class SmartCityDrawer extends StatefulWidget {
 }
 
 class _SmartCityDrawerState extends State<SmartCityDrawer> {
-  String _searchQuery = '';
-  String _selectedCategory = 'All';
+  String? _expandedCategory;
 
-  static const List<String> _categories = [
-    'All',
-    '1. Explore, AI Trip & Stays',
-    '2. Smart Transit & Maps',
-    '3. Social, Chat & Saved',
-    '4. Civic Reports & SOS',
-    '5. Minimal B&W Utilities',
-    '6. Profile & Settings',
-  ];
+  static const Map<String, _DrawerCategoryMeta> _categoryMeta = {
+    '1. Explore & AI Trip': _DrawerCategoryMeta(
+      title: 'Explore & AI Trip',
+      subtitle: 'Trip Planner, Hotels, SIM & Guides',
+      icon: Icons.auto_awesome_rounded,
+    ),
+    '2. Smart Transit & Maps': _DrawerCategoryMeta(
+      title: 'Smart Transit & Maps',
+      subtitle: 'Live Bus Radar, Island Map & Route',
+      icon: Icons.directions_bus_filled_rounded,
+    ),
+    '3. Social, Chat & Saved': _DrawerCategoryMeta(
+      title: 'Social, Chat & Saved',
+      subtitle: 'Locals Feed, Chat, Saved & Journal',
+      icon: Icons.photo_camera_back_rounded,
+    ),
+    '4. Civic Reports & SOS': _DrawerCategoryMeta(
+      title: 'Civic Reports & SOS',
+      subtitle: 'Falcon AI SOS, Reports & Alerts',
+      icon: Icons.radar_rounded,
+    ),
+    '5. Daily Utilities': _DrawerCategoryMeta(
+      title: 'Daily Utilities',
+      subtitle: 'Notifications, Calendar & Clock',
+      icon: Icons.calendar_month_rounded,
+    ),
+    '6. Profile & Settings': _DrawerCategoryMeta(
+      title: 'Profile & Settings',
+      subtitle: 'Home, Profile, Languages & Pro',
+      icon: Icons.tune_rounded,
+    ),
+  };
 
   List<_DrawerPageItem> _buildSystemPages({
     required int pendingIssues,
@@ -89,248 +114,195 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
     required String activeCurrency,
   }) {
     return [
-      // ======================================================================
-      // CATEGORY 1: EXPLORE, AI TRIP & STAYS (6 PAGES — MOST LOVED BY USERS)
-      // ======================================================================
+      // 1. Explore & AI Trip (6 Pages)
       _DrawerPageItem(
         id: 'itinerary_planner',
-        title: 'Ceylon Explorer — AI Trip Planner',
-        subtitle: 'Unified Route Engine, Hotels, SIM Advisor & Expense Split',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'AI Trip & Route Planner',
+        category: '1. Explore & AI Trip',
         icon: Icons.auto_awesome_rounded,
-        badge: '#1 LOVED',
+        badge: '#1',
         onNavigate: (ctx) => _pushScreen(ctx, const ItineraryScreen()),
       ),
       _DrawerPageItem(
         id: 'explore',
-        title: 'Explore Smart Regions & Weather',
-        subtitle: 'Live weather cover, Must-See landmarks & 9 provinces',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'Explore Regions & Weather',
+        category: '1. Explore & AI Trip',
         icon: Icons.explore_rounded,
-        badge: 'HERO',
         onNavigate: (ctx) => _pushScreen(ctx, const ExploreScreen()),
       ),
       _DrawerPageItem(
         id: 'hotels',
-        title: 'Find Your Perfect Stay (Hotels)',
-        subtitle: 'Booking.com-style stays, map pins & room reservation',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'Find Hotels & Stays',
+        category: '1. Explore & AI Trip',
         icon: Icons.hotel_rounded,
-        badge: '12 STAYS',
+        badge: '12',
         onNavigate: (ctx) => _pushScreen(ctx, const HotelBookingScreen()),
       ),
       _DrawerPageItem(
         id: 'ai_travel_planner',
-        title: 'AI Day-by-Day Itinerary Generator',
-        subtitle: 'Custom Sri Lanka plan by days, budget & interests',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'AI Day-by-Day Generator',
+        category: '1. Explore & AI Trip',
         icon: Icons.event_note_rounded,
-        badge: 'AI',
         onNavigate: (ctx) => _pushScreen(ctx, const AiTravelPlannerScreen()),
       ),
       _DrawerPageItem(
         id: 'sim_advisor',
-        title: 'AI SIM Card & Coverage Advisor',
-        subtitle: 'Dialog, Mobitel, Airtel & Hutch tourist eSIM matcher',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'AI SIM & 5G Advisor',
+        category: '1. Explore & AI Trip',
         icon: Icons.sim_card_rounded,
-        badge: '5G/4G',
         onNavigate: (ctx) => _pushScreen(ctx, const SIMRecommendationScreen()),
       ),
       _DrawerPageItem(
         id: 'guides',
-        title: 'Certified Local Tour Guides',
-        subtitle: 'Verified cultural, safari, surfing & hiking specialists',
-        category: '1. Explore, AI Trip & Stays',
+        title: 'Local Tour Guides',
+        category: '1. Explore & AI Trip',
         icon: Icons.badge_outlined,
-        badge: '6 GUIDES',
         onNavigate: (ctx) => _pushScreen(ctx, const GuidesScreen()),
       ),
 
-      // ======================================================================
-      // CATEGORY 2: SMART TRANSIT & LIVE MAPS (3 PAGES — DAILY MOBILITY)
-      // ======================================================================
+      // 2. Smart Transit & Maps (3 Pages)
       _DrawerPageItem(
         id: 'smart_bus',
-        title: 'Smart Bus Live Radar (Routes 22 & 48)',
-        subtitle: 'Real-time bus telemetry, seat load & ETA countdown',
+        title: 'Smart Bus Live Radar',
         category: '2. Smart Transit & Maps',
         icon: Icons.directions_bus_filled_rounded,
-        badge: 'TAB 3',
+        badge: 'LIVE',
         onNavigate: (ctx) =>
             _switchOrPush(ctx, 2, const SmartBusTrackingScreen()),
       ),
       _DrawerPageItem(
         id: 'island_map',
-        title: 'Interactive Island & Smart City Map',
-        subtitle: 'Full-screen OpenStreetMap with UNESCO & civic pins',
+        title: 'Interactive Island Map',
         category: '2. Smart Transit & Maps',
         icon: Icons.map_rounded,
-        badge: 'OSM',
         onNavigate: (ctx) => _pushScreen(ctx, const MapScreen()),
       ),
       _DrawerPageItem(
         id: 'live_route_engine',
-        title: 'Live OSRM Route & Drive Engine',
-        subtitle: 'Multi-stop road routing, vehicle speed & fuel estimator',
+        title: 'Live OSRM Drive Engine',
         category: '2. Smart Transit & Maps',
         icon: Icons.alt_route_rounded,
-        badge: 'GPS',
         onNavigate: (ctx) => _pushScreen(ctx, const ItineraryScreen()),
       ),
 
-      // ======================================================================
-      // CATEGORY 3: SOCIAL FEED, CHAT & SAVED (4 PAGES — COMMUNITY LOOP)
-      // ======================================================================
+      // 3. Social, Chat & Saved (4 Pages)
       _DrawerPageItem(
         id: 'social_feed',
-        title: 'Locals by AI — Instagram Feed',
-        subtitle: 'Citizen stories, photo uploads, likes & comments',
+        title: 'Locals by AI Feed',
         category: '3. Social, Chat & Saved',
         icon: Icons.photo_camera_back_rounded,
-        badge: 'SOCIAL',
         onNavigate: (ctx) => _pushScreen(ctx, const CommunityFeedScreen()),
       ),
       _DrawerPageItem(
         id: 'realtime_chat',
-        title: 'Realtime Citizen & Guide Chat',
-        subtitle: 'Clean minimal B&W messaging with municipal & tour desks',
+        title: 'Realtime Citizen Chat',
         category: '3. Social, Chat & Saved',
         icon: Icons.chat_bubble_outline_rounded,
-        badge: 'MINIMAL B&W',
         onNavigate: (ctx) => _pushScreen(ctx, const ChatListScreen()),
       ),
       _DrawerPageItem(
         id: 'saved',
-        title: 'Saved Trips, Places & Stays',
-        subtitle: 'Bookmarked routes, heritage landmarks & luxury hotels',
+        title: 'Saved Trips & Stays',
         category: '3. Social, Chat & Saved',
         icon: Icons.bookmarks_outlined,
         onNavigate: (ctx) => _pushScreen(ctx, const SavedScreen()),
       ),
       _DrawerPageItem(
         id: 'trip_journal',
-        title: 'Trip Journal & Field Memories',
-        subtitle: 'Personal travel log, photos & route distance archive',
+        title: 'Trip Journal & Memories',
         category: '3. Social, Chat & Saved',
         icon: Icons.menu_book_rounded,
         onNavigate: (ctx) => _pushScreen(ctx, const TripJournalScreen()),
       ),
 
-      // ======================================================================
-      // CATEGORY 4: CIVIC REPORTS & FALCON AI SOS (4 PAGES — SAFETY & OPS)
-      // ======================================================================
+      // 4. Civic Reports & SOS (4 Pages)
       _DrawerPageItem(
         id: 'reports',
-        title: 'Citizen Issue & Disaster Hub',
-        subtitle: '2-Mode Hub: Local Issues & Falcon AI Voice Guardian',
+        title: 'Issue & Disaster Hub',
         category: '4. Civic Reports & SOS',
         icon: Icons.report_problem_rounded,
-        badge: pendingIssues > 0 ? '$pendingIssues OPEN' : 'TAB 2',
+        badge: pendingIssues > 0 ? '$pendingIssues' : null,
         onNavigate: (ctx) =>
             _switchOrPush(ctx, 1, const CommunityIssuesScreen()),
       ),
       _DrawerPageItem(
         id: 'report_wizard',
-        title: 'Falcon AI Voice SOS & Issue Wizard',
-        subtitle: 'Say "Hey Falcon, wake up" or report local road hazards',
+        title: 'Falcon AI Voice SOS',
         category: '4. Civic Reports & SOS',
         icon: Icons.record_voice_over_rounded,
-        badge: 'FALCON AI',
-        isDanger: true,
+        badge: 'SOS',
         onNavigate: (ctx) => _pushScreen(ctx, const ReportIssueWizardScreen()),
       ),
       _DrawerPageItem(
         id: 'civic_alerts',
-        title: 'Civic Alerts & Weather Radar',
-        subtitle: '117 DMC monsoon warnings & council work orders',
+        title: 'Weather & Civic Alerts',
         category: '4. Civic Reports & SOS',
         icon: Icons.campaign_rounded,
-        badge: 'LIVE',
         onNavigate: (ctx) => _pushScreen(ctx, const CivicAlertsScreen()),
       ),
       _DrawerPageItem(
         id: 'sos_beacon',
-        title: 'Emergency SOS Strobe & Hotlines',
-        subtitle: '1990 Suwa Seriya, 117 DMC & instant GPS distress beacon',
+        title: 'Emergency SOS Strobe',
         category: '4. Civic Reports & SOS',
         icon: Icons.sos_rounded,
-        badge: '117 / 1990',
-        isDanger: true,
         onNavigate: (ctx) {
           Navigator.pop(ctx);
           EmergencyBeaconModal.show(ctx);
         },
       ),
 
-      // ======================================================================
-      // CATEGORY 5: MINIMAL B&W DAILY UTILITIES (3 PAGES — MONOCHROME SUITE)
-      // ======================================================================
+      // 5. Daily Utilities (3 Pages)
       _DrawerPageItem(
         id: 'notifications',
-        title: 'System Notifications & Inbox',
-        subtitle: 'Clean minimal B&W alerts, work orders & bus ETA',
-        category: '5. Minimal B&W Utilities',
+        title: 'Notifications Inbox',
+        category: '5. Daily Utilities',
         icon: Icons.notifications_active_outlined,
-        badge: unreadNotifications > 0 ? '$unreadNotifications NEW' : 'B&W',
+        badge: unreadNotifications > 0 ? '$unreadNotifications' : null,
         onNavigate: (ctx) => _pushScreen(ctx, const NotificationsScreen()),
       ),
       _DrawerPageItem(
         id: 'calendar',
-        title: 'Travel & Civic Schedule Calendar',
-        subtitle: 'Clean minimal B&W 7-day planner for trips & inspections',
-        category: '5. Minimal B&W Utilities',
+        title: 'Schedule Calendar',
+        category: '5. Daily Utilities',
         icon: Icons.calendar_month_rounded,
-        badge: 'B&W',
         onNavigate: (ctx) => _pushScreen(ctx, const ScheduleCalendarScreen()),
       ),
       _DrawerPageItem(
         id: 'world_clock',
-        title: 'World Clock & Travel Timer',
-        subtitle: 'Clean minimal B&W Colombo (UTC+5:30) multi-zone clock',
-        category: '5. Minimal B&W Utilities',
+        title: 'World Clock & Timer',
+        category: '5. Daily Utilities',
         icon: Icons.access_time_filled_rounded,
-        badge: 'B&W',
         onNavigate: (ctx) => _pushScreen(ctx, const WorldClockScreen()),
       ),
 
-      // ======================================================================
-      // CATEGORY 6: PROFILE, SETTINGS & PRO STORE (4 PAGES — CONTROL CENTER)
-      // ======================================================================
+      // 6. Profile & Settings (4 Pages)
       _DrawerPageItem(
         id: 'home',
-        title: 'Smart City Home Dashboard',
-        subtitle: 'Calm 5-Zone Command Center & Most Popular Experiences',
+        title: 'Smart City Home',
         category: '6. Profile & Settings',
         icon: Icons.home_rounded,
-        badge: 'TAB 1',
         onNavigate: (ctx) => _switchOrPush(ctx, 0, null),
       ),
       _DrawerPageItem(
         id: 'profile',
-        title: 'Citizen Profile & Civic Hub',
-        subtitle: 'Digital Citizen ID, Smart Transit Pass & evidence vault',
+        title: 'Citizen Profile & ID',
         category: '6. Profile & Settings',
         icon: Icons.person_rounded,
-        badge: 'TAB 4',
         onNavigate: (ctx) => _switchOrPush(ctx, 3, const ProfileScreen()),
       ),
       _DrawerPageItem(
         id: 'settings',
-        title: 'Settings & Smart City Control Center',
-        subtitle: '11 Languages, 6 Currencies, Dark Mode & Falcon AI',
+        title: 'Settings & Languages',
         category: '6. Profile & Settings',
         icon: Icons.settings_rounded,
-        badge: '$activeLang • $activeCurrency',
+        badge: '$activeLang•$activeCurrency',
         onNavigate: (ctx) => _pushScreen(ctx, const SettingsScreen()),
       ),
       _DrawerPageItem(
         id: 'pro_store',
-        title: 'Smart City Pro & Revenue Storefront',
-        subtitle: 'Falcon Shield+ Pro, Insurance Dossiers & Sponsored Pins',
+        title: 'Smart City Pro Store',
         category: '6. Profile & Settings',
         icon: Icons.workspace_premium_rounded,
-        badge: 'PRO',
         onNavigate: (ctx) {
           Navigator.pop(ctx);
           PremiumStoreModal.show(ctx);
@@ -370,8 +342,17 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
     final notifService = context.watch<NotificationService>();
     final localization = context.watch<LocalizationService>();
     final currency = context.watch<CurrencyService>();
-    final subscription = context.watch<SubscriptionService>();
     final themeService = context.watch<ThemeService>();
+
+    final isDark = AppColors.isDark(context);
+    final fg = isDark ? Colors.white : Colors.black;
+    final muted = isDark ? Colors.white70 : Colors.black54;
+    final glassBorder = isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.black.withValues(alpha: 0.12);
+    final glassTileFill = isDark
+        ? Colors.white.withValues(alpha: 0.07)
+        : Colors.black.withValues(alpha: 0.04);
 
     final userName = profile.displayName.isNotEmpty
         ? profile.displayName
@@ -391,470 +372,377 @@ class _SmartCityDrawerState extends State<SmartCityDrawer> {
       activeCurrency: currency.currentCurrency,
     );
 
-    final filteredPages = allPages.where((p) {
-      if (_selectedCategory != 'All' && p.category != _selectedCategory) {
-        return false;
-      }
-      if (_searchQuery.trim().isEmpty) return true;
-      final q = _searchQuery.toLowerCase();
-      return p.title.toLowerCase().contains(q) ||
-          p.subtitle.toLowerCase().contains(q) ||
-          p.category.toLowerCase().contains(q);
-    }).toList();
-
     final Map<String, List<_DrawerPageItem>> grouped = {};
-    for (final page in filteredPages) {
+    for (final page in allPages) {
       grouped.putIfAbsent(page.category, () => []).add(page);
     }
 
     return Drawer(
-      width: 356,
-      backgroundColor: AppColors.background(context),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // 1. Drawer Architecture Header
-            Container(
-              padding: const EdgeInsets.all(AppSpace.lg),
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                border: Border(
-                  bottom: BorderSide(color: AppColors.outline(context)),
-                ),
+      width: 262,
+      backgroundColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.horizontal(
+          right: Radius.circular(28),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 26, sigmaY: 26),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        Colors.black.withValues(alpha: 0.58),
+                        Colors.black.withValues(alpha: 0.76),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.72),
+                        Colors.white.withValues(alpha: 0.88),
+                      ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: AppColors.primary(context),
-                        backgroundImage: profile.avatarBytes != null
-                            ? MemoryImage(profile.avatarBytes!)
-                            : null,
-                        child: profile.avatarBytes == null
-                            ? Text(
-                                avatarLetter,
-                                style: AppTypography.title.copyWith(
-                                  color: AppColors.onPrimary(context),
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              userName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.subtitle.copyWith(
-                                color: AppColors.textPrimary(context),
-                              ),
-                            ),
-                            Text(
-                              '${subscription.currentPlanName} • 24 Pages by Priority',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.caption.copyWith(
-                                color: AppColors.textSecondary(context),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Toggle Theme',
-                        onPressed: themeService.toggleTheme,
-                        icon: Icon(
-                          AppColors.isDark(context)
-                              ? Icons.light_mode_outlined
-                              : Icons.dark_mode_outlined,
-                          color: AppColors.primary(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.md),
-
-                  // Search Box inside Drawer
-                  TextField(
-                    onChanged: (v) => setState(() => _searchQuery = v),
-                    style: AppTypography.body.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search all 24 system pages...',
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        size: 18,
-                        color: AppColors.textSecondary(context),
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear_rounded, size: 16),
-                              onPressed: () =>
-                                  setState(() => _searchQuery = ''),
-                            )
-                          : null,
-                      isDense: true,
-                      filled: true,
-                      fillColor: AppColors.surfaceMuted(context),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: AppSpace.md,
-                        vertical: AppSpace.sm,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.mdBorder,
-                        borderSide: BorderSide(
-                          color: AppColors.outline(context),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.mdBorder,
-                        borderSide: BorderSide(
-                          color: AppColors.outline(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpace.sm),
-
-                  // Category Filter Pills
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _categories.map((cat) {
-                        final selected = _selectedCategory == cat;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: AppSpace.xs),
-                          child: ChoiceChip(
-                            label: Text(cat),
-                            selected: selected,
-                            onSelected: (_) =>
-                                setState(() => _selectedCategory = cat),
-                            selectedColor: AppColors.primary(context),
-                            backgroundColor: AppColors.surfaceMuted(context),
-                            labelStyle: AppTypography.caption.copyWith(
-                              color: selected
-                                  ? AppColors.onPrimary(context)
-                                  : AppColors.textPrimary(context),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
+              borderRadius: const BorderRadius.horizontal(
+                right: Radius.circular(28),
+              ),
+              border: Border(
+                right: BorderSide(color: glassBorder, width: 1.2),
               ),
             ),
-
-            // 2. Categorized System Pages List (With "Most Loved" Quick Pin Bar)
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.md,
-                ),
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_searchQuery.isEmpty && _selectedCategory == 'All') ...[
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: AppSpace.xs,
-                        bottom: AppSpace.xs,
-                      ),
-                      child: Text(
-                        '★ MOST LOVED BY USERS (1-TAP)',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.primary(context),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                  // 1. Compact Liquid Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg,
+                      AppSpace.md,
+                      AppSpace.md,
+                      AppSpace.md,
                     ),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildTopFavoriteChip(
-                            context,
-                            icon: Icons.auto_awesome_rounded,
-                            label: 'AI Trip',
-                            onTap: () =>
-                                _pushScreen(context, const ItineraryScreen()),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: fg,
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(width: AppSpace.xs),
-                          _buildTopFavoriteChip(
-                            context,
-                            icon: Icons.hotel_rounded,
-                            label: 'Hotels',
-                            onTap: () => _pushScreen(
-                              context,
-                              const HotelBookingScreen(),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          _buildTopFavoriteChip(
-                            context,
-                            icon: Icons.explore_rounded,
-                            label: 'Explore',
-                            onTap: () =>
-                                _pushScreen(context, const ExploreScreen()),
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          _buildTopFavoriteChip(
-                            context,
-                            icon: Icons.directions_bus_filled_rounded,
-                            label: 'Smart Bus',
-                            onTap: () => _switchOrPush(
-                              context,
-                              2,
-                              const SmartBusTrackingScreen(),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpace.xs),
-                          _buildTopFavoriteChip(
-                            context,
-                            icon: Icons.radar_rounded,
-                            label: 'Falcon SOS',
-                            onTap: () => _pushScreen(
-                              context,
-                              const ReportIssueWizardScreen(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.md),
-                  ],
-                  for (final entry in grouped.entries) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(
-                        left: AppSpace.xs,
-                        top: AppSpace.sm,
-                        bottom: AppSpace.xs,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            entry.key.toUpperCase(),
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.primary(context),
+                          alignment: Alignment.center,
+                          child: Text(
+                            avatarLetter,
+                            style: AppTypography.subtitle.copyWith(
+                              color: isDark ? Colors.black : Colors.white,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                          Text(
-                            '${entry.value.length} pages',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ...entry.value.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpace.xs),
-                        child: InkWell(
-                          onTap: () => item.onNavigate(context),
-                          borderRadius: AppRadius.mdBorder,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpace.md,
-                              vertical: AppSpace.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface(context),
-                              borderRadius: AppRadius.mdBorder,
-                              border: Border.all(
-                                color: item.isDanger
-                                    ? AppColors.danger(
-                                        context,
-                                      ).withValues(alpha: 0.35)
-                                    : AppColors.outline(context),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                userName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.subtitle.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: item.isDanger
-                                        ? AppColors.danger(
-                                            context,
-                                          ).withValues(alpha: 0.12)
-                                        : AppColors.primary(
-                                            context,
-                                          ).withValues(alpha: 0.12),
-                                    borderRadius: AppRadius.smBorder,
-                                  ),
-                                  child: Icon(
-                                    item.icon,
-                                    size: 18,
-                                    color: item.isDanger
-                                        ? AppColors.danger(context)
-                                        : AppColors.primary(context),
-                                  ),
+                              Text(
+                                '6 Categories • 24 Pages',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.caption.copyWith(
+                                  color: muted,
                                 ),
-                                const SizedBox(width: AppSpace.md),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.bodyStrong
-                                            .copyWith(
-                                              color: AppColors.textPrimary(
-                                                context,
-                                              ),
-                                            ),
-                                      ),
-                                      Text(
-                                        item.subtitle,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.caption.copyWith(
-                                          color: AppColors.textSecondary(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Switch Theme',
+                          onPressed: themeService.toggleTheme,
+                          icon: Icon(
+                            isDark
+                                ? Icons.light_mode_outlined
+                                : Icons.dark_mode_outlined,
+                            size: 20,
+                            color: fg,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(color: glassBorder, height: 1),
+
+                  // 2. Category-Only Liquid Accordion List
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.md,
+                      ),
+                      children: [
+                        for (final entry in grouped.entries)
+                          _buildLiquidCategoryAccordion(
+                            context,
+                            categoryKey: entry.key,
+                            items: entry.value,
+                            isDark: isDark,
+                            fg: fg,
+                            muted: muted,
+                            glassBorder: glassBorder,
+                            glassTileFill: glassTileFill,
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // 3. Compact Liquid Footer
+                  Divider(color: glassBorder, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpace.md),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.pop(context);
+                              PremiumStoreModal.show(context);
+                            },
+                            borderRadius: AppRadius.mdBorder,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpace.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: fg,
+                                borderRadius: AppRadius.mdBorder,
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Pro Store',
+                                style: AppTypography.caption.copyWith(
+                                  color: isDark ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                if (item.badge != null) ...[
-                                  const SizedBox(width: AppSpace.xs),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: item.isDanger
-                                          ? AppColors.danger(
-                                              context,
-                                            ).withValues(alpha: 0.14)
-                                          : AppColors.primary(
-                                              context,
-                                            ).withValues(alpha: 0.12),
-                                      borderRadius: AppRadius.smBorder,
-                                    ),
-                                    child: Text(
-                                      item.badge!,
-                                      style: AppTypography.caption.copyWith(
-                                        color: item.isDanger
-                                            ? AppColors.danger(context)
-                                            : AppColors.primary(context),
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpace.sm),
-                  ],
-                ],
-              ),
-            ),
-
-            // 3. Drawer Footer: Quick Pro Upgrade & Sign Out
-            Container(
-              padding: const EdgeInsets.all(AppSpace.md),
-              decoration: BoxDecoration(
-                color: AppColors.surface(context),
-                border: Border(
-                  top: BorderSide(color: AppColors.outline(context)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: AppButton(
-                      label: 'Pro Store',
-                      icon: Icons.workspace_premium_rounded,
-                      variant: AppButtonVariant.secondary,
-                      onPressed: () {
-                        Navigator.pop(context);
-                        PremiumStoreModal.show(context);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: AppSpace.sm),
-                  Expanded(
-                    child: AppButton(
-                      label: 'Sign Out',
-                      icon: Icons.logout_rounded,
-                      variant: AppButtonVariant.ghost,
-                      onPressed: () async {
-                        await auth.logout();
-                        if (context.mounted) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (_) => const LoginScreen(),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () async {
+                              await auth.logout();
+                              if (context.mounted) {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginScreen(),
+                                  ),
+                                  (_) => false,
+                                );
+                              }
+                            },
+                            borderRadius: AppRadius.mdBorder,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpace.sm,
+                              ),
+                              decoration: BoxDecoration(
+                                color: glassTileFill,
+                                borderRadius: AppRadius.mdBorder,
+                                border: Border.all(color: glassBorder),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Sign Out',
+                                style: AppTypography.caption.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                            (_) => false,
-                          );
-                        }
-                      },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTopFavoriteChip(
+  Widget _buildLiquidCategoryAccordion(
     BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
+    required String categoryKey,
+    required List<_DrawerPageItem> items,
+    required bool isDark,
+    required Color fg,
+    required Color muted,
+    required Color glassBorder,
+    required Color glassTileFill,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: AppRadius.pillBorder,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpace.md,
-          vertical: AppSpace.xs,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface(context),
-          borderRadius: AppRadius.pillBorder,
-          border: Border.all(color: AppColors.outline(context)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: AppColors.primary(context)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: AppColors.textPrimary(context),
-                fontWeight: FontWeight.w700,
+    final isExpanded = _expandedCategory == categoryKey;
+    final meta = _categoryMeta[categoryKey] ??
+        _DrawerCategoryMeta(
+          title: categoryKey,
+          subtitle: '${items.length} pages',
+          icon: Icons.folder_outlined,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () {
+              setState(() {
+                _expandedCategory = isExpanded ? null : categoryKey;
+              });
+            },
+            borderRadius: AppRadius.mdBorder,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.md,
+              ),
+              decoration: BoxDecoration(
+                color: isExpanded
+                    ? (isDark
+                        ? Colors.white.withValues(alpha: 0.14)
+                        : Colors.black.withValues(alpha: 0.08))
+                    : glassTileFill,
+                borderRadius: AppRadius.mdBorder,
+                border: Border.all(
+                  color: isExpanded ? fg.withValues(alpha: 0.45) : glassBorder,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: isExpanded ? fg : glassTileFill,
+                      borderRadius: AppRadius.smBorder,
+                      border: Border.all(color: glassBorder),
+                    ),
+                    child: Icon(
+                      meta.icon,
+                      size: 17,
+                      color: isExpanded
+                          ? (isDark ? Colors.black : Colors.white)
+                          : fg,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          meta.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodyStrong.copyWith(color: fg),
+                        ),
+                        Text(
+                          meta.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 20,
+                    color: muted,
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          if (isExpanded)
+            Padding(
+              padding: const EdgeInsets.only(
+                left: AppSpace.md,
+                top: AppSpace.xs,
+              ),
+              child: Column(
+                children: items.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: InkWell(
+                      onTap: () => item.onNavigate(context),
+                      borderRadius: AppRadius.smBorder,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.sm,
+                        ),
+                        decoration: BoxDecoration(
+                          color: glassTileFill,
+                          borderRadius: AppRadius.smBorder,
+                          border: Border.all(color: glassBorder),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(item.icon, size: 16, color: fg),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Text(
+                                item.title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.caption.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (item.badge != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: fg,
+                                  borderRadius: AppRadius.pillBorder,
+                                ),
+                                child: Text(
+                                  item.badge!,
+                                  style: AppTypography.caption.copyWith(
+                                    color: isDark ? Colors.black : Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+        ],
       ),
     );
   }
