@@ -124,7 +124,10 @@ class HotelDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: AppSpace.sm),
-                        Row(
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -138,12 +141,11 @@ class HotelDetailScreen extends StatelessWidget {
                               child: Text(
                                 hotel.rating.toStringAsFixed(1),
                                 style: AppTypography.subtitle.copyWith(
-                                  color: Colors.white,
+                                  color: AppColors.onPrimary(context),
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: AppSpace.sm),
                             Text(
                               hotel.ratingText,
                               style: AppTypography.subtitle.copyWith(
@@ -151,7 +153,6 @@ class HotelDetailScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(width: AppSpace.sm),
                             Text(
                               '(${hotel.reviewCount} verified reviews)',
                               style: AppTypography.caption.copyWith(

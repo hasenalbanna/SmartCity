@@ -178,36 +178,43 @@ class _HotelBookingViewState extends State<HotelBookingView> {
         // 1. Hero Header Banner ("Find Your Perfect Stay" + Booking.com Verified Badge)
         ClipRRect(
           borderRadius: AppRadius.lgBorder,
-          child: SizedBox(
-            height: 128,
-            width: double.infinity,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 128),
             child: Stack(
-              fit: StackFit.expand,
               children: [
-                Image.asset(
-                  'assets/southern province/mirissa beach.jpg',
-                  fit: BoxFit.cover,
+                Positioned.fill(
+                  child: Image.asset(
+                    'assets/southern province/mirissa beach.jpg',
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.78),
-                        Colors.black.withValues(alpha: 0.45),
-                      ],
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.78),
+                          Colors.black.withValues(alpha: 0.45),
+                        ],
+                      ),
                     ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpace.lg),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: AppSpace.md,
+                      runSpacing: AppSpace.sm,
+                      children: [
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const StatusChip(
                               label: 'BOOKING.COM PARTNER',
@@ -217,8 +224,9 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                             const SizedBox(height: AppSpace.xs),
                             Text(
                               'Find Your Perfect Stay',
-                              style: AppTypography.display.copyWith(
+                              style: AppTypography.title.copyWith(
                                 color: Colors.white,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
                             Text(
@@ -229,14 +237,14 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                             ),
                           ],
                         ),
-                      ),
-                      AppButton(
-                        label: _showMap ? 'Hide Map' : 'Show Map',
-                        icon: Icons.map_outlined,
-                        variant: AppButtonVariant.secondary,
-                        onPressed: () => setState(() => _showMap = !_showMap),
-                      ),
-                    ],
+                        AppButton(
+                          label: _showMap ? 'Hide Map' : 'Show Map',
+                          icon: Icons.map_outlined,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => setState(() => _showMap = !_showMap),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -381,7 +389,7 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.caption.copyWith(
-                                    color: Colors.white,
+                                    color: AppColors.onPrimary(context),
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
@@ -624,50 +632,59 @@ class _HotelBookingViewState extends State<HotelBookingView> {
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpace.md),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '\$$priceUsd',
-                          style: AppTypography.display.copyWith(
-                            color: AppColors.primary(context),
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: AppSpace.sm,
+                    runSpacing: AppSpace.sm,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '\$$priceUsd',
+                            style: AppTypography.display.copyWith(
+                              color: AppColors.primary(context),
+                            ),
                           ),
-                        ),
-                        Text(
-                          'per night • ${hotel.priceRange}',
-                          style: AppTypography.caption.copyWith(
-                            color: AppColors.textSecondary(context),
+                          Text(
+                            'per night • ${hotel.priceRange}',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.textSecondary(context),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        AppButton(
-                          label: 'Show Prices',
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => HotelDetailScreen(hotel: hotel),
-                              ),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: AppSpace.sm),
-                        AppButton(
-                          label: 'Book Now',
-                          icon: Icons.bolt_rounded,
-                          onPressed: () =>
-                              _showBookingSheet(context, hotel, priceUsd),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                      Wrap(
+                        spacing: AppSpace.xs,
+                        runSpacing: AppSpace.xs,
+                        children: [
+                          AppButton(
+                            label: 'Show Prices',
+                            variant: AppButtonVariant.secondary,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      HotelDetailScreen(hotel: hotel),
+                                ),
+                              );
+                            },
+                          ),
+                          AppButton(
+                            label: 'Book Now',
+                            icon: Icons.bolt_rounded,
+                            onPressed: () =>
+                                _showBookingSheet(context, hotel, priceUsd),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

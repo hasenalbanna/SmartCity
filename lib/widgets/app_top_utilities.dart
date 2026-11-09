@@ -19,6 +19,9 @@ class AppTopUtilities extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final unread = context.watch<NotificationService>().unreadCount;
+    final isCompact = MediaQuery.sizeOf(context).width < 430;
+    final gap = isCompact ? 4.0 : AppSpace.sm;
+    final boxSize = isCompact ? 34.0 : 42.0;
 
     final boxBg = isDark ? Colors.black : Colors.white;
     final boxBorder = isDark ? Colors.white24 : Colors.black12;
@@ -29,6 +32,7 @@ class AppTopUtilities extends StatelessWidget {
     return Padding(
       padding: padding,
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _buildUtilityButton(
             tooltip: 'Realtime Chat',
@@ -36,27 +40,30 @@ class AppTopUtilities extends StatelessWidget {
             boxBg: boxBg,
             boxBorder: boxBorder,
             iconColor: iconColor,
+            boxSize: boxSize,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ChatListScreen()),
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          SizedBox(width: gap),
           _buildUtilityButton(
             tooltip: 'Toggle Light / Dark Mode',
             icon: isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
             boxBg: boxBg,
             boxBorder: boxBorder,
             iconColor: iconColor,
+            boxSize: boxSize,
             onTap: () => context.read<ThemeService>().toggleTheme(),
           ),
-          const SizedBox(width: AppSpace.sm),
+          SizedBox(width: gap),
           _buildUtilityButton(
             tooltip: 'Schedule Calendar',
             icon: Icons.calendar_month_outlined,
             boxBg: boxBg,
             boxBorder: boxBorder,
             iconColor: iconColor,
+            boxSize: boxSize,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -64,19 +71,20 @@ class AppTopUtilities extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          SizedBox(width: gap),
           _buildUtilityButton(
             tooltip: 'World Clock & Timer',
             icon: Icons.access_time_outlined,
             boxBg: boxBg,
             boxBorder: boxBorder,
             iconColor: iconColor,
+            boxSize: boxSize,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const WorldClockScreen()),
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          SizedBox(width: gap),
           InkWell(
             onTap: () => Navigator.push(
               context,
@@ -91,6 +99,7 @@ class AppTopUtilities extends StatelessWidget {
                   boxBg: boxBg,
                   boxBorder: boxBorder,
                   iconColor: iconColor,
+                  boxSize: boxSize,
                 ),
                 if (unread > 0)
                   Positioned(
@@ -129,6 +138,7 @@ class AppTopUtilities extends StatelessWidget {
     required Color boxBg,
     required Color boxBorder,
     required Color iconColor,
+    required double boxSize,
     required VoidCallback onTap,
   }) {
     return Tooltip(
@@ -141,6 +151,7 @@ class AppTopUtilities extends StatelessWidget {
           boxBg: boxBg,
           boxBorder: boxBorder,
           iconColor: iconColor,
+          boxSize: boxSize,
         ),
       ),
     );
@@ -151,10 +162,11 @@ class AppTopUtilities extends StatelessWidget {
     required Color boxBg,
     required Color boxBorder,
     required Color iconColor,
+    required double boxSize,
   }) {
     return Container(
-      width: 42,
-      height: 42,
+      width: boxSize,
+      height: boxSize,
       decoration: BoxDecoration(
         color: boxBg,
         borderRadius: AppRadius.mdBorder,
@@ -162,7 +174,7 @@ class AppTopUtilities extends StatelessWidget {
       ),
       child: Icon(
         icon,
-        size: 19,
+        size: boxSize <= 34 ? 16 : 19,
         color: iconColor,
       ),
     );
