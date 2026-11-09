@@ -492,7 +492,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
             right: AppSpace.md,
             bottom: AppSpace.md,
             child: AppButton(
-              label: 'Nintavur',
+              label: 'Smart Hub',
               icon: Icons.my_location_rounded,
               variant: AppButtonVariant.secondary,
               onPressed: () {

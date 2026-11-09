@@ -38,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _offlineMapCache = true;
 
   static const List<String> _wards = [
-    'Ward 01 — Nintavur North',
+    'Ward 01 — Colombo & Global Hub',
     'Ward 02 — Hospital Road',
     'Ward 03 — Town Central',
     'Ward 04 — Addappalam',
@@ -170,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               : 'AL Banna');
     final userBio = profile.bio.isNotEmpty
         ? profile.bio
-        : 'Civic Steward • Nintavur Smart Municipality';
+        : 'Civic Steward • Global Smart City Network';
     final avatarLetter = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
 
     final allIssues = issueService.issues;
@@ -502,7 +502,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Nintavur Smart Transit Card',
+                            'Global Smart Transit Card',
                             style: AppTypography.subtitle.copyWith(
                               color: AppColors.textPrimary(context),
                             ),
@@ -664,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildHotlineChip(
                 context,
                 title: '067-2250111 Council',
-                subtitle: 'Nintavur Pradeshiya Sabha',
+                subtitle: 'National & Global Smart City Council',
                 icon: Icons.account_balance_outlined,
                 color: AppColors.primary(context),
                 notificationService: notificationService,
@@ -926,7 +926,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: AppColors.primary(context),
                   ),
                   title: Text(
-                    'Offline Nintavur Map & Report Queue',
+                    'Offline Global Map & Report Queue',
                     style: AppTypography.bodyStrong.copyWith(
                       color: AppColors.textPrimary(context),
                     ),

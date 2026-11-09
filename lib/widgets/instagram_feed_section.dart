@@ -28,7 +28,7 @@ class InstagramFeedSection extends StatelessWidget {
     _StoryUser(name: 'Sarah K.'),
     _StoryUser(name: 'David R.'),
     _StoryUser(name: 'Falcon AI'),
-    _StoryUser(name: 'Nintavur MC'),
+    _StoryUser(name: 'Smart City'),
   ];
 
   @override
@@ -57,7 +57,7 @@ class InstagramFeedSection extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Live photos & updates posted by Nintavur citizens',
+                    'Live photos & updates posted by citizens worldwide',
                     style: AppTypography.caption.copyWith(
                       color: AppColors.textSecondary(context),
                     ),
@@ -551,7 +551,7 @@ class CreateInstagramPostModal extends StatefulWidget {
 class _CreateInstagramPostModalState extends State<CreateInstagramPostModal> {
   final TextEditingController _captionCtrl = TextEditingController();
   final TextEditingController _locationCtrl = TextEditingController(
-    text: 'Nintavur Smart Hub',
+    text: 'Global Smart Hub',
   );
   String _selectedPhotoUrl = 'assets/western province/galle-face.jpg';
 
@@ -657,7 +657,7 @@ class _CreateInstagramPostModalState extends State<CreateInstagramPostModal> {
           AppTextField(
             controller: _locationCtrl,
             label: 'Location Tag',
-            hint: 'e.g. Nintavur Beachfront',
+            hint: 'e.g. Colombo, Kandy, London, Dubai...',
           ),
           const SizedBox(height: AppSpace.md),
           AppTextField(

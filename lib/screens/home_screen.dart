@@ -141,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                       style: AppTypography.title.copyWith(color: fg),
                     ),
                     Text(
-                      'Nintavur • ${subService.currentPlanName}',
+                      'Smart City Global • ${subService.currentPlanName}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.caption.copyWith(color: muted),
@@ -369,7 +369,7 @@ class HomeScreen extends StatelessWidget {
           // ===================================================================
           SectionHeader(
             title: 'Live City Pulse',
-            subtitle: 'Real-time Nintavur civic status at a glance',
+            subtitle: 'Real-time national & global smart city status at a glance',
             actionLabel: 'All Reports (${issues.length})',
             onAction: () => MainNavigationScreen.switchToTab(context, 1),
           ),

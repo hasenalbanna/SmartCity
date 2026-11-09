@@ -511,7 +511,7 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
     },
     {
       'time': '10:30 AM',
-      'title': 'Nintavur Ward 04 Drainage & Road Inspection',
+      'title': 'Global Smart City Infrastructure & Road Inspection',
       'location': 'Addappalam Main Corridor',
       'type': 'Civic Ops',
     },
@@ -532,7 +532,7 @@ class _ScheduleCalendarScreenState extends State<ScheduleCalendarScreen> {
   void _addScheduleItem() {
     final titleCtrl = TextEditingController();
     final timeCtrl = TextEditingController(text: '09:00 AM');
-    final locCtrl = TextEditingController(text: 'Colombo / Nintavur');
+    final locCtrl = TextEditingController(text: 'Colombo / Global Hub');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? Colors.black : Colors.white;
     final fg = isDark ? Colors.white : Colors.black;
@@ -1005,7 +1005,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
   final List<Map<String, dynamic>> _threads = [
     {
       'name': 'Municipal Dispatch',
-      'role': 'Nintavur Smart City Desk',
+      'role': 'Global Smart City Desk',
       'messages': <Map<String, dynamic>>[
         {
           'sender': 'Dispatch Desk',
@@ -1409,7 +1409,7 @@ class TripJournalScreen extends StatefulWidget {
 
 class _TripJournalScreenState extends State<TripJournalScreen> {
   void _addNewEntry(BuildContext context, TripHistoryService service) {
-    final fromCtrl = TextEditingController(text: 'Nintavur');
+    final fromCtrl = TextEditingController(text: 'Colombo');
     final toCtrl = TextEditingController(text: 'Arugam Bay');
     final noteCtrl = TextEditingController(text: 'Scenic coastal drive');
 
@@ -1746,7 +1746,7 @@ class NotificationsScreen extends StatelessWidget {
                       icon: Icons.add_alert_rounded,
                       onPressed: () {
                         notifService.add(
-                          title: 'Nintavur Smart City Telemetry Active',
+                          title: 'Global Smart City Telemetry Active',
                           body:
                               'Route 22 Smart Bus arriving at Addappalam Junction in 4 minutes.',
                           type: NotificationType.info,

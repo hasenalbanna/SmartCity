@@ -89,7 +89,7 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   LatLng _selectedLocation = const LatLng(7.3486, 81.8494);
   final TextEditingController _searchRoadController = TextEditingController();
   String _addressText =
-      'Nintavur, Ampara District, Eastern Province, 32340, Sri Lanka';
+      'Colombo / Global Smart City Hub';
   bool _isLocating = false;
 
   final TextEditingController _descriptionController = TextEditingController();
@@ -207,7 +207,7 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
       categoryLocal: category.localTitle,
       title: title,
       description: desc.isEmpty
-          ? 'Reported ${category.title} issue in Nintavur'
+          ? 'Reported ${category.title} issue in Smart City'
           : desc,
       address: _addressText,
       location: _selectedLocation,
@@ -516,7 +516,7 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
         ),
         const SizedBox(height: AppSpace.xs),
         Text(
-          'Mark the exact problem spot inside the Nintavur boundary.',
+          'Mark the exact problem spot on the live map.',
           style: AppTypography.body.copyWith(
             color: AppColors.textSecondary(context),
           ),
@@ -529,7 +529,7 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                 controller: _searchRoadController,
                 onSubmitted: (_) => _searchRoad(),
                 decoration: const InputDecoration(
-                  hintText: 'Search road name in Nintavur',
+                  hintText: 'Search city, street, or landmark worldwide',
                 ),
               ),
             ),

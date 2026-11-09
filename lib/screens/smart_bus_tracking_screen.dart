@@ -328,7 +328,7 @@ class _SmartBusTrackingScreenState extends State<SmartBusTrackingScreen> {
           right: AppSpace.md,
           bottom: AppSpace.md,
           child: AppButton(
-            label: 'Nintavur Hub',
+            label: 'Central Hub',
             icon: Icons.my_location_rounded,
             variant: AppButtonVariant.secondary,
             onPressed: () {

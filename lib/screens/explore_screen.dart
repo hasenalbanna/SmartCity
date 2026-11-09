@@ -84,9 +84,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   static const List<_ProvinceCardData> _provinces = [
     _ProvinceCardData(
-      name: 'Eastern Province (Nintavur & Arugam Bay)',
+      name: 'Eastern Province (Trincomalee & Arugam Bay)',
       coverImagePath: 'assets/PROVINCE COVER PHOTO/EASTERN.png',
-      hotspot: 'Nintavur Smart Coastal Belt & Kumana',
+      hotspot: 'Smart Coastal Belt & Kumana National Park',
       tempLabel: '29°C',
       liveVisitors: '6,420 live',
     ),
@@ -473,7 +473,7 @@ class ExploreCoverWeatherCard extends StatelessWidget {
               ? weather.currentLabel
               : 'Current Location');
     final subtitle = point == null
-        ? 'Drizzle • Nintavur & Regional Hub'
+        ? 'Drizzle • Global & National Smart Hub'
         : WeatherService.weatherLabel(point.weatherCode);
     final tempText = point == null
         ? '25.8°C'
