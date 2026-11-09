@@ -234,12 +234,12 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: AppSpace.md),
           LayoutBuilder(
             builder: (context, constraints) {
-              final isWide = constraints.maxWidth >= 640;
+              final isCompact = constraints.maxWidth < 640;
               final experiences = [
                 _QuickActionData(
-                  badge: '#1 MOST LOVED',
-                  title: 'AI Trip Planner',
-                  subtitle: 'Route, Hotels, SIM & Budget',
+                  badge: isCompact ? '#1 AI' : '#1 MOST LOVED',
+                  title: isCompact ? 'AI Trip' : 'AI Trip Planner',
+                  subtitle: isCompact ? 'Route & Plan' : 'Route, Hotels, SIM & Budget',
                   icon: Icons.auto_awesome_rounded,
                   isPrimaryInvert: true,
                   onTap: () {
@@ -253,8 +253,8 @@ class HomeScreen extends StatelessWidget {
                 ),
                 _QuickActionData(
                   badge: '12 STAYS',
-                  title: 'Find Hotels & Stays',
-                  subtitle: 'Booking.com stays & map pins',
+                  title: isCompact ? 'Hotels' : 'Find Hotels & Stays',
+                  subtitle: isCompact ? 'Book Stays' : 'Booking.com stays & map pins',
                   icon: Icons.hotel_rounded,
                   onTap: () {
                     Navigator.push(
@@ -267,15 +267,15 @@ class HomeScreen extends StatelessWidget {
                 ),
                 _QuickActionData(
                   badge: 'LIVE GPS',
-                  title: 'Smart Bus Radar',
-                  subtitle: 'Routes 22 & 48 live ETA',
+                  title: isCompact ? 'Smart Bus' : 'Smart Bus Radar',
+                  subtitle: isCompact ? 'Live ETA' : 'Routes 22 & 48 live ETA',
                   icon: Icons.directions_bus_filled_rounded,
                   onTap: () => MainNavigationScreen.switchToTab(context, 2),
                 ),
                 _QuickActionData(
-                  badge: 'FALCON AI',
-                  title: 'Report & Voice SOS',
-                  subtitle: 'Local issues & "Hey Falcon"',
+                  badge: isCompact ? 'SOS AI' : 'FALCON AI',
+                  title: isCompact ? 'Falcon SOS' : 'Report & Voice SOS',
+                  subtitle: isCompact ? 'Report Issue' : 'Local issues & "Hey Falcon"',
                   icon: Icons.radar_rounded,
                   onTap: () {
                     Navigator.push(
@@ -288,45 +288,19 @@ class HomeScreen extends StatelessWidget {
                 ),
               ];
 
-              if (isWide) {
-                return Row(
-                  children: [
-                    for (int i = 0; i < experiences.length; i++) ...[
-                      Expanded(
-                        child: _buildExperienceCard(context, experiences[i]),
-                      ),
-                      if (i < experiences.length - 1)
-                        const SizedBox(width: AppSpace.md),
-                    ],
-                  ],
-                );
-              }
-
-              return Column(
+              return Row(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildExperienceCard(context, experiences[0]),
+                  for (int i = 0; i < experiences.length; i++) ...[
+                    Expanded(
+                      child: _buildExperienceCard(
+                        context,
+                        experiences[i],
+                        isCompact: isCompact,
                       ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: _buildExperienceCard(context, experiences[1]),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpace.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildExperienceCard(context, experiences[2]),
-                      ),
-                      const SizedBox(width: AppSpace.md),
-                      Expanded(
-                        child: _buildExperienceCard(context, experiences[3]),
-                      ),
-                    ],
-                  ),
+                    ),
+                    if (i < experiences.length - 1)
+                      SizedBox(width: isCompact ? AppSpace.sm : AppSpace.md),
+                  ],
                 ],
               );
             },
@@ -526,13 +500,79 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExperienceCard(BuildContext context, _QuickActionData data) {
+  Widget _buildExperienceCard(
+    BuildContext context,
+    _QuickActionData data, {
+    bool isCompact = false,
+  }) {
     final fg = AppColors.textPrimary(context);
     final muted = AppColors.textSecondary(context);
     final surface = AppColors.surface(context);
     final surfaceMuted = AppColors.surfaceMuted(context);
     final outline = AppColors.outline(context);
     final onPrimary = AppColors.onPrimary(context);
+
+    if (isCompact) {
+      return InkWell(
+        onTap: data.onTap,
+        borderRadius: AppRadius.mdBorder,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.sm,
+            vertical: AppSpace.md,
+          ),
+          decoration: BoxDecoration(
+            color: data.isPrimaryInvert ? surfaceMuted : surface,
+            borderRadius: AppRadius.mdBorder,
+            border: Border.all(
+              color: data.isPrimaryInvert ? fg.withValues(alpha: 0.65) : outline,
+              width: data.isPrimaryInvert ? 1.4 : 1.0,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: data.isPrimaryInvert ? fg : surfaceMuted,
+                  borderRadius: AppRadius.smBorder,
+                  border: Border.all(color: outline),
+                ),
+                child: Icon(
+                  data.icon,
+                  color: data.isPrimaryInvert ? onPrimary : fg,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(height: AppSpace.sm),
+              Text(
+                data.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTypography.caption.copyWith(
+                  color: fg,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                data.subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTypography.caption.copyWith(
+                  color: muted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return InkWell(
       onTap: data.onTap,
