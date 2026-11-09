@@ -100,13 +100,13 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                   ? AppColors.danger(context)
                   : AppColors.surface(context),
               foregroundColor: _reportModeIndex == 1
-                  ? Colors.white
+                  ? AppColors.onPrimary(context)
                   : AppColors.danger(context),
               onPressed: () {
                 setState(() => _reportModeIndex = 1);
                 falcon.wakeUpFalcon();
               },
-              icon: const Icon(Icons.radar_rounded),
+              icon: const Icon(Icons.radar_rounded, size: 18),
               label: const Text('Hey Falcon AI'),
             ),
           ),
@@ -124,8 +124,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
               );
             },
             backgroundColor: AppColors.primary(context),
-            foregroundColor: Colors.white,
-            icon: const Icon(Icons.add_location_alt_outlined),
+            foregroundColor: AppColors.onPrimary(context),
+            icon: const Icon(Icons.add_location_alt_outlined, size: 18),
             label: const Text('Report Issue'),
           ),
         ],
@@ -154,9 +154,10 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     String userName,
     String avatarLetter,
   ) {
+    final onPrimary = AppColors.onPrimary(context);
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpace.lg,
+        horizontal: AppSpace.md,
         vertical: AppSpace.sm,
       ),
       color: AppColors.surface(context),
@@ -165,55 +166,98 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
           Builder(
             builder: (scaffoldContext) => IconButton(
               tooltip: 'Open All Pages Menu',
+              visualDensity: VisualDensity.compact,
               onPressed: () => Scaffold.of(scaffoldContext).openDrawer(),
               icon: const Icon(Icons.menu_rounded),
             ),
           ),
-          Text(
-            'Hello, $userName',
-            style: AppTypography.title.copyWith(
-              color: AppColors.textPrimary(context),
-              fontWeight: FontWeight.w800,
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              'Hello, $userName',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.title.copyWith(
+                color: AppColors.textPrimary(context),
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
-          const Spacer(),
-          TextButton.icon(
-            onPressed: () => PremiumStoreModal.show(context),
-            icon: Icon(
-              Icons.workspace_premium_rounded,
-              size: 18,
-              color: AppColors.warning(context),
+          const SizedBox(width: AppSpace.xs),
+          InkWell(
+            onTap: () => PremiumStoreModal.show(context),
+            borderRadius: AppRadius.pillBorder,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.sm,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted(context),
+                borderRadius: AppRadius.pillBorder,
+                border: Border.all(color: AppColors.outline(context)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 15,
+                    color: AppColors.textPrimary(context),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Pro',
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textPrimary(context),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            label: const Text('Pro Store'),
           ),
           const SizedBox(width: AppSpace.xs),
           Semantics(
             label: 'Trigger Emergency SOS Strobe',
             button: true,
-            child: OutlinedButton.icon(
-              onPressed: () => EmergencyBeaconModal.show(context),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.danger(context),
-                side: BorderSide(color: AppColors.danger(context)),
-                minimumSize: const Size(40, 36),
+            child: InkWell(
+              onTap: () => EmergencyBeaconModal.show(context),
+              borderRadius: AppRadius.pillBorder,
+              child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.md,
-                  vertical: AppSpace.xs,
+                  horizontal: AppSpace.sm,
+                  vertical: 6,
                 ),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.pillBorder),
+                decoration: BoxDecoration(
+                  color: AppColors.primary(context),
+                  borderRadius: AppRadius.pillBorder,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sos_rounded, size: 15, color: onPrimary),
+                    const SizedBox(width: 4),
+                    Text(
+                      'SOS',
+                      style: AppTypography.caption.copyWith(
+                        color: onPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              icon: const Icon(Icons.sos_rounded, size: 16),
-              label: const Text('SOS'),
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          const SizedBox(width: AppSpace.xs),
           CircleAvatar(
-            radius: 17,
+            radius: 16,
             backgroundColor: AppColors.primary(context),
             child: Text(
               avatarLetter,
               style: AppTypography.caption.copyWith(
-                color: Colors.white,
+                color: onPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -231,6 +275,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
   ) {
     final isLocal = _reportModeIndex == 0;
     final isDisaster = _reportModeIndex == 1;
+    final onPrimary = AppColors.onPrimary(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -270,7 +315,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                       Icons.construction_rounded,
                       size: 18,
                       color: isLocal
-                          ? Colors.white
+                          ? onPrimary
                           : AppColors.textPrimary(context),
                     ),
                     const SizedBox(width: AppSpace.sm),
@@ -284,7 +329,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.bodyStrong.copyWith(
                               color: isLocal
-                                  ? Colors.white
+                                  ? onPrimary
                                   : AppColors.textPrimary(context),
                             ),
                           ),
@@ -294,7 +339,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.caption.copyWith(
                               color: isLocal
-                                  ? Colors.white.withValues(alpha: 0.85)
+                                  ? onPrimary.withValues(alpha: 0.78)
                                   : AppColors.textSecondary(context),
                             ),
                           ),
@@ -320,9 +365,13 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                 decoration: BoxDecoration(
                   color: isDisaster
                       ? AppColors.danger(context)
-                      : AppColors.dangerBg(context),
+                      : AppColors.surfaceMuted(context),
                   borderRadius: AppRadius.mdBorder,
-                  border: Border.all(color: AppColors.danger(context)),
+                  border: Border.all(
+                    color: isDisaster
+                        ? AppColors.danger(context)
+                        : AppColors.outline(context),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -331,8 +380,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                       Icons.radar_rounded,
                       size: 18,
                       color: isDisaster
-                          ? Colors.white
-                          : AppColors.danger(context),
+                          ? onPrimary
+                          : AppColors.textPrimary(context),
                     ),
                     const SizedBox(width: AppSpace.sm),
                     Flexible(
@@ -345,8 +394,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.bodyStrong.copyWith(
                               color: isDisaster
-                                  ? Colors.white
-                                  : AppColors.danger(context),
+                                  ? onPrimary
+                                  : AppColors.textPrimary(context),
                             ),
                           ),
                           Text(
@@ -357,8 +406,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.caption.copyWith(
                               color: isDisaster
-                                  ? Colors.white.withValues(alpha: 0.9)
-                                  : AppColors.danger(context),
+                                  ? onPrimary.withValues(alpha: 0.78)
+                                  : AppColors.textSecondary(context),
                             ),
                           ),
                         ],
@@ -478,26 +527,79 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
           Positioned(
             left: AppSpace.md,
             bottom: AppSpace.md,
-            child: AppButton(
-              label: _isMapExpanded ? 'Collapse Map' : 'Expand Map',
-              icon: _isMapExpanded
-                  ? Icons.fullscreen_exit_rounded
-                  : Icons.fullscreen_rounded,
-              variant: AppButtonVariant.secondary,
-              onPressed: () =>
-                  setState(() => _isMapExpanded = !_isMapExpanded),
+            child: InkWell(
+              onTap: () => setState(() => _isMapExpanded = !_isMapExpanded),
+              borderRadius: AppRadius.mdBorder,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.84),
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _isMapExpanded
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _isMapExpanded ? 'Collapse Map' : 'Expand Map',
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
           Positioned(
             right: AppSpace.md,
             bottom: AppSpace.md,
-            child: AppButton(
-              label: 'Smart Hub',
-              icon: Icons.my_location_rounded,
-              variant: AppButtonVariant.secondary,
-              onPressed: () {
+            child: InkWell(
+              onTap: () {
                 _mapController.move(const LatLng(7.3486, 81.8475), 14.2);
               },
+              borderRadius: AppRadius.mdBorder,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md,
+                  vertical: AppSpace.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.84),
+                  borderRadius: AppRadius.mdBorder,
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.my_location_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Smart Hub',
+                      style: AppTypography.caption.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],

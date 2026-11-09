@@ -140,7 +140,7 @@ class _FalconAiDisasterPanelState extends State<FalconAiDisasterPanel> {
                       falcon.state == FalconAiState.dispatched
                           ? Icons.sos_rounded
                           : Icons.radar_rounded,
-                      color: Colors.white,
+                      color: AppColors.onPrimary(context),
                       size: 26,
                     ),
                   ),
@@ -149,7 +149,10 @@ class _FalconAiDisasterPanelState extends State<FalconAiDisasterPanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'FALCON AI • DISASTER GUARDIAN',
@@ -158,7 +161,6 @@ class _FalconAiDisasterPanelState extends State<FalconAiDisasterPanel> {
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(width: AppSpace.sm),
                             StatusChip(
                               label: falcon.state == FalconAiState.standby
                                   ? 'STANDBY'
@@ -242,7 +244,7 @@ class _FalconAiDisasterPanelState extends State<FalconAiDisasterPanel> {
                         backgroundColor: falcon.isMicListening
                             ? AppColors.danger(context)
                             : AppColors.primary(context),
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onPrimary(context),
                       ),
                       icon: Icon(
                         falcon.isMicListening

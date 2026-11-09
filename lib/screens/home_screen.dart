@@ -86,73 +86,92 @@ class HomeScreen extends StatelessWidget {
         ),
         children: [
           // ===================================================================
-          // ZONE 1: UNIFIED SINGLE HEADER BAR (MONOCHROME BLACK / WHITE / GRAY)
+          // ZONE 1: UNIFIED HEADER BAR (RESPONSIVE ZERO-OVERFLOW AT 360PX)
           // ===================================================================
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Builder(
-                builder: (scaffoldContext) => InkWell(
-                  onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
-                  borderRadius: AppRadius.mdBorder,
-                  child: Container(
-                    width: 42,
-                    height: 42,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 460;
+              final brandRow = Row(
+                children: [
+                  Builder(
+                    builder: (scaffoldContext) => InkWell(
+                      onTap: () => Scaffold.of(scaffoldContext).openDrawer(),
+                      borderRadius: AppRadius.mdBorder,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: surface,
+                          borderRadius: AppRadius.mdBorder,
+                          border: Border.all(color: outline),
+                        ),
+                        child: Icon(
+                          Icons.menu_rounded,
+                          size: 20,
+                          color: fg,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpace.xs),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: surface,
+                      color: Colors.white,
                       borderRadius: AppRadius.mdBorder,
                       border: Border.all(color: outline),
                     ),
-                    child: Icon(
-                      Icons.menu_rounded,
-                      size: 22,
-                      color: fg,
+                    child: ClipRRect(
+                      borderRadius: AppRadius.smBorder,
+                      child: Image.asset(
+                        'assets/images/smart_city_logo.png',
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.xs),
-              Container(
-                width: 42,
-                height: 42,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: AppRadius.mdBorder,
-                  border: Border.all(color: outline),
-                ),
-                child: ClipRRect(
-                  borderRadius: AppRadius.smBorder,
-                  child: Image.asset(
-                    'assets/images/smart_city_logo.png',
-                    fit: BoxFit.contain,
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hello, $userName',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.title.copyWith(color: fg),
+                        ),
+                        Text(
+                          'Smart City Global • ${subService.currentPlanName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: AppSpace.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hello, $userName',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.title.copyWith(color: fg),
+                  if (!isNarrow)
+                    const AppTopUtilities(
+                      padding: EdgeInsets.zero,
                     ),
-                    Text(
-                      'Smart City Global • ${subService.currentPlanName}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.caption.copyWith(color: muted),
-                    ),
-                  ],
-                ),
-              ),
-              const AppTopUtilities(
-                padding: EdgeInsets.zero,
-              ),
-            ],
+                ],
+              );
+
+              if (!isNarrow) return brandRow;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  brandRow,
+                  const SizedBox(height: AppSpace.sm),
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: AppTopUtilities(padding: EdgeInsets.zero),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppSpace.md),
 
@@ -719,14 +738,18 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      'LATEST REPORT • ${issue.category.toUpperCase()}',
-                      style: AppTypography.caption.copyWith(
-                        color: fg,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        'LATEST REPORT • ${issue.category.toUpperCase()}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: fg,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: AppSpace.xs),
                     Text(
                       _formatDate(issue.createdAt),
                       style: AppTypography.caption.copyWith(color: muted),

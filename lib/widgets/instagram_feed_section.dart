@@ -42,12 +42,18 @@ class InstagramFeedSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header with "+ Post" and "Open Feed"
-        Row(
-          children: [
-            Expanded(
-              child: Column(
+        // Section Header with "+ Post" and "Open Feed" (Responsive Wrap for 360px)
+        SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Citizen Community Feed',
@@ -64,29 +70,34 @@ class InstagramFeedSection extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            AppButton(
-              label: 'New Post',
-              icon: Icons.add_a_photo_outlined,
-              variant: AppButtonVariant.secondary,
-              onPressed: () => CreateInstagramPostModal.show(context),
-            ),
-            if (maxPosts != null) ...[
-              const SizedBox(width: AppSpace.xs),
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const FullInstagramFeedScreen(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppButton(
+                    label: 'New Post',
+                    icon: Icons.add_a_photo_outlined,
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () => CreateInstagramPostModal.show(context),
+                  ),
+                  if (maxPosts != null) ...[
+                    const SizedBox(width: AppSpace.xs),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FullInstagramFeedScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.dynamic_feed_rounded, size: 18),
+                      label: const Text('Open Feed'),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.dynamic_feed_rounded, size: 18),
-                label: const Text('Open Feed'),
+                  ],
+                ],
               ),
             ],
-          ],
+          ),
         ),
         const SizedBox(height: AppSpace.md),
 
