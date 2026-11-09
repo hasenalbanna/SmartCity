@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/sim_provider.dart';
+import '../services/auth_service.dart';
 import '../services/sim_recommendation_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -69,6 +71,7 @@ class _SimRecommendationViewState extends State<SimRecommendationView> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -81,9 +84,10 @@ class _SimRecommendationViewState extends State<SimRecommendationView> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Image.asset(
-                  'assets/cover.png',
-                  fit: BoxFit.cover,
+                AdaptiveDestinationImage(
+                  imageUrl: '',
+                  country: auth.userCountry,
+                  placeName: '${auth.userCountry} Telecom Radar',
                 ),
                 DecoratedBox(
                   decoration: BoxDecoration(

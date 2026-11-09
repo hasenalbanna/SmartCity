@@ -239,6 +239,7 @@ class AiInsightsSection extends StatelessWidget {
   }
 
   void _showInsightDetailModal(BuildContext context, AiInsightItem item) {
+    final auth = context.read<AuthService>();
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -261,21 +262,12 @@ class AiInsightsSection extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      item.imagePath.startsWith('http')
-                          ? Image.network(
-                              item.imagePath,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.surfaceMuted(ctx),
-                              ),
-                            )
-                          : Image.asset(
-                              item.imagePath,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: AppColors.surfaceMuted(ctx),
-                              ),
-                            ),
+                      AdaptiveDestinationImage(
+                        imageUrl: item.imagePath,
+                        country: auth.userCountry,
+                        placeName: item.location,
+                        category: item.category,
+                      ),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -440,6 +432,7 @@ class _AiInsightPhotoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthService>();
     return SizedBox(
       width: fullWidth ? double.infinity : 205,
       child: ClipRRect(
@@ -451,24 +444,13 @@ class _AiInsightPhotoCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Real High-Resolution Background Photograph
-                item.imagePath.startsWith('http')
-                    ? Image.network(
-                        item.imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          'assets/cover.png',
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Image.asset(
-                        item.imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          'assets/cover.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                // Real High-Resolution Destination Image with Zero-Storage Country Fallback
+                AdaptiveDestinationImage(
+                  imageUrl: item.imagePath,
+                  country: auth.userCountry,
+                  placeName: item.location,
+                  category: item.category,
+                ),
                 // Rich Cinematic Scrim Overlay for Crisp Text Readability
                 DecoratedBox(
                   decoration: BoxDecoration(

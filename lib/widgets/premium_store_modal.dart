@@ -123,25 +123,32 @@ class PremiumUpsellBanner extends StatelessWidget {
 class PremiumStoreModal {
   PremiumStoreModal._();
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context, {int initialTabIndex = 0}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _PremiumStoreSheet(),
+      builder: (_) => _PremiumStoreSheet(initialTabIndex: initialTabIndex),
     );
   }
 }
 
 class _PremiumStoreSheet extends StatefulWidget {
-  const _PremiumStoreSheet();
+  final int initialTabIndex;
+  const _PremiumStoreSheet({this.initialTabIndex = 0});
 
   @override
   State<_PremiumStoreSheet> createState() => _PremiumStoreSheetState();
 }
 
 class _PremiumStoreSheetState extends State<_PremiumStoreSheet> {
-  int _selectedTabIndex = 0; // 0 = Membership Plans, 1 = Pay-Per-Use Add-Ons
+  late int _selectedTabIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTabIndex = widget.initialTabIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -213,32 +212,11 @@ class _TravelGridTile extends StatelessWidget {
   const _TravelGridTile({required this.post});
 
   Widget _buildPostImage(String? url) {
-    final img = url ?? '';
-    if (img.isEmpty) {
-      return Image.asset('assets/cover.png', fit: BoxFit.cover);
-    }
-    if (img.startsWith('data:image')) {
-      try {
-        final commaIdx = img.indexOf(',');
-        final bytes = base64Decode(img.substring(commaIdx + 1));
-        return Image.memory(bytes, fit: BoxFit.cover);
-      } catch (_) {
-        return Image.asset('assets/cover.png', fit: BoxFit.cover);
-      }
-    }
-    if (img.startsWith('assets/')) {
-      return Image.asset(
-        img,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) =>
-            Image.asset('assets/cover.png', fit: BoxFit.cover),
-      );
-    }
-    return Image.network(
-      img,
+    return AdaptiveDestinationImage(
+      imageUrl: url ?? '',
+      country: post.country,
+      placeName: post.placeName,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) =>
-          Image.asset('assets/cover.png', fit: BoxFit.cover),
     );
   }
 
@@ -459,34 +437,11 @@ class InstagramPostCard extends StatelessWidget {
   }
 
   Widget _buildPostPhoto(BuildContext context, String? url) {
-    final img = url ?? '';
-    if (img.isEmpty) {
-      return Image.asset('assets/cover.png', fit: BoxFit.cover);
-    }
-    if (img.startsWith('data:image')) {
-      try {
-        final commaIdx = img.indexOf(',');
-        final bytes = base64Decode(img.substring(commaIdx + 1));
-        return Image.memory(bytes, fit: BoxFit.cover);
-      } catch (_) {}
-    }
-    if (img.startsWith('assets/')) {
-      return Image.asset(
-        img,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Image.asset(
-          'assets/cover.png',
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Image.network(
-      img,
+    return AdaptiveDestinationImage(
+      imageUrl: url ?? '',
+      country: post.country,
+      placeName: post.placeName,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        'assets/cover.png',
-        fit: BoxFit.cover,
-      ),
     );
   }
 
@@ -498,7 +453,7 @@ class InstagramPostCard extends StatelessWidget {
     final isSaved = social.isPostSaved(post.id);
     final photoUrl = post.photoUrls.isNotEmpty
         ? post.photoUrls.first
-        : 'assets/cover.png';
+        : '';
 
     return AppCard(
       padding: EdgeInsets.zero,

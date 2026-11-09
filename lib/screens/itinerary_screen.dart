@@ -1245,31 +1245,14 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           children: [
             ClipRRect(
               borderRadius: AppRadius.mdBorder,
-              child: stop.place.image.startsWith('http')
-                  ? Image.network(
-                      stop.place.image,
-                      width: 82,
-                      height: 82,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/cover.png',
-                        width: 82,
-                        height: 82,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Image.asset(
-                      stop.place.image,
-                      width: 82,
-                      height: 82,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/cover.png',
-                        width: 82,
-                        height: 82,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+              child: AdaptiveDestinationImage(
+                imageUrl: stop.place.image,
+                country: context.read<AuthService>().userCountry,
+                placeName: stop.place.name,
+                width: 82,
+                height: 82,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(width: AppSpace.md),
             Expanded(
@@ -1552,31 +1535,14 @@ class _ItineraryScreenState extends State<ItineraryScreen> {
           children: [
             ClipRRect(
               borderRadius: AppRadius.lgBorder,
-              child: place.image.startsWith('http')
-                  ? Image.network(
-                      place.image,
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/cover.png',
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : Image.asset(
-                      place.image,
-                      width: double.infinity,
-                      height: 220,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Image.asset(
-                        'assets/cover.png',
-                        width: double.infinity,
-                        height: 220,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
+              child: AdaptiveDestinationImage(
+                imageUrl: place.image,
+                country: context.read<AuthService>().userCountry,
+                placeName: place.name,
+                width: double.infinity,
+                height: 220,
+                fit: BoxFit.cover,
+              ),
             ),
             const SizedBox(height: AppSpace.md),
             Row(

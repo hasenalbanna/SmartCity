@@ -57,6 +57,18 @@ class AppTheme {
         thickness: 1,
         space: 1,
       ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: isDark ? const Color(0xFF1E2230) : const Color(0xFF0F172A),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.pillBorder,
+          side: BorderSide(
+            color: isDark ? const Color(0xFF38BDF8).withValues(alpha: 0.4) : Colors.transparent,
+            width: 1.2,
+          ),
+        ),
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,

@@ -135,26 +135,6 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     return countryRegion.center;
   }
 
-  String _localFallbackAsset(String city) {
-    final c = city.toLowerCase();
-    if (c.contains('sigiriya')) return 'assets/images/sigiriya.jpg';
-    if (c.contains('kandy')) {
-      return 'assets/central province/temple of tooth.jpg';
-    }
-    if (c.contains('galle')) return 'assets/southern province/galle fort.jpg';
-    if (c.contains('ella')) return 'assets/images/nine_arch_bridge.jpg';
-    if (c.contains('mirissa')) {
-      return 'assets/southern province/mirissa beach.jpg';
-    }
-    if (c.contains('arugam') || c.contains('trinco')) {
-      return 'assets/eastern province/arugam bay.jpg';
-    }
-    if (c.contains('nuwara')) {
-      return 'assets/central province/nuwara eliya tea country.jpg';
-    }
-    return 'assets/cover.png';
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
@@ -512,18 +492,14 @@ class _HotelBookingViewState extends State<HotelBookingView> {
     double width = double.infinity,
     double height = 175,
   }) {
-    final fallbackAsset = _localFallbackAsset(hotel.city);
-    return Image.network(
-      hotel.imageUrl,
+    return AdaptiveDestinationImage(
+      imageUrl: hotel.imageUrl,
+      country: hotel.city,
+      placeName: hotel.name,
+      category: hotel.city,
       width: width,
       height: height,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        fallbackAsset,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-      ),
     );
   }
 

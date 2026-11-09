@@ -71,7 +71,6 @@ class HomeScreen extends StatelessWidget {
     final fg = AppColors.textPrimary(context);
     final muted = AppColors.textSecondary(context);
     final surface = AppColors.surface(context);
-    final surfaceMuted = AppColors.surfaceMuted(context);
     final outline = AppColors.outline(context);
 
     return AppScaffold(
@@ -245,6 +244,12 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: AppSpace.md),
+
+          // ===================================================================
+          // COMPACT SMART CITY PRO & 4 PREMIUM CATEGORIES STRIP
+          // ===================================================================
+          _buildCompactPremiumPackagesCard(context, subService),
           const SizedBox(height: AppSpace.xl),
 
           // ===================================================================
@@ -467,78 +472,269 @@ class HomeScreen extends StatelessWidget {
             showStoriesRow: true,
             preferGrid: true,
           ),
+          const SizedBox(height: AppSpace.xxl),
+        ],
+      ),
+    );
+  }
 
-          // ===================================================================
-          // ZONE 7: EXECUTIVE MONOCHROME PRO STOREFRONT CARD AT FOOTER
-          // ===================================================================
-          const SizedBox(height: AppSpace.xl),
-          InkWell(
-            onTap: () => PremiumStoreModal.show(context),
-            borderRadius: AppRadius.lgBorder,
-            child: Container(
-              padding: const EdgeInsets.all(AppSpace.lg),
-              decoration: BoxDecoration(
-                color: surfaceMuted,
-                borderRadius: AppRadius.lgBorder,
-                border: Border.all(color: fg.withValues(alpha: 0.45)),
+  Widget _buildCompactPremiumPackagesCard(
+    BuildContext context,
+    SubscriptionService subService,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = AppColors.textPrimary(context);
+    final muted = AppColors.textSecondary(context);
+    final accentGold = AppColors.accentAmber(context);
+
+    final bgStart = isDark
+        ? Color.lerp(const Color(0xFF131722), accentGold, 0.08)!
+        : Color.lerp(Colors.white, accentGold, 0.04)!;
+    final bgEnd = isDark ? const Color(0xFF0A0D14) : const Color(0xFFF7F9FC);
+
+    final categories = [
+      _PremiumCategoryPill(
+        icon: Icons.record_voice_over_rounded,
+        label: 'Falcon AI SOS',
+        tag: '24/7 Voice',
+        color: AppColors.accentPurple(context),
+        tabIndex: 0,
+      ),
+      _PremiumCategoryPill(
+        icon: Icons.description_outlined,
+        label: 'Insurance PDFs',
+        tag: 'Claims',
+        color: AppColors.accentBlue(context),
+        tabIndex: 1,
+      ),
+      _PremiumCategoryPill(
+        icon: Icons.pin_drop_rounded,
+        label: 'Business Pins',
+        tag: 'Map Ads',
+        color: AppColors.accentGreen(context),
+        tabIndex: 1,
+      ),
+      _PremiumCategoryPill(
+        icon: Icons.domain_rounded,
+        label: 'Enterprise SLA',
+        tag: 'Valuations',
+        color: AppColors.accentAmber(context),
+        tabIndex: 0,
+      ),
+    ];
+
+    return ClipRRect(
+      borderRadius: AppRadius.mdBorder,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: AppRadius.mdBorder,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [bgStart, bgEnd],
+          ),
+          border: Border.all(
+            color: accentGold.withValues(alpha: isDark ? 0.35 : 0.22),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: accentGold.withValues(alpha: isDark ? 0.10 : 0.05),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpace.md,
+                AppSpace.sm,
+                AppSpace.md,
+                AppSpace.xs,
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 32,
+                    height: 32,
                     decoration: BoxDecoration(
-                      color: fg,
-                      borderRadius: AppRadius.mdBorder,
+                      color: accentGold.withValues(alpha: isDark ? 0.20 : 0.12),
+                      borderRadius: BorderRadius.circular(AppSpace.xs + 2),
+                      border: Border.all(
+                        color: accentGold.withValues(alpha: isDark ? 0.45 : 0.30),
+                      ),
                     ),
                     child: Icon(
                       Icons.workspace_premium_rounded,
-                      color: AppColors.onPrimary(context),
-                      size: 24,
+                      color: accentGold,
+                      size: 17,
                     ),
                   ),
-                  const SizedBox(width: AppSpace.md),
+                  const SizedBox(width: AppSpace.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          subService.isProOrHigher
-                              ? '${subService.currentPlanName} Active'
-                              : 'Upgrade to Falcon Shield+ Pro',
-                          style: AppTypography.subtitle.copyWith(color: fg),
+                        Row(
+                          children: [
+                            Text(
+                              subService.isProOrHigher
+                                  ? '${subService.currentPlanName} Active'
+                                  : 'Premium Packages & Pro Add-Ons',
+                              style: AppTypography.caption.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.xs),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: accentGold.withValues(
+                                  alpha: isDark ? 0.22 : 0.12,
+                                ),
+                                borderRadius: AppRadius.pillBorder,
+                              ),
+                              child: Text(
+                                '4 CATEGORIES',
+                                style: AppTypography.caption.copyWith(
+                                  color: accentGold,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          '24/7 voice SOS guardian, insurance dossiers & priority alerts.',
-                          style: AppTypography.caption.copyWith(color: muted),
+                          '24/7 Voice SOS, certified dossiers, business pins & SLA',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(
+                            color: muted,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: AppSpace.sm),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpace.md,
-                      vertical: AppSpace.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: fg,
-                      borderRadius: AppRadius.pillBorder,
-                    ),
-                    child: Text(
-                      'Open Pro',
-                      style: AppTypography.caption.copyWith(
-                        color: AppColors.onPrimary(context),
-                        fontWeight: FontWeight.w800,
+                  InkWell(
+                    onTap: () => PremiumStoreModal.show(context),
+                    borderRadius: AppRadius.pillBorder,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm + 2,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: fg,
+                        borderRadius: AppRadius.pillBorder,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Open Store',
+                            style: AppTypography.caption.copyWith(
+                              color: AppColors.onPrimary(context),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: AppColors.onPrimary(context),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 2),
+            Divider(
+              height: 1,
+              color: AppColors.outline(context).withValues(alpha: 0.6),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.md,
+                vertical: AppSpace.sm,
+              ),
+              child: Row(
+                children: categories.map((cat) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: AppSpace.sm),
+                    child: InkWell(
+                      onTap: () => PremiumStoreModal.show(
+                        context,
+                        initialTabIndex: cat.tabIndex,
+                      ),
+                      borderRadius: AppRadius.pillBorder,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpace.sm + 2,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: cat.color.withValues(
+                            alpha: isDark ? 0.14 : 0.08,
+                          ),
+                          borderRadius: AppRadius.pillBorder,
+                          border: Border.all(
+                            color: cat.color.withValues(
+                              alpha: isDark ? 0.35 : 0.20,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              cat.icon,
+                              size: 14,
+                              color: cat.color,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              cat.label,
+                              style: AppTypography.caption.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '• ${cat.tag}',
+                              style: AppTypography.caption.copyWith(
+                                color: cat.color,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -969,4 +1165,20 @@ class _ExperienceCardPatternPainter extends CustomPainter {
   bool shouldRepaint(covariant _ExperienceCardPatternPainter oldDelegate) {
     return oldDelegate.color != color || oldDelegate.isDark != isDark;
   }
+}
+
+class _PremiumCategoryPill {
+  final IconData icon;
+  final String label;
+  final String tag;
+  final Color color;
+  final int tabIndex;
+
+  const _PremiumCategoryPill({
+    required this.icon,
+    required this.label,
+    required this.tag,
+    required this.color,
+    required this.tabIndex,
+  });
 }

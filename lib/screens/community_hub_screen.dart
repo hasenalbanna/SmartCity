@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -120,13 +119,36 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
       return true;
     }).toList();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fabBg = isDark ? const Color(0xFF1E2230) : const Color(0xFF0F172A);
+    final fabBorder = isDark
+        ? AppColors.accentBlue(context).withValues(alpha: 0.5)
+        : Colors.transparent;
+
     return AppScaffold(
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateJourneyModal(context),
-        backgroundColor: AppColors.primary(context),
-        foregroundColor: AppColors.onPrimary(context),
-        icon: const Icon(Icons.alt_route_rounded),
-        label: const Text('Share Life Journey'),
+        backgroundColor: fabBg,
+        foregroundColor: Colors.white,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.pillBorder,
+          side: BorderSide(color: fabBorder, width: 1.2),
+        ),
+        icon: Icon(
+          Icons.alt_route_rounded,
+          color: isDark ? AppColors.accentBlue(context) : Colors.white,
+          size: 20,
+        ),
+        label: Text(
+          'Share Life Journey',
+          style: AppTypography.button.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            letterSpacing: 0.3,
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
@@ -518,7 +540,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
   Widget _buildInstagramGridCard(BuildContext context, UserPost post) {
     final photoUrl = post.photoUrls.isNotEmpty
         ? post.photoUrls.first
-        : 'assets/cover.png';
+        : '';
     final hasRoute = post.routeSummary != null && post.routeSummary!.isNotEmpty;
 
     return InkWell(
@@ -529,8 +551,12 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Traveled place photo
-            _buildPostImage(photoUrl),
+            // Traveled place photo with zero-storage country fallback
+            _buildPostImage(
+              photoUrl,
+              country: post.country,
+              placeName: post.placeName,
+            ),
 
             // Top Gradient with user handle
             Positioned(
@@ -679,31 +705,12 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
     );
   }
 
-  Widget _buildPostImage(String url) {
-    if (url.startsWith('data:image')) {
-      try {
-        final commaIdx = url.indexOf(',');
-        final bytes = base64Decode(url.substring(commaIdx + 1));
-        return Image.memory(bytes, fit: BoxFit.cover);
-      } catch (_) {}
-    }
-    if (url.startsWith('assets/')) {
-      return Image.asset(
-        url,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Image.asset(
-          'assets/cover.png',
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Image.network(
-      url,
+  Widget _buildPostImage(String url, {String? country, String? placeName}) {
+    return AdaptiveDestinationImage(
+      imageUrl: url,
+      country: country,
+      placeName: placeName,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Image.asset(
-        'assets/cover.png',
-        fit: BoxFit.cover,
-      ),
     );
   }
 
@@ -808,9 +815,9 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
                     height: 220,
                     width: double.infinity,
                     child: _buildPostImage(
-                      post.photoUrls.isNotEmpty
-                          ? post.photoUrls.first
-                          : 'assets/cover.png',
+                      post.photoUrls.isNotEmpty ? post.photoUrls.first : '',
+                      country: post.country,
+                      placeName: post.placeName,
                     ),
                   ),
                 ),

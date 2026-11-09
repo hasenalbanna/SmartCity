@@ -178,6 +178,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildMustSeeCard(BuildContext context, GlobalPlace place) {
+    final auth = context.read<AuthService>();
     return SizedBox(
       width: 220,
       child: ClipRRect(
@@ -185,23 +186,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            place.imageUrl.startsWith('http')
-                ? Image.network(
-                    place.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      'assets/cover.png',
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Image.asset(
-                    place.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      'assets/cover.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+            AdaptiveDestinationImage(
+              imageUrl: place.imageUrl,
+              country: auth.userCountry,
+              placeName: place.name,
+              category: place.tag,
+            ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -276,6 +266,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   Widget _buildProvinceCard(BuildContext context, GlobalRegionCard prov) {
+    final auth = context.read<AuthService>();
     return ClipRRect(
       borderRadius: AppRadius.lgBorder,
       child: SizedBox(
@@ -283,23 +274,12 @@ class _ExploreScreenState extends State<ExploreScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            prov.coverImageUrl.startsWith('http')
-                ? Image.network(
-                    prov.coverImageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      'assets/cover.png',
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                : Image.asset(
-                    prov.coverImageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Image.asset(
-                      'assets/cover.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+            AdaptiveDestinationImage(
+              imageUrl: prov.coverImageUrl,
+              country: auth.userCountry,
+              placeName: prov.name,
+              category: prov.hotspot,
+            ),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -450,23 +430,12 @@ class ExploreCoverWeatherCard extends StatelessWidget {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                coverImage.startsWith('http')
-                    ? Image.network(
-                        coverImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          'assets/cover.png',
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Image.asset(
-                        coverImage,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          'assets/cover.png',
-                          fit: BoxFit.cover,
-                        ),
-                      ),
+                AdaptiveDestinationImage(
+                  imageUrl: coverImage,
+                  country: userCountry,
+                  placeName: userCity,
+                  category: exp.tagline,
+                ),
                 DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
