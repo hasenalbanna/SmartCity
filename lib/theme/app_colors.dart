@@ -128,4 +128,41 @@ class AppColors {
 
   static Color infoBg(BuildContext context) =>
       isDark(context) ? infoBgDark : infoBgLight;
+
+  // Feature & KPI Accent Colors for Dark and Light Modes
+  static const Color accentBlueLight = Color(0xFF2563EB);
+  static const Color accentBlueDark = Color(0xFF60A5FA);
+
+  static const Color accentGreenLight = Color(0xFF059669);
+  static const Color accentGreenDark = Color(0xFF34D399);
+
+  static const Color accentPurpleLight = Color(0xFF7C3AED);
+  static const Color accentPurpleDark = Color(0xFFA78BFA);
+
+  static const Color accentAmberLight = Color(0xFFD97706);
+  static const Color accentAmberDark = Color(0xFFFBBF24);
+
+  static const Color accentRoseLight = Color(0xFFE11D48);
+  static const Color accentRoseDark = Color(0xFFFB7185);
+
+  static const Color accentTealLight = Color(0xFF0D9488);
+  static const Color accentTealDark = Color(0xFF2DD4BF);
+
+  static Color accentBlue(BuildContext context) =>
+      isDark(context) ? accentBlueDark : accentBlueLight;
+
+  static Color accentGreen(BuildContext context) =>
+      isDark(context) ? accentGreenDark : accentGreenLight;
+
+  static Color accentPurple(BuildContext context) =>
+      isDark(context) ? accentPurpleDark : accentPurpleLight;
+
+  static Color accentAmber(BuildContext context) =>
+      isDark(context) ? accentAmberDark : accentAmberLight;
+
+  static Color accentRose(BuildContext context) =>
+      isDark(context) ? accentRoseDark : accentRoseLight;
+
+  static Color accentTeal(BuildContext context) =>
+      isDark(context) ? accentTealDark : accentTealLight;
 }

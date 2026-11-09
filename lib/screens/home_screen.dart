@@ -265,6 +265,7 @@ class HomeScreen extends StatelessWidget {
                   subtitle: isCompact ? 'Route & Plan' : 'Route, Hotels, SIM & Budget',
                   icon: Icons.auto_awesome_rounded,
                   isPrimaryInvert: true,
+                  accentColor: AppColors.accentPurple(context),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -279,6 +280,7 @@ class HomeScreen extends StatelessWidget {
                   title: isCompact ? 'Hotels' : 'Find Hotels & Stays',
                   subtitle: isCompact ? 'Book Stays' : 'Booking.com stays & map pins',
                   icon: Icons.hotel_rounded,
+                  accentColor: AppColors.accentAmber(context),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -293,6 +295,7 @@ class HomeScreen extends StatelessWidget {
                   title: isCompact ? 'Smart Bus' : 'Smart Bus Radar',
                   subtitle: isCompact ? 'Live ETA' : 'Routes 22 & 48 live ETA',
                   icon: Icons.directions_bus_filled_rounded,
+                  accentColor: AppColors.accentTeal(context),
                   onTap: () => MainNavigationScreen.switchToTab(
                     context,
                     MainNavigationScreen.tabSmartBus,
@@ -303,6 +306,7 @@ class HomeScreen extends StatelessWidget {
                   title: isCompact ? 'Falcon SOS' : 'Report & Voice SOS',
                   subtitle: isCompact ? 'Report Issue' : 'Local issues & "Hey Falcon"',
                   icon: Icons.radar_rounded,
+                  accentColor: AppColors.accentRose(context),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -410,7 +414,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Open Reports',
                   value: '$openIssuesCount',
                   icon: Icons.report_problem_outlined,
-                  accentColor: fg,
+                  accentColor: AppColors.accentRose(context),
                   onTap: () => MainNavigationScreen.switchToTab(
                     context,
                     MainNavigationScreen.tabReports,
@@ -423,7 +427,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Buses Live',
                   value: '$busesCount',
                   icon: Icons.directions_bus_outlined,
-                  accentColor: fg,
+                  accentColor: AppColors.accentTeal(context),
                   onTap: () => MainNavigationScreen.switchToTab(
                     context,
                     MainNavigationScreen.tabSmartBus,
@@ -436,7 +440,7 @@ class HomeScreen extends StatelessWidget {
                   label: 'Active Alerts',
                   value: '$activeAlertsCount',
                   icon: Icons.shield_outlined,
-                  accentColor: fg,
+                  accentColor: AppColors.accentAmber(context),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -544,146 +548,251 @@ class HomeScreen extends StatelessWidget {
     _QuickActionData data, {
     bool isCompact = false,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = AppColors.textPrimary(context);
     final muted = AppColors.textSecondary(context);
-    final surface = AppColors.surface(context);
-    final surfaceMuted = AppColors.surfaceMuted(context);
-    final outline = AppColors.outline(context);
-    final onPrimary = AppColors.onPrimary(context);
+    final accentColor = data.accentColor ?? AppColors.primary(context);
+
+    // Adaptive card background
+    final bgStart = isDark
+        ? Color.lerp(const Color(0xFF131722), accentColor, 0.09)!
+        : Color.lerp(Colors.white, accentColor, 0.04)!;
+    final bgEnd = isDark
+        ? const Color(0xFF090C12)
+        : const Color(0xFFF6F8FA);
 
     if (isCompact) {
-      return InkWell(
-        onTap: data.onTap,
+      return ClipRRect(
         borderRadius: AppRadius.mdBorder,
         child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpace.sm,
-            vertical: AppSpace.md,
-          ),
           decoration: BoxDecoration(
-            color: data.isPrimaryInvert ? surfaceMuted : surface,
             borderRadius: AppRadius.mdBorder,
-            border: Border.all(
-              color: data.isPrimaryInvert ? fg.withValues(alpha: 0.65) : outline,
-              width: data.isPrimaryInvert ? 1.4 : 1.0,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [bgStart, bgEnd],
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: data.isPrimaryInvert ? fg : surfaceMuted,
-                  borderRadius: AppRadius.smBorder,
-                  border: Border.all(color: outline),
-                ),
-                child: Icon(
-                  data.icon,
-                  color: data.isPrimaryInvert ? onPrimary : fg,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(height: AppSpace.sm),
-              Text(
-                data.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: AppTypography.caption.copyWith(
-                  color: fg,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                data.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: AppTypography.caption.copyWith(
-                  color: muted,
-                ),
+            border: Border.all(
+              color: accentColor.withValues(alpha: isDark ? 0.35 : 0.22),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: accentColor.withValues(alpha: isDark ? 0.12 : 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: data.onTap,
+              borderRadius: AppRadius.mdBorder,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _ExperienceCardPatternPainter(
+                        color: accentColor,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: -6,
+                    bottom: -8,
+                    child: IgnorePointer(
+                      child: Icon(
+                        data.icon,
+                        size: 44,
+                        color: accentColor.withValues(alpha: isDark ? 0.08 : 0.05),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: AppSpace.md,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                            borderRadius: AppRadius.smBorder,
+                            border: Border.all(
+                              color: accentColor.withValues(alpha: isDark ? 0.45 : 0.30),
+                            ),
+                          ),
+                          child: Icon(
+                            data.icon,
+                            color: accentColor,
+                            size: 19,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.sm),
+                        Text(
+                          data.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.caption.copyWith(
+                            color: fg,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          data.subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.caption.copyWith(
+                            color: muted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       );
     }
 
-    return InkWell(
-      onTap: data.onTap,
+    return ClipRRect(
       borderRadius: AppRadius.lgBorder,
       child: Container(
-        padding: const EdgeInsets.all(AppSpace.lg),
         decoration: BoxDecoration(
-          color: data.isPrimaryInvert ? surfaceMuted : surface,
           borderRadius: AppRadius.lgBorder,
-          border: Border.all(
-            color: data.isPrimaryInvert ? fg.withValues(alpha: 0.65) : outline,
-            width: data.isPrimaryInvert ? 1.4 : 1.0,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [bgStart, bgEnd],
           ),
+          border: Border.all(
+            color: accentColor.withValues(alpha: isDark ? 0.35 : 0.22),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: accentColor.withValues(alpha: isDark ? 0.14 : 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: data.onTap,
+            borderRadius: AppRadius.lgBorder,
+            child: Stack(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: data.isPrimaryInvert ? fg : surfaceMuted,
-                    borderRadius: AppRadius.smBorder,
-                    border: Border.all(color: outline),
-                  ),
-                  child: Icon(
-                    data.icon,
-                    color: data.isPrimaryInvert ? onPrimary : fg,
-                    size: 20,
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _ExperienceCardPatternPainter(
+                      color: accentColor,
+                      isDark: isDark,
+                    ),
                   ),
                 ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpace.sm,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: data.isPrimaryInvert ? fg : surfaceMuted,
-                    borderRadius: AppRadius.pillBorder,
-                    border: Border.all(color: outline),
-                  ),
-                  child: Text(
-                    data.badge,
-                    style: AppTypography.caption.copyWith(
-                      color: data.isPrimaryInvert ? onPrimary : fg,
-                      fontWeight: FontWeight.w800,
+                Positioned(
+                  right: -8,
+                  bottom: -10,
+                  child: IgnorePointer(
+                    child: Icon(
+                      data.icon,
+                      size: 64,
+                      color: accentColor.withValues(alpha: isDark ? 0.08 : 0.05),
                     ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSpace.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: isDark ? 0.20 : 0.12),
+                              borderRadius: AppRadius.smBorder,
+                              border: Border.all(
+                                color: accentColor.withValues(alpha: isDark ? 0.45 : 0.30),
+                              ),
+                            ),
+                            child: Icon(
+                              data.icon,
+                              color: accentColor,
+                              size: 21,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.sm + 2,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                              borderRadius: AppRadius.pillBorder,
+                              border: Border.all(
+                                color: accentColor.withValues(alpha: isDark ? 0.50 : 0.30),
+                              ),
+                            ),
+                            child: Text(
+                              data.badge,
+                              style: AppTypography.caption.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 11,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      Text(
+                        data.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.subtitle.copyWith(
+                          color: fg,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        data.subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpace.md),
-            Text(
-              data.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.subtitle.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              data.subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.caption.copyWith(color: muted),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -797,6 +906,7 @@ class _QuickActionData {
   final String subtitle;
   final IconData icon;
   final bool isPrimaryInvert;
+  final Color? accentColor;
   final VoidCallback onTap;
 
   const _QuickActionData({
@@ -805,6 +915,58 @@ class _QuickActionData {
     required this.subtitle,
     required this.icon,
     this.isPrimaryInvert = false,
+    this.accentColor,
     required this.onTap,
   });
+}
+
+/// Custom vector painter drawing modern geometric mesh lines and ambient radar arcs.
+class _ExperienceCardPatternPainter extends CustomPainter {
+  final Color color;
+  final bool isDark;
+
+  _ExperienceCardPatternPainter({
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = color.withValues(alpha: isDark ? 0.08 : 0.05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // 1. Concentric ambient ripples in top-right
+    final center = Offset(size.width * 0.92, -10);
+    for (int r = 1; r <= 3; r++) {
+      canvas.drawCircle(center, r * 24.0, linePaint);
+    }
+
+    // 2. Subtle diagonal wave curve
+    final path = Path();
+    path.moveTo(0, size.height * 0.70);
+    path.quadraticBezierTo(
+      size.width * 0.50,
+      size.height * 0.50,
+      size.width,
+      size.height * 0.85,
+    );
+    canvas.drawPath(path, linePaint);
+
+    // 3. Ambient glow in top-left
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          color.withValues(alpha: isDark ? 0.12 : 0.05),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: const Offset(20, 20), radius: 52));
+    canvas.drawCircle(const Offset(20, 20), 52, glowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ExperienceCardPatternPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.isDark != isDark;
+  }
 }

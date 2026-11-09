@@ -235,162 +235,305 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         children: [
           // 1. Digital Citizen ID Card + Reputation Progress
-          AppCard(
-            accentBorderColor: AppColors.primary(context),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () => profile.pickAvatarFromGallery(),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            radius: 36,
-                            backgroundColor: AppColors.primary(context),
-                            backgroundImage: profile.avatarBytes != null
-                                ? MemoryImage(profile.avatarBytes!)
-                                : null,
-                            child: profile.avatarBytes == null
-                                ? Text(
-                                    avatarLetter,
-                                    style: AppTypography.display.copyWith(
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          Positioned(
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                color: AppColors.surface(context),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.outline(context),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.camera_alt_outlined,
-                                size: 14,
-                                color: AppColors.primary(context),
-                              ),
-                            ),
-                          ),
+          ClipRRect(
+            borderRadius: AppRadius.lgBorder,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.lgBorder,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [
+                          const Color(0xFF131722),
+                          const Color(0xFF0E1118),
+                          const Color(0xFF080A0F),
+                        ]
+                      : [
+                          Colors.white,
+                          const Color(0xFFF8FAFC),
+                          const Color(0xFFEFF3F8),
                         ],
+                ),
+                border: Border.all(
+                  color: AppColors.primary(context).withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark ? 0.35 : 0.22,
+                  ),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary(context).withValues(
+                      alpha: Theme.of(context).brightness == Brightness.dark ? 0.15 : 0.08,
+                    ),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _CitizenPassPatternPainter(
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                        primaryColor: AppColors.primary(context),
                       ),
                     ),
-                    const SizedBox(width: AppSpace.lg),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                  ),
+                  Positioned(
+                    right: -12,
+                    bottom: -16,
+                    child: IgnorePointer(
+                      child: Icon(
+                        Icons.shield_outlined,
+                        size: 110,
+                        color: AppColors.primary(context).withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.03,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: () => profile.pickAvatarFromGallery(),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.primary(context).withValues(alpha: 0.45),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primary(context).withValues(alpha: 0.20),
+                                          blurRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                    child: CircleAvatar(
+                                      radius: 36,
+                                      backgroundColor: AppColors.primary(context),
+                                      backgroundImage: profile.avatarBytes != null
+                                          ? MemoryImage(profile.avatarBytes!)
+                                          : null,
+                                      child: profile.avatarBytes == null
+                                          ? Text(
+                                              avatarLetter,
+                                              style: AppTypography.display.copyWith(
+                                                color: AppColors.onPrimary(context),
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 0,
+                                    bottom: 0,
+                                    child: Container(
+                                      width: 26,
+                                      height: 26,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.surface(context),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.outline(context),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Icon(
+                                        Icons.camera_alt_outlined,
+                                        size: 14,
+                                        color: AppColors.primary(context),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          userName,
+                                          style: AppTypography.title.copyWith(
+                                            color: AppColors.textPrimary(context),
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: -0.3,
+                                          ),
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpace.sm + 2,
+                                          vertical: 3,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: (Theme.of(context).brightness == Brightness.dark
+                                                  ? Colors.white
+                                                  : Colors.black)
+                                              .withValues(alpha: 0.08),
+                                          borderRadius: AppRadius.pillBorder,
+                                          border: Border.all(
+                                            color: AppColors.outline(context),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.nfc_rounded,
+                                              size: 13,
+                                              color: AppColors.textPrimary(context),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'ID: ${countryRegion.code}-$cityPrefix-8492',
+                                              style: AppTypography.caption.copyWith(
+                                                color: AppColors.textPrimary(context),
+                                                fontWeight: FontWeight.w800,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: AppSpace.xs),
+                                  Text(
+                                    userBio,
+                                    style: AppTypography.body.copyWith(
+                                      color: AppColors.textSecondary(context),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpace.sm),
+                                  Wrap(
+                                    spacing: AppSpace.sm,
+                                    runSpacing: AppSpace.xs,
+                                    children: [
+                                      const StatusChip(
+                                        label: 'Verified Citizen',
+                                        kind: StatusChipKind.resolved,
+                                        icon: Icons.verified_user_rounded,
+                                      ),
+                                      StatusChip(
+                                        label: '${auth.userCity}, ${auth.userCountry}',
+                                        kind: StatusChipKind.neutral,
+                                        icon: Icons.location_on_outlined,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        Container(
+                          padding: const EdgeInsets.all(AppSpace.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceMuted(context).withValues(
+                              alpha: Theme.of(context).brightness == Brightness.dark ? 0.65 : 0.85,
+                            ),
+                            borderRadius: AppRadius.mdBorder,
+                            border: Border.all(
+                              color: AppColors.outline(context).withValues(alpha: 0.7),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Text(
-                                  userName,
-                                  style: AppTypography.title.copyWith(
-                                    color: AppColors.textPrimary(context),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.stars_rounded,
+                                        size: 17,
+                                        color: AppColors.accentAmber(context),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Text(
+                                        'Civic Reputation • Level 4 Steward',
+                                        style: AppTypography.caption.copyWith(
+                                          color: AppColors.textPrimary(context),
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    '$civicPoints / $nextTierPoints pts',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textPrimary(context),
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpace.sm),
+                              ClipRRect(
+                                borderRadius: AppRadius.pillBorder,
+                                child: Container(
+                                  height: 8,
+                                  width: double.infinity,
+                                  color: AppColors.outline(context),
+                                  child: FractionallySizedBox(
+                                    alignment: Alignment.centerLeft,
+                                    widthFactor: progress,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: AppRadius.pillBorder,
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            AppColors.accentBlue(context),
+                                            AppColors.accentGreen(context),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                              StatusChip(
-                                label: 'ID: ${countryRegion.code}-$cityPrefix-8492',
-                                kind: StatusChipKind.info,
-                                icon: Icons.badge_outlined,
+                              const SizedBox(height: AppSpace.xs),
+                              Text(
+                                'Earn points by reporting verified road, drainage, and streetlight issues.',
+                                style: AppTypography.caption.copyWith(
+                                  color: AppColors.textSecondary(context),
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSpace.xs),
-                          Text(
-                            userBio,
-                            style: AppTypography.body.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpace.sm),
-                          Wrap(
-                            spacing: AppSpace.sm,
-                            runSpacing: AppSpace.xs,
-                            children: [
-                              const StatusChip(
-                                label: 'Verified Citizen',
-                                kind: StatusChipKind.resolved,
-                                icon: Icons.verified_user_outlined,
-                              ),
-                              StatusChip(
-                                label: '${auth.userCity}, ${auth.userCountry}',
-                                kind: StatusChipKind.neutral,
-                                icon: Icons.location_on_outlined,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.lg),
-                Container(
-                  padding: const EdgeInsets.all(AppSpace.md),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted(context),
-                    borderRadius: AppRadius.smBorder,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Civic Reputation • Level 4 Steward',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textPrimary(context),
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            '$civicPoints / $nextTierPoints pts',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.primary(context),
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpace.sm),
-                      ClipRRect(
-                        borderRadius: AppRadius.pillBorder,
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 8,
-                          backgroundColor: AppColors.outline(context),
-                          color: AppColors.primary(context),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpace.xs),
-                      Text(
-                        'Earn points by reporting verified road, drainage, and streetlight issues.',
-                        style: AppTypography.caption.copyWith(
-                          color: AppColors.textSecondary(context),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpace.lg),
 
-          // 2. 4-Column Civic Impact KPI Row
+          // 2. 4-Column Civic Impact KPI Row (With Adaptive Patterns & Vibrant Accents)
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 640;
@@ -399,7 +542,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Reports Filed',
                   value: '$totalReports',
                   icon: Icons.assignment_outlined,
-                  accentColor: AppColors.primary(context),
+                  accentColor: AppColors.accentBlue(context),
                   onTap: () => MainNavigationScreen.switchToTab(
                     context,
                     MainNavigationScreen.tabReports,
@@ -409,7 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Resolved',
                   value: '$resolvedReports',
                   icon: Icons.check_circle_outline_rounded,
-                  accentColor: AppColors.success(context),
+                  accentColor: AppColors.accentGreen(context),
                   onTap: () => MainNavigationScreen.switchToTab(
                     context,
                     MainNavigationScreen.tabReports,
@@ -418,8 +561,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 StatTile(
                   label: 'AI Verified',
                   value: '$aiVerifiedCount',
-                  icon: Icons.auto_awesome_outlined,
-                  accentColor: AppColors.warning(context),
+                  icon: Icons.auto_awesome_rounded,
+                  accentColor: AppColors.accentPurple(context),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -433,7 +576,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: 'Civic Points',
                   value: '$civicPoints',
                   icon: Icons.stars_rounded,
-                  accentColor: AppColors.primary(context),
+                  accentColor: AppColors.accentAmber(context),
                 ),
               ];
 
@@ -472,10 +615,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: AppSpace.xl),
 
           // 2.5 Smart City Pro Subscription & Revenue Storefront Banner
-          const PremiumUpsellBanner(
+          PremiumUpsellBanner(
             title: 'Smart City Pro, Insurance Dossiers & Business Map Pins',
-            subtitle:
-                'Upgrade to Falcon Shield+ Pro (LKR 990/mo), Business Enterprise (LKR 4,900/mo), or buy instant Insurance Claim PDFs.',
+            subtitle: countryRegion.code == 'LK'
+                ? 'Upgrade to Falcon Shield+ Pro (LKR 990/mo), Business Enterprise (LKR 4,900/mo), or buy instant Insurance Claim PDFs.'
+                : 'Upgrade to Falcon Shield+ Pro (\$4.99/mo), Business Enterprise (\$19.99/mo), or buy instant Insurance Claim PDFs.',
             priceBadge: 'PRO MARKETPLACE',
             ctaLabel: 'Open Store',
           ),
@@ -484,98 +628,172 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // 3. Smart Transit Commuter Pass & Saved Routes
           SectionHeader(
             title: 'Smart Transit Pass & Commute',
-            subtitle: 'Contactless fare wallet & favorite ${auth.userCity} transit routes',
+            subtitle:
+                'Contactless fare wallet & favorite ${auth.userCity} transit routes',
             actionLabel: 'Top Up',
-            onAction: () => _showTopUpPassDialog(context, auth.userCity, countryRegion),
+            onAction: () =>
+                _showTopUpPassDialog(context, auth.userCity, countryRegion),
           ),
           const SizedBox(height: AppSpace.md),
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary(context).withValues(alpha: 0.12),
-                        borderRadius: AppRadius.smBorder,
-                      ),
-                      child: Icon(
-                        Icons.contactless_outlined,
-                        color: AppColors.primary(context),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpace.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Global Smart Transit Card',
-                            style: AppTypography.subtitle.copyWith(
-                              color: AppColors.textPrimary(context),
-                            ),
-                          ),
-                          Text(
-                            'Valid across ${auth.userCity} & ${countryRegion.name} transit networks',
-                            style: AppTypography.caption.copyWith(
-                              color: AppColors.textSecondary(context),
-                            ),
-                          ),
+          ClipRRect(
+            borderRadius: AppRadius.lgBorder,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: AppRadius.lgBorder,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [
+                          const Color(0xFF111827),
+                          const Color(0xFF0D121F),
+                        ]
+                      : [
+                          Colors.white,
+                          const Color(0xFFF1F5F9),
                         ],
+                ),
+                border: Border.all(
+                  color: AppColors.accentTeal(context).withValues(
+                    alpha: Theme.of(context).brightness == Brightness.dark ? 0.35 : 0.22,
+                  ),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.accentTeal(context).withValues(
+                      alpha: Theme.of(context).brightness == Brightness.dark ? 0.12 : 0.05,
+                    ),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _TransitCardPatternPainter(
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                        accentColor: AppColors.accentTeal(context),
                       ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          countryRegion.code == 'LK'
-                              ? 'LKR ${_transitPassBalanceLkr.toStringAsFixed(0)}'
-                              : '\$${(_transitPassBalanceLkr / 250).toStringAsFixed(2)}',
-                          style: AppTypography.title.copyWith(
-                            color: AppColors.success(context),
-                          ),
+                  ),
+                  Positioned(
+                    right: -10,
+                    top: -10,
+                    child: IgnorePointer(
+                      child: Icon(
+                        Icons.directions_bus_rounded,
+                        size: 96,
+                        color: AppColors.accentTeal(context).withValues(
+                          alpha: Theme.of(context).brightness == Brightness.dark ? 0.05 : 0.03,
                         ),
-                        const StatusChip(
-                          label: 'Active Pass',
-                          kind: StatusChipKind.resolved,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpace.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.accentTeal(context).withValues(alpha: 0.16),
+                                borderRadius: AppRadius.mdBorder,
+                                border: Border.all(
+                                  color: AppColors.accentTeal(context).withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.contactless_outlined,
+                                color: AppColors.accentTeal(context),
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Global Smart Transit Card',
+                                    style: AppTypography.subtitle.copyWith(
+                                      color: AppColors.textPrimary(context),
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Valid across ${auth.userCity} & ${countryRegion.name} transit networks',
+                                    style: AppTypography.caption.copyWith(
+                                      color: AppColors.textSecondary(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  countryRegion.code == 'LK'
+                                      ? 'LKR ${_transitPassBalanceLkr.toStringAsFixed(0)}'
+                                      : '\$${(_transitPassBalanceLkr / 250).toStringAsFixed(2)}',
+                                  style: AppTypography.title.copyWith(
+                                    color: AppColors.accentGreen(context),
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -0.5,
+                                  ),
+                                ),
+                                const StatusChip(
+                                  label: 'Active Pass',
+                                  kind: StatusChipKind.resolved,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        Divider(height: 1, color: AppColors.outline(context)),
+                        const SizedBox(height: AppSpace.md),
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: AppSpace.sm,
+                          children: busService.routes.map((route) {
+                            final fareDisplay = countryRegion.code == 'LK'
+                                ? 'LKR ${route.fareLkr.toInt()}'
+                                : '\$${route.fareLkr.toStringAsFixed(2)}';
+                            return ActionChip(
+                              avatar: Icon(
+                                Icons.directions_bus_outlined,
+                                size: 16,
+                                color: Color(route.colorHex),
+                              ),
+                              label: Text(
+                                '${route.displayName} • $fareDisplay',
+                                style: AppTypography.caption.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              onPressed: () {
+                                busService.selectRoute(route.id);
+                                MainNavigationScreen.switchToTab(
+                                  context,
+                                  MainNavigationScreen.tabSmartBus,
+                                );
+                              },
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppSpace.md),
-                Divider(height: 1, color: AppColors.outline(context)),
-                const SizedBox(height: AppSpace.md),
-                Wrap(
-                  spacing: AppSpace.sm,
-                  runSpacing: AppSpace.sm,
-                  children: busService.routes.map((route) {
-                    final fareDisplay = countryRegion.code == 'LK'
-                        ? 'LKR ${route.fareLkr.toInt()}'
-                        : '\$${route.fareLkr.toStringAsFixed(2)}';
-                    return ActionChip(
-                      avatar: Icon(
-                        Icons.directions_bus_outlined,
-                        size: 16,
-                        color: Color(route.colorHex),
-                      ),
-                      label: Text(
-                        '${route.displayName} • $fareDisplay',
-                      ),
-                      onPressed: () {
-                        busService.selectRoute(route.id);
-                        MainNavigationScreen.switchToTab(
-                          context,
-                          MainNavigationScreen.tabSmartBus,
-                        );
-                      },
-                    );
-                  }).toList(),
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: AppSpace.xl),
@@ -905,5 +1123,121 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+}
+
+/// Custom vector painter creating holographic curves, microchip tracks and telemetry wave patterns.
+class _CitizenPassPatternPainter extends CustomPainter {
+  final bool isDark;
+  final Color primaryColor;
+
+  _CitizenPassPatternPainter({
+    required this.isDark,
+    required this.primaryColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = primaryColor.withValues(alpha: isDark ? 0.07 : 0.04)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    // Concentric security arcs radiating from top right
+    final arcCenter = Offset(size.width * 0.95, -20);
+    for (int i = 1; i <= 5; i++) {
+      canvas.drawCircle(arcCenter, i * 28.0, linePaint);
+    }
+
+    // Wave contour across the card
+    final wavePath = Path();
+    wavePath.moveTo(0, size.height * 0.55);
+    wavePath.cubicTo(
+      size.width * 0.35,
+      size.height * 0.35,
+      size.width * 0.65,
+      size.height * 0.75,
+      size.width,
+      size.height * 0.45,
+    );
+    canvas.drawPath(wavePath, linePaint);
+
+    final wavePath2 = Path();
+    wavePath2.moveTo(0, size.height * 0.70);
+    wavePath2.cubicTo(
+      size.width * 0.30,
+      size.height * 0.50,
+      size.width * 0.70,
+      size.height * 0.90,
+      size.width,
+      size.height * 0.60,
+    );
+    canvas.drawPath(wavePath2, linePaint);
+
+    // Subtle ambient glow spot behind user avatar
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          primaryColor.withValues(alpha: isDark ? 0.12 : 0.06),
+          Colors.transparent,
+        ],
+      ).createShader(Rect.fromCircle(center: const Offset(56, 56), radius: 64));
+    canvas.drawCircle(const Offset(56, 56), 64, glowPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CitizenPassPatternPainter oldDelegate) {
+    return oldDelegate.isDark != isDark || oldDelegate.primaryColor != primaryColor;
+  }
+}
+
+/// Custom vector painter drawing modern transit tracks and contactless telemetry arcs.
+class _TransitCardPatternPainter extends CustomPainter {
+  final bool isDark;
+  final Color accentColor;
+
+  _TransitCardPatternPainter({
+    required this.isDark,
+    required this.accentColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final trackPaint = Paint()
+      ..color = accentColor.withValues(alpha: isDark ? 0.08 : 0.05)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    // Contactless radio arcs radiating from top-left NFC badge
+    const nfcCenter = Offset(42, 42);
+    for (int i = 1; i <= 4; i++) {
+      canvas.drawCircle(nfcCenter, i * 22.0, trackPaint);
+    }
+
+    // Metro transit diagonal track curves
+    final track = Path();
+    track.moveTo(size.width * 0.2, size.height);
+    track.quadraticBezierTo(
+      size.width * 0.5,
+      size.height * 0.5,
+      size.width,
+      size.height * 0.2,
+    );
+    canvas.drawPath(track, trackPaint);
+
+    final track2 = Path();
+    track2.moveTo(size.width * 0.35, size.height);
+    track2.quadraticBezierTo(
+      size.width * 0.65,
+      size.height * 0.55,
+      size.width,
+      size.height * 0.35,
+    );
+    canvas.drawPath(track2, trackPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _TransitCardPatternPainter oldDelegate) {
+    return oldDelegate.isDark != isDark || oldDelegate.accentColor != accentColor;
   }
 }
