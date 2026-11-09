@@ -94,54 +94,56 @@ class SocialService extends ChangeNotifier {
       const TravelerProfile(
         uid: 'user_alex',
         username: 'alex_smart',
-        displayName: 'Alex M.',
+        displayName: 'Alex Rivera',
         avatarUrl: '',
-        bio: 'Full-Stack Smart City Engineer & Tea Country Explorer',
-        country: 'Sri Lanka',
-        city: 'Colombo',
-        countryFlag: '🇱🇰',
-        followersCount: 284,
-        placesTraveledCount: 11,
-        routesSharedCount: 4,
+        bio: 'Full-Stack Smart City Engineer & High-Altitude Urban Explorer',
+        country: 'United States',
+        city: 'New York',
+        countryFlag: '🇺🇸',
+        followersCount: 584,
+        placesTraveledCount: 21,
+        routesSharedCount: 11,
         isVerified: true,
-        recentRoute: 'Sigiriya Rock Fortress ➔ Dambulla ➔ Kandy',
+        recentRoute: 'Central Park Promenade ➔ Bethesda Terrace ➔ The Met',
         locationSharingEnabled: true,
-        latitude: 6.9271,
-        longitude: 79.8612,
+        latitude: 40.7829,
+        longitude: -73.9654,
       ),
       const TravelerProfile(
         uid: 'user_sarah',
         username: 'sarah_city',
-        displayName: 'Sarah K.',
+        displayName: 'Sarah Jenkins',
         avatarUrl: '',
-        bio: 'Coastal Ecosystem Monitor & High-Altitude Backpacker',
-        country: 'Sri Lanka',
-        city: 'Galle',
-        countryFlag: '🇱🇰',
-        followersCount: 390,
+        bio: 'Hudson River Ecosystem Monitor & Brooklyn Trail Guide',
+        country: 'United States',
+        city: 'New York',
+        countryFlag: '🇺🇸',
+        followersCount: 490,
         placesTraveledCount: 19,
-        routesSharedCount: 7,
+        routesSharedCount: 8,
         isVerified: true,
-        recentRoute: 'Ella Station ➔ Demodara Nine Arch ➔ Little Adam Peak',
+        recentRoute: 'City Hall ➔ Brooklyn Bridge ➔ DUMBO Pebble Beach',
         locationSharingEnabled: true,
-        latitude: 6.9319,
-        longitude: 79.8478,
+        latitude: 40.7061,
+        longitude: -73.9969,
       ),
       const TravelerProfile(
         uid: 'user_david',
         username: 'david_transit',
-        displayName: 'David R.',
+        displayName: 'David Ross',
         avatarUrl: '',
-        bio: 'Transit Route Optimizer & Heritage Trail Documenter',
-        country: 'Sri Lanka',
-        city: 'Kandy',
-        countryFlag: '🇱🇰',
-        followersCount: 195,
-        placesTraveledCount: 8,
-        routesSharedCount: 3,
+        bio: 'National Parks Trail Documenter & Transit Corridor Optimizer',
+        country: 'United States',
+        city: 'Phoenix',
+        countryFlag: '🇺🇸',
+        followersCount: 395,
+        placesTraveledCount: 18,
+        routesSharedCount: 7,
         isVerified: true,
-        recentRoute: 'Mirissa Beach ➔ Galle Dutch Fort ➔ Bentota',
+        recentRoute: 'Mather Point ➔ Bright Angel Trail ➔ Ooh Aah Point',
         locationSharingEnabled: false,
+        latitude: 36.0544,
+        longitude: -112.1401,
       ),
       const TravelerProfile(
         uid: 'user_elena',
@@ -199,20 +201,171 @@ class SocialService extends ChangeNotifier {
       ),
     ]);
 
-    // Seed sample travel journeys with real map paths
+    // Seed sample travel journeys with real map paths and high-definition photography
     _userPosts.addAll([
+      // 1. United States - New York Central Park
+      UserPost(
+        id: 'post_us_1',
+        placeId: 'central_park_midtown',
+        placeName: 'Central Park Promenade & Bethesda Terrace',
+        userId: 'user_alex',
+        userName: 'Alex Rivera',
+        userHandle: '@alex_smart',
+        userAvatar: '',
+        caption:
+            'Morning jog through The Mall and Bethesda Fountain in Central Park! Beat the NYC crowd and caught sunrise through the elm trees. Path logged below! 🏃‍♂️🍂 #CentralPark #NewYorkRoute',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+        likedBy: ['local_user_1', 'user_sarah', 'user_david'],
+        commentsCount: 8,
+        latitude: 40.7829,
+        longitude: -73.9654,
+        routeSummary: 'Central Park Mall ➔ Bethesda Terrace ➔ The Met',
+        routeStops: ['Central Park South', 'Bethesda Terrace', 'The Met'],
+        distanceKm: 5.4,
+        country: 'United States',
+        city: 'New York',
+      ),
+      // 2. United States - Brooklyn Bridge & DUMBO
+      UserPost(
+        id: 'post_us_2',
+        placeId: 'brooklyn_dumbo',
+        placeName: 'Brooklyn Bridge Walkway & DUMBO Waterfront',
+        userId: 'user_sarah',
+        userName: 'Sarah Jenkins',
+        userHandle: '@sarah_city',
+        userAvatar: '',
+        caption:
+            'Crossed the iconic Brooklyn Bridge on foot into DUMBO for sunset skyline views over Lower Manhattan! Smooth pedestrian flow and breezy air. 🌉🗽 #BrooklynBridge #NYCTrail',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 3)),
+        likedBy: ['user_alex', 'local_user_1', 'user_marcus'],
+        commentsCount: 12,
+        latitude: 40.7061,
+        longitude: -73.9969,
+        routeSummary: 'City Hall Park ➔ Brooklyn Bridge ➔ DUMBO Pebble Beach',
+        routeStops: ['City Hall Park', 'Bridge Tower', 'Pebble Beach DUMBO'],
+        distanceKm: 3.8,
+        country: 'United States',
+        city: 'New York',
+      ),
+      // 3. United States - Grand Canyon
+      UserPost(
+        id: 'post_us_3',
+        placeId: 'grand_canyon_trail',
+        placeName: 'Grand Canyon South Rim & Bright Angel Trail',
+        userId: 'user_david',
+        userName: 'David Ross',
+        userHandle: '@david_transit',
+        userAvatar: '',
+        caption:
+            'Hiked the South Rim trail down towards Indian Garden. The depth of the canyon layers in morning light is completely mind-blowing. Full GPS trail logged! 🏜️🦅 #GrandCanyon #Arizona',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1474044159687-1ee9f3a51722?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 6)),
+        likedBy: ['user_alex', 'user_sarah', 'user_albanna'],
+        commentsCount: 9,
+        latitude: 36.0544,
+        longitude: -112.1401,
+        routeSummary: 'Mather Point ➔ Bright Angel Trail ➔ Ooh Aah Point',
+        routeStops: ['Mather Point', 'Bright Angel Trailhead', 'Ooh Aah Point'],
+        distanceKm: 15.2,
+        country: 'United States',
+        city: 'Phoenix',
+      ),
+      // 4. United States - Golden Gate Bridge
+      UserPost(
+        id: 'post_us_4',
+        placeId: 'golden_gate_marin',
+        placeName: 'Golden Gate Bridge & Marin Headlands',
+        userId: 'user_albanna',
+        userName: 'AL Banna',
+        userHandle: '@albanna',
+        userAvatar: '',
+        caption:
+            'Biked across Golden Gate Bridge up to Hawk Hill in Marin Headlands. Clear blue Pacific skies with zero fog today! Smart transit bike lanes were flawless. 🌁🚴 #GoldenGate #SanFrancisco',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 9)),
+        likedBy: ['user_alex', 'user_sarah', 'user_elena'],
+        commentsCount: 15,
+        latitude: 37.8199,
+        longitude: -122.4783,
+        routeSummary: 'Presidio ➔ Golden Gate Bridge ➔ Marin Headlands Vista',
+        routeStops: ['Presidio', 'Golden Gate Span', 'Hawk Hill'],
+        distanceKm: 12.6,
+        country: 'United States',
+        city: 'San Francisco',
+      ),
+      // 5. United States - Miami South Beach
+      UserPost(
+        id: 'post_us_5',
+        placeId: 'miami_south_beach',
+        placeName: 'Miami Ocean Drive & Wynwood Art Corridor',
+        userId: 'user_elena',
+        userName: 'Elena Sato',
+        userHandle: '@elena_miami',
+        userAvatar: '',
+        caption:
+            'Cruised from South Beach Ocean Drive art deco buildings into the colorful Wynwood street art district. Electric micromobility lanes made the commute seamless! 🌴🎨 #Miami #Wynwood',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1506953823976-52e1fdc0149a?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 14)),
+        likedBy: ['user_albanna', 'user_david', 'local_user_1'],
+        commentsCount: 7,
+        latitude: 25.7617,
+        longitude: -80.1918,
+        routeSummary: 'South Beach ➔ Venetian Causeway ➔ Wynwood Walls',
+        routeStops: ['Ocean Drive', 'Venetian Causeway', 'Wynwood'],
+        distanceKm: 9.3,
+        country: 'United States',
+        city: 'Miami',
+      ),
+      // 6. United States - Yosemite Valley
+      UserPost(
+        id: 'post_us_6',
+        placeId: 'yosemite_valley',
+        placeName: 'Yosemite Valley & Tunnel View Scenic Loop',
+        userId: 'user_marcus',
+        userName: 'Marcus Davies',
+        userHandle: '@marcus_us',
+        userAvatar: '',
+        caption:
+            'Witnessed the monumental granite domes of El Capitan and Half Dome from Tunnel View. Nature in its most magnificent form! 🌲🏔️ #Yosemite #CaliforniaTrails',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 20)),
+        likedBy: ['user_alex', 'user_albanna', 'user_sarah'],
+        commentsCount: 11,
+        latitude: 37.8651,
+        longitude: -119.5383,
+        routeSummary: 'Wawona Road ➔ Tunnel View ➔ Yosemite Valley Floor',
+        routeStops: ['Wawona', 'Tunnel View', 'Valley Floor'],
+        distanceKm: 26.4,
+        country: 'United States',
+        city: 'Los Angeles',
+      ),
+      // 7. Sri Lanka - Sigiriya
       UserPost(
         id: 'post_1',
         placeId: 'sigiriya_kandy',
         placeName: 'Sigiriya Rock Fortress & Golden Caves',
         userId: 'user_alex',
-        userName: 'Alex M.',
+        userName: 'Alex Rivera',
         userHandle: '@alex_smart',
         userAvatar: '',
         caption:
             'Traveled from Colombo up to Sigiriya Fortress via Dambulla! Sunrise climb at 6:00 AM beat the heat and crowds. Map path logged below. 🦁🌄 #Sigiriya #TravelRoute',
         photoUrls: ['assets/central province/sigiriya.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+        createdAt: DateTime.now().subtract(const Duration(hours: 22)),
         likedBy: ['local_user_1', 'user_sarah', 'user_david', 'user_elena'],
         commentsCount: 6,
         latitude: 7.9570,
@@ -223,18 +376,19 @@ class SocialService extends ChangeNotifier {
         country: 'Sri Lanka',
         city: 'Sigiriya',
       ),
+      // 8. Sri Lanka - Ella
       UserPost(
         id: 'post_2',
         placeId: 'ella_gap',
         placeName: 'Demodara Nine Arch Bridge & Ella Rock',
         userId: 'user_sarah',
-        userName: 'Sarah K.',
+        userName: 'Sarah Jenkins',
         userHandle: '@sarah_city',
         userAvatar: '',
         caption:
             'Epic scenic journey through Ella! Caught the blue express train over Demodara Bridge then trekked to Little Adam\'s Peak. Highly recommend this walking path. 🚂⛰️ #Ella #NineArch',
-        photoUrls: ['assets/uva province/ella-rock.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 5)),
+        photoUrls: ['assets/images/nine_arch_bridge.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 24)),
         likedBy: ['user_alex', 'local_user_1', 'user_marcus'],
         commentsCount: 8,
         latitude: 6.8728,
@@ -245,18 +399,19 @@ class SocialService extends ChangeNotifier {
         country: 'Sri Lanka',
         city: 'Ella',
       ),
+      // 9. Sri Lanka - Galle
       UserPost(
         id: 'post_3',
         placeId: 'galle_coast',
         placeName: 'Galle Dutch Fort & LightHouse Ramparts',
         userId: 'user_david',
-        userName: 'David R.',
+        userName: 'David Ross',
         userHandle: '@david_transit',
         userAvatar: '',
         caption:
             'Sunset stroll along the centuries-old ocean ramparts of Galle Fort. Clean cobblestone streets, zero traffic congestion, pure coastal magic. 🌊🏰 #GalleFort #HeritagePath',
-        photoUrls: ['assets/southern province/galle-fort.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 8)),
+        photoUrls: ['assets/images/galle_fort.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 28)),
         likedBy: ['user_alex', 'user_sarah', 'user_albanna'],
         commentsCount: 4,
         latitude: 6.0328,
@@ -267,18 +422,19 @@ class SocialService extends ChangeNotifier {
         country: 'Sri Lanka',
         city: 'Galle',
       ),
+      // 10. Sri Lanka - Colombo
       UserPost(
         id: 'post_4',
         placeId: 'colombo_nintavur',
-        placeName: 'Lotus Tower & Eastern Smart Highway',
+        placeName: 'Colombo Lotus Tower & Marine Promenade',
         userId: 'user_albanna',
         userName: 'AL Banna',
         userHandle: '@albanna',
         userAvatar: '',
         caption:
-            'Cross-island telemetry expedition: Started at Colombo Lotus Tower, traveled east through the central hills, arriving at Nintavur Coastal Hub. All civic sensors active! 📡🇱🇰 #IslandRoute',
-        photoUrls: ['assets/western province/lotus-tower.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 12)),
+            'Cross-island telemetry expedition: Started at Colombo coastal promenade, traveled east through the central hills, arriving at Nintavur Coastal Hub. All civic sensors active! 📡🇱🇰 #IslandRoute',
+        photoUrls: ['assets/western province/galle-face.jpg'],
+        createdAt: DateTime.now().subtract(const Duration(hours: 32)),
         likedBy: ['user_alex', 'user_sarah', 'user_elena', 'user_david'],
         commentsCount: 9,
         latitude: 6.9298,
@@ -287,8 +443,9 @@ class SocialService extends ChangeNotifier {
         routeStops: ['Lotus Tower', 'Kandy Corridor', 'Nintavur Hub'],
         distanceKm: 320.5,
         country: 'Sri Lanka',
-        city: 'Nintavur',
+        city: 'Colombo',
       ),
+      // 11. Japan - Tokyo
       UserPost(
         id: 'post_5',
         placeId: 'tokyo_fuji',
@@ -299,8 +456,10 @@ class SocialService extends ChangeNotifier {
         userAvatar: '',
         caption:
             'Took the Romancecar from Shinjuku out to Hakone, sailed across Lake Ashi, and reached Mount Fuji 5th Station. Clear skies and stunning peak vistas! 🗻🚄 #FujiPath #JapanTravel',
-        photoUrls: ['assets/western province/galle-face.jpg'],
-        createdAt: DateTime.now().subtract(const Duration(hours: 18)),
+        photoUrls: [
+          'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 36)),
         likedBy: ['user_albanna', 'user_alex', 'user_marcus'],
         commentsCount: 11,
         latitude: 35.3606,
@@ -310,6 +469,31 @@ class SocialService extends ChangeNotifier {
         distanceKm: 138.0,
         country: 'Japan',
         city: 'Tokyo',
+      ),
+      // 12. United Kingdom - London
+      UserPost(
+        id: 'post_6',
+        placeId: 'london_thames',
+        placeName: 'London Tower Bridge & South Bank Promenade',
+        userId: 'user_marcus',
+        userName: 'Marcus Davies',
+        userHandle: '@marcus_london',
+        userAvatar: '',
+        caption:
+            'Walked along Thames Path from Westminster Bridge past the Tate Modern to Tower Bridge. Clean historic corridors with smart bus connections! 🇬🇧🏰 #LondonPath #ThamesWalk',
+        photoUrls: [
+          'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=700&q=75',
+        ],
+        createdAt: DateTime.now().subtract(const Duration(hours: 40)),
+        likedBy: ['user_alex', 'user_sarah', 'local_user_1'],
+        commentsCount: 5,
+        latitude: 51.5055,
+        longitude: -0.0754,
+        routeSummary: 'Westminster ➔ South Bank ➔ Tower Bridge',
+        routeStops: ['Westminster', 'South Bank', 'Tower Bridge'],
+        distanceKm: 4.8,
+        country: 'United Kingdom',
+        city: 'London',
       ),
     ]);
 
@@ -342,14 +526,91 @@ class SocialService extends ChangeNotifier {
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
-  List<UserPost> getAllPosts() {
-    return List<UserPost>.from(_userPosts)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  List<TravelerProfile> getTravelersForCountry([String? country]) {
+    if (country == null || country.isEmpty) return travelers;
+    final c = country.toLowerCase();
+    final isUs = c.contains('united states') ||
+        c.contains('america') ||
+        c.contains('usa') ||
+        c == 'us';
+    final list = List<TravelerProfile>.from(_travelers);
+    list.sort((a, b) {
+      final aMatch = isUs
+          ? (a.country.toLowerCase().contains('united states') ||
+              a.country.toLowerCase().contains('america') ||
+              a.country.toLowerCase().contains('usa') ||
+              a.country.toLowerCase() == 'us')
+          : a.country.toLowerCase().contains(c);
+      final bMatch = isUs
+          ? (b.country.toLowerCase().contains('united states') ||
+              b.country.toLowerCase().contains('america') ||
+              b.country.toLowerCase().contains('usa') ||
+              b.country.toLowerCase() == 'us')
+          : b.country.toLowerCase().contains(c);
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return b.followersCount.compareTo(a.followersCount);
+    });
+    return list;
   }
 
-  List<UserPost> getAlgorithmAlignedPosts() {
+  List<UserPost> getAllPosts({String? country}) {
+    final list = List<UserPost>.from(_userPosts);
+    if (country != null && country.isNotEmpty) {
+      final c = country.toLowerCase();
+      final isUs = c.contains('united states') ||
+          c.contains('america') ||
+          c.contains('usa') ||
+          c == 'us';
+      list.sort((a, b) {
+        final aMatch = isUs
+            ? (a.country?.toLowerCase().contains('united states') == true ||
+                a.country?.toLowerCase().contains('america') == true ||
+                a.country?.toLowerCase().contains('usa') == true ||
+                a.country?.toLowerCase() == 'us')
+            : (a.country?.toLowerCase().contains(c) == true);
+        final bMatch = isUs
+            ? (b.country?.toLowerCase().contains('united states') == true ||
+                b.country?.toLowerCase().contains('america') == true ||
+                b.country?.toLowerCase().contains('usa') == true ||
+                b.country?.toLowerCase() == 'us')
+            : (b.country?.toLowerCase().contains(c) == true);
+        if (aMatch && !bMatch) return -1;
+        if (!aMatch && bMatch) return 1;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+    } else {
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return list;
+  }
+
+  List<UserPost> getAlgorithmAlignedPosts({String? country}) {
     final posts = List<UserPost>.from(_userPosts);
+    final c = country?.toLowerCase();
+    final isUs = c != null &&
+        (c.contains('united states') ||
+            c.contains('america') ||
+            c.contains('usa') ||
+            c == 'us');
+
     posts.sort((a, b) {
+      if (country != null && country.isNotEmpty) {
+        final aMatch = isUs
+            ? (a.country?.toLowerCase().contains('united states') == true ||
+                a.country?.toLowerCase().contains('america') == true ||
+                a.country?.toLowerCase().contains('usa') == true ||
+                a.country?.toLowerCase() == 'us')
+            : (a.country?.toLowerCase().contains(c!) == true);
+        final bMatch = isUs
+            ? (b.country?.toLowerCase().contains('united states') == true ||
+                b.country?.toLowerCase().contains('america') == true ||
+                b.country?.toLowerCase().contains('usa') == true ||
+                b.country?.toLowerCase() == 'us')
+            : (b.country?.toLowerCase().contains(c!) == true);
+        if (aMatch && !bMatch) return -1;
+        if (!aMatch && bMatch) return 1;
+      }
       final aAgeHours = DateTime.now().difference(a.createdAt).inHours;
       final bAgeHours = DateTime.now().difference(b.createdAt).inHours;
       final aScore = (a.likesCount * 2) + a.commentsCount - aAgeHours;

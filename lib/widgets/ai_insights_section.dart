@@ -92,7 +92,8 @@ class AiInsightsSection extends StatelessWidget {
       recommendation: '7:30 AM - Beat the morning rush',
       detailedForecast:
           'Falcon AI pedestrian sensors indicate 68% lower foot traffic across Central Park Promenade before 8:30 AM. Clear sky conditions and mild morning breeze.',
-      imagePath: 'assets/cover.png',
+      imagePath:
+          'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=800&auto=format&fit=crop&q=80',
       icon: Icons.access_time_filled_rounded,
       confidenceBadge: '98% AI Match',
     ),
@@ -102,7 +103,8 @@ class AiInsightsSection extends StatelessWidget {
       recommendation: 'Clear skies • Moderate 21°C',
       detailedForecast:
           'Hudson River coastal telemetry confirms calm winds (12 km/h) and optimal visibility across Brooklyn Bridge and Manhattan transit corridors.',
-      imagePath: 'assets/cover.png',
+      imagePath:
+          'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&auto=format&fit=crop&q=80',
       icon: Icons.wb_sunny_rounded,
       confidenceBadge: 'Live Radar',
     ),
@@ -112,7 +114,8 @@ class AiInsightsSection extends StatelessWidget {
       recommendation: 'Express shuttles on schedule',
       detailedForecast:
           'Subway and city bus telemetry reporting 99.4% on-time performance across Atlantic Ave and Grand Central terminals.',
-      imagePath: 'assets/cover.png',
+      imagePath:
+          'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?w=800&auto=format&fit=crop&q=80',
       icon: Icons.directions_bus_rounded,
       confidenceBadge: 'Smart Transit',
     ),
@@ -122,16 +125,81 @@ class AiInsightsSection extends StatelessWidget {
       recommendation: 'Zero active flood alerts',
       detailedForecast:
           'Drainage pumps and municipal storm sensors operating normally across Kings County municipal district.',
-      imagePath: 'assets/cover.png',
+      imagePath:
+          'https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?w=800&auto=format&fit=crop&q=80',
       icon: Icons.check_circle_rounded,
       confidenceBadge: '99% Clear',
     ),
   ];
 
+  static const List<AiInsightItem> ukInsights = [
+    AiInsightItem(
+      category: 'Best Time to Visit',
+      location: 'Westminster & Thames Walk',
+      recommendation: '8:00 AM - Uncrowded riverbanks',
+      detailedForecast:
+          'Pedestrian density along the Thames Path and Elizabeth Tower is minimal before 9:00 AM with fresh riverside breeze.',
+      imagePath:
+          'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&auto=format&fit=crop&q=80',
+      icon: Icons.access_time_filled_rounded,
+      confidenceBadge: '95% AI Match',
+    ),
+    AiInsightItem(
+      category: 'Transit Update',
+      location: 'London Underground & Bus',
+      recommendation: 'TfL network operating normally',
+      detailedForecast:
+          'Jubilee and Central lines reporting on-schedule frequency with real-time contactless bus sync at London Bridge.',
+      imagePath:
+          'https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=800&auto=format&fit=crop&q=80',
+      icon: Icons.directions_bus_rounded,
+      confidenceBadge: 'TfL Status',
+    ),
+  ];
+
+  static const List<AiInsightItem> jpInsights = [
+    AiInsightItem(
+      category: 'Best Time to Visit',
+      location: 'Shinjuku Gyoen & Meiji Jingu',
+      recommendation: '7:00 AM - Quiet temple grounds',
+      detailedForecast:
+          'Crowd prediction shows peaceful atmosphere and optimal photography light across forested pathways.',
+      imagePath:
+          'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=80',
+      icon: Icons.access_time_filled_rounded,
+      confidenceBadge: '97% AI Match',
+    ),
+    AiInsightItem(
+      category: 'Transit Update',
+      location: 'Yamanote & Chuo Lines',
+      recommendation: 'Shinkansen & Metro on time',
+      detailedForecast:
+          'Telemetry records 99.9% transit precision across Shinjuku, Shibuya, and Tokyo Station hubs.',
+      imagePath:
+          'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=800&auto=format&fit=crop&q=80',
+      icon: Icons.directions_transit_rounded,
+      confidenceBadge: 'Smart Transit',
+    ),
+  ];
+
   static List<AiInsightItem> getInsights(String country) {
     final c = country.toLowerCase();
-    if (c.contains('united states') || c.contains('america') || c.contains('usa') || c == 'us') {
+    if (c.contains('united states') ||
+        c.contains('america') ||
+        c.contains('usa') ||
+        c == 'us') {
       return usInsights;
+    }
+    if (c.contains('united kingdom') ||
+        c.contains('britain') ||
+        c.contains('england') ||
+        c.contains('london') ||
+        c == 'uk' ||
+        c == 'gb') {
+      return ukInsights;
+    }
+    if (c.contains('japan') || c.contains('tokyo') || c == 'jp') {
+      return jpInsights;
     }
     return insights;
   }
@@ -193,13 +261,21 @@ class AiInsightsSection extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        item.imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: AppColors.surfaceMuted(ctx),
-                        ),
-                      ),
+                      item.imagePath.startsWith('http')
+                          ? Image.network(
+                              item.imagePath,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: AppColors.surfaceMuted(ctx),
+                              ),
+                            )
+                          : Image.asset(
+                              item.imagePath,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: AppColors.surfaceMuted(ctx),
+                              ),
+                            ),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -376,14 +452,23 @@ class _AiInsightPhotoCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 // Real High-Resolution Background Photograph
-                Image.asset(
-                  item.imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Image.asset(
-                    'assets/cover.png',
-                    fit: BoxFit.cover,
-                  ),
-                ),
+                item.imagePath.startsWith('http')
+                    ? Image.network(
+                        item.imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/cover.png',
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Image.asset(
+                        item.imagePath,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Image.asset(
+                          'assets/cover.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                 // Rich Cinematic Scrim Overlay for Crisp Text Readability
                 DecoratedBox(
                   decoration: BoxDecoration(

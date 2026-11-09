@@ -7,6 +7,7 @@ import '../data/hotels_data.dart';
 import '../data/mock_data.dart';
 import '../data/sri_lanka_places.dart';
 import '../models/guide.dart';
+import '../services/auth_service.dart';
 import '../services/clock_service.dart';
 import '../services/community_issue_service.dart';
 import '../services/currency_service.dart';
@@ -1460,6 +1461,7 @@ class _TripJournalScreenState extends State<TripJournalScreen> {
   @override
   Widget build(BuildContext context) {
     final tripService = context.watch<TripHistoryService>();
+    final auth = context.watch<AuthService>();
 
     return AppScaffold(
       appBar: AppBar(
@@ -1468,15 +1470,15 @@ class _TripJournalScreenState extends State<TripJournalScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addNewEntry(context, tripService),
         backgroundColor: AppColors.primary(context),
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary(context),
         icon: const Icon(Icons.edit_note_rounded),
         label: const Text('New Journal Entry'),
       ),
       body: ListView(
         padding: AppSpace.pagePadding,
         children: [
-          const SectionHeader(
-            title: 'My Sri Lanka Travel & Field Journal',
+          SectionHeader(
+            title: 'My ${auth.userCountry} Travel & Field Journal',
             subtitle: 'Documented routes, distances, and travel milestones',
           ),
           const SizedBox(height: AppSpace.md),

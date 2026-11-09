@@ -73,8 +73,8 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
   Widget build(BuildContext context) {
     final social = context.watch<SocialService>();
     final auth = context.watch<AuthService>();
-    final travelers = social.travelers;
-    final allPosts = social.getAllPosts();
+    final travelers = social.getTravelersForCountry(auth.userCountry);
+    final allPosts = social.getAllPosts(country: auth.userCountry);
 
     // Filter travelers by search query & filter
     final filteredTravelers = travelers.where((t) {
@@ -124,7 +124,7 @@ class _CommunityHubScreenState extends State<CommunityHubScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateJourneyModal(context),
         backgroundColor: AppColors.primary(context),
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onPrimary(context),
         icon: const Icon(Icons.alt_route_rounded),
         label: const Text('Share Life Journey'),
       ),

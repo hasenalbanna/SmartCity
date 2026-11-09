@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../models/user_post.dart';
+import '../services/auth_service.dart';
 import '../services/social_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
@@ -36,7 +37,10 @@ class InstagramFeedSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final social = context.watch<SocialService>();
-    final allPosts = social.getAllPosts();
+    final auth = context.watch<AuthService>();
+    final allPosts = preferGrid
+        ? social.getAlgorithmAlignedPosts(country: auth.userCountry)
+        : social.getAllPosts(country: auth.userCountry);
     final visiblePosts = maxPosts != null
         ? allPosts.take(maxPosts!).toList()
         : allPosts;
