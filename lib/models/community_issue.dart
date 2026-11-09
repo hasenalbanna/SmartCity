@@ -15,6 +15,8 @@ class CommunityIssue {
   final String description;
   final String address;
   final LatLng location;
+  final String country;
+  final String city;
   final IssueStatus status;
   final String contactNumber;
   final String? imagePath;
@@ -30,6 +32,8 @@ class CommunityIssue {
     required this.description,
     required this.address,
     required this.location,
+    this.country = 'Sri Lanka',
+    this.city = 'Nintavur',
     this.status = IssueStatus.pending,
     required this.contactNumber,
     this.imagePath,
@@ -46,6 +50,8 @@ class CommunityIssue {
     String? description,
     String? address,
     LatLng? location,
+    String? country,
+    String? city,
     IssueStatus? status,
     String? contactNumber,
     String? imagePath,
@@ -61,6 +67,8 @@ class CommunityIssue {
       description: description ?? this.description,
       address: address ?? this.address,
       location: location ?? this.location,
+      country: country ?? this.country,
+      city: city ?? this.city,
       status: status ?? this.status,
       contactNumber: contactNumber ?? this.contactNumber,
       imagePath: imagePath ?? this.imagePath,
@@ -80,6 +88,8 @@ class CommunityIssue {
       'address': address,
       'lat': location.latitude,
       'lng': location.longitude,
+      'country': country,
+      'city': city,
       'status': status.name,
       'contactNumber': contactNumber,
       'imagePath': imagePath,
@@ -101,6 +111,8 @@ class CommunityIssue {
         (json['lat'] as num).toDouble(),
         (json['lng'] as num).toDouble(),
       ),
+      country: json['country'] as String? ?? 'Sri Lanka',
+      city: json['city'] as String? ?? 'Nintavur',
       status: IssueStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => IssueStatus.pending,

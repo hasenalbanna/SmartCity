@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
 import '../models/community_issue.dart';
 import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
@@ -29,6 +30,7 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
   bool _isMapExpanded = false;
   int _reportModeIndex = 0; // 0 = Local Issues, 1 = Disaster Issues (Falcon AI)
   String _selectedFilter = 'All';
+  bool _isGlobalScope = false; // false = My Country/City, true = Worldwide
   final Set<String> _expandedAiCards = {};
 
   static const List<String> _filters = [
@@ -36,14 +38,6 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     'Pending',
     'In Progress',
     'Resolved',
-  ];
-
-  static const List<LatLng> _nintavurBoundary = [
-    LatLng(7.3720, 81.8250),
-    LatLng(7.3720, 81.8650),
-    LatLng(7.3220, 81.8650),
-    LatLng(7.3220, 81.8250),
-    LatLng(7.3720, 81.8250),
   ];
 
   String _formatDate(DateTime dt) => '${dt.month}/${dt.day}/${dt.year}';
@@ -59,6 +53,144 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     }
   }
 
+  void _showCountryCitySwitchModal(BuildContext context, AuthService auth) {
+    final profile = context.read<ProfileService>();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            constraints: const BoxConstraints(maxHeight: 520),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Switch Citizen Region',
+                      style: AppTypography.title.copyWith(
+                        color: AppColors.textPrimary(context),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                Text(
+                  'Select your active country & city to customize live issue feeds and maps.',
+                  style: AppTypography.caption.copyWith(
+                    color: AppColors.textSecondary(context),
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: GlobalRegions.countries.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      color: AppColors.outline(context),
+                    ),
+                    itemBuilder: (_, index) {
+                      final c = GlobalRegions.countries[index];
+                      final isSelected = c.name == auth.userCountry;
+                      return ExpansionTile(
+                        leading: Text(c.flag, style: AppTypography.title),
+                        title: Text(
+                          c.name,
+                          style: AppTypography.subtitle.copyWith(
+                            color: AppColors.textPrimary(context),
+                            fontWeight: isSelected
+                                ? FontWeight.w800
+                                : FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          isSelected
+                              ? 'Active: ${auth.userCity}'
+                              : '${c.cities.length} cities available',
+                          style: AppTypography.caption.copyWith(
+                            color: isSelected
+                                ? AppColors.primary(context)
+                                : AppColors.textSecondary(context),
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.normal,
+                          ),
+                        ),
+                        initiallyExpanded: isSelected,
+                        children: c.cities.map((city) {
+                          final isCitySelected =
+                              isSelected && auth.userCity == city.name;
+                          return ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: AppSpace.xl,
+                            ),
+                            leading: Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: isCitySelected
+                                  ? AppColors.primary(context)
+                                  : AppColors.textSecondary(context),
+                            ),
+                            title: Text(
+                              city.name,
+                              style: AppTypography.body.copyWith(
+                                color: isCitySelected
+                                    ? AppColors.primary(context)
+                                    : AppColors.textPrimary(context),
+                                fontWeight: isCitySelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                            trailing: isCitySelected
+                                ? Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 18,
+                                    color: AppColors.primary(context),
+                                  )
+                                : null,
+                            onTap: () async {
+                              await auth.updateRegion(c.name, city.name);
+                              profile.updateProfile(
+                                displayName: profile.displayName,
+                                bio: profile.bio,
+                                location: '${city.name}, ${c.name}',
+                              );
+                              if (context.mounted) {
+                                Navigator.pop(ctx);
+                                _mapController.move(
+                                  city.coordinates,
+                                  c.defaultZoom,
+                                );
+                              }
+                            },
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthService>();
@@ -66,13 +198,38 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     final issuesService = context.watch<CommunityIssueService>();
     final falcon = context.watch<FalconAiService>();
 
+    final userCountry = auth.userCountry;
+    final userCity = auth.userCity;
+    final countryRegion = GlobalRegions.findCountry(userCountry);
+    final userCoords = GlobalRegions.resolveLocation(userCountry, userCity);
+
     final userName = auth.currentUser?.username.isNotEmpty == true
         ? auth.currentUser!.username
         : (profile.displayName.isNotEmpty ? profile.displayName : 'AL');
     final avatarLetter = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
 
     final allIssues = issuesService.issues;
-    final filteredIssues = allIssues.where((issue) {
+    final scopedIssues = _isGlobalScope
+        ? allIssues
+        : allIssues.where((issue) {
+            if (issue.country.toLowerCase() == userCountry.toLowerCase()) {
+              return true;
+            }
+            if (issue.address.toLowerCase().contains(
+                  userCountry.toLowerCase(),
+                )) {
+              return true;
+            }
+            if (issue.city.toLowerCase() == userCity.toLowerCase()) {
+              return true;
+            }
+            return false;
+          }).toList();
+
+    final activeIssuesList =
+        scopedIssues.isNotEmpty ? scopedIssues : allIssues;
+
+    final filteredIssues = activeIssuesList.where((issue) {
       if (_selectedFilter == 'Pending') {
         return issue.status == IssueStatus.pending;
       }
@@ -130,9 +287,24 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
       ),
       body: Column(
         children: [
-          _buildHeader(context, userName, avatarLetter),
+          _buildHeader(
+            context,
+            userName,
+            avatarLetter,
+            countryRegion,
+            userCity,
+            auth,
+          ),
           _buildPrimaryTwoOptionsSelector(context, falcon),
-          _buildMapSection(context, allIssues, falcon),
+          _buildScopeSwitcher(context, userCity, userCountry, userCoords),
+          _buildMapSection(
+            context,
+            activeIssuesList,
+            falcon,
+            countryRegion,
+            userCoords,
+            userCity,
+          ),
           Expanded(
             child: _reportModeIndex == 1
                 ? FalconAiDisasterPanel(mapController: _mapController)
@@ -140,6 +312,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                     context,
                     filteredIssues,
                     issuesService,
+                    userCity,
+                    countryRegion.name,
                   ),
           ),
         ],
@@ -151,6 +325,9 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     BuildContext context,
     String userName,
     String avatarLetter,
+    CountryRegion countryRegion,
+    String userCity,
+    AuthService auth,
   ) {
     final onPrimary = AppColors.onPrimary(context);
     return Container(
@@ -171,92 +348,224 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
           ),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(
-              'Hello, $userName',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.title.copyWith(
-                color: AppColors.textPrimary(context),
-                fontWeight: FontWeight.w800,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Hello, $userName',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.title.copyWith(
+                    color: AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                InkWell(
+                  onTap: () => _showCountryCitySwitchModal(context, auth),
+                  borderRadius: AppRadius.xsBorder,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(countryRegion.flag, style: AppTypography.caption),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          '$userCity, ${countryRegion.name}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textSecondary(context),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down_rounded, size: 16),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: AppSpace.xs),
-          InkWell(
-            onTap: () => PremiumStoreModal.show(context),
-            borderRadius: AppRadius.pillBorder,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpace.sm,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceMuted(context),
-                borderRadius: AppRadius.pillBorder,
-                border: Border.all(color: AppColors.outline(context)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.workspace_premium_rounded,
-                    size: 15,
-                    color: AppColors.textPrimary(context),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: () => PremiumStoreModal.show(context),
+                  borderRadius: AppRadius.pillBorder,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceMuted(context),
+                      borderRadius: AppRadius.pillBorder,
+                      border: Border.all(color: AppColors.outline(context)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 15,
+                          color: AppColors.textPrimary(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Pro',
+                          style: AppTypography.caption.copyWith(
+                            color: AppColors.textPrimary(context),
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Pro',
+                ),
+                const SizedBox(width: 6),
+                Semantics(
+                  label: 'Trigger Emergency SOS Strobe',
+                  button: true,
+                  child: InkWell(
+                    onTap: () => EmergencyBeaconModal.show(context),
+                    borderRadius: AppRadius.pillBorder,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.sm,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary(context),
+                        borderRadius: AppRadius.pillBorder,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.sos_rounded, size: 15, color: onPrimary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'SOS',
+                            style: AppTypography.caption.copyWith(
+                              color: onPrimary,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor: AppColors.primary(context),
+                  child: Text(
+                    avatarLetter,
                     style: AppTypography.caption.copyWith(
-                      color: AppColors.textPrimary(context),
+                      color: onPrimary,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: AppSpace.xs),
-          Semantics(
-            label: 'Trigger Emergency SOS Strobe',
-            button: true,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScopeSwitcher(
+    BuildContext context,
+    String userCity,
+    String userCountry,
+    LatLng userCoords,
+  ) {
+    final onPrimary = AppColors.onPrimary(context);
+    final country = GlobalRegions.findCountry(userCountry);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        0,
+        AppSpace.lg,
+        AppSpace.xs,
+      ),
+      color: AppColors.surface(context),
+      child: Row(
+        children: [
+          Expanded(
             child: InkWell(
-              onTap: () => EmergencyBeaconModal.show(context),
+              onTap: () {
+                setState(() => _isGlobalScope = false);
+                _mapController.move(userCoords, country.defaultZoom);
+              },
               borderRadius: AppRadius.pillBorder,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpace.sm,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary(context),
+                  color: !_isGlobalScope
+                      ? AppColors.primary(context)
+                      : AppColors.surfaceMuted(context),
                   borderRadius: AppRadius.pillBorder,
+                  border: Border.all(
+                    color: !_isGlobalScope
+                        ? AppColors.primary(context)
+                        : AppColors.outline(context),
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.sos_rounded, size: 15, color: onPrimary),
-                    const SizedBox(width: 4),
-                    Text(
-                      'SOS',
-                      style: AppTypography.caption.copyWith(
-                        color: onPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+                alignment: Alignment.center,
+                child: Text(
+                  '📍 My Area ($userCity)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    color: !_isGlobalScope
+                        ? onPrimary
+                        : AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: AppSpace.xs),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.primary(context),
-            child: Text(
-              avatarLetter,
-              style: AppTypography.caption.copyWith(
-                color: onPrimary,
-                fontWeight: FontWeight.w800,
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: InkWell(
+              onTap: () {
+                setState(() => _isGlobalScope = true);
+                _mapController.move(const LatLng(20.0, 0.0), 1.8);
+              },
+              borderRadius: AppRadius.pillBorder,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isGlobalScope
+                      ? AppColors.primary(context)
+                      : AppColors.surfaceMuted(context),
+                  borderRadius: AppRadius.pillBorder,
+                  border: Border.all(
+                    color: _isGlobalScope
+                        ? AppColors.primary(context)
+                        : AppColors.outline(context),
+                  ),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '🌍 Global Issues (World)',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.caption.copyWith(
+                    color: _isGlobalScope
+                        ? onPrimary
+                        : AppColors.textPrimary(context),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ),
             ),
           ),
@@ -425,6 +734,9 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     BuildContext context,
     List<CommunityIssue> issues,
     FalconAiService falcon,
+    CountryRegion countryRegion,
+    LatLng userCoords,
+    String userCity,
   ) {
     final mapHeight = _isMapExpanded ? 320.0 : 200.0;
     return AnimatedContainer(
@@ -436,24 +748,26 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
         children: [
           FlutterMap(
             mapController: _mapController,
-            options: const MapOptions(
-              initialCenter: LatLng(7.3486, 81.8475),
-              initialZoom: 13.8,
+            options: MapOptions(
+              initialCenter:
+                  _isGlobalScope ? const LatLng(20.0, 0.0) : userCoords,
+              initialZoom: _isGlobalScope ? 1.8 : countryRegion.defaultZoom,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.smartcity.app',
               ),
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: _nintavurBoundary,
-                    strokeWidth: 3.0,
-                    color: AppColors.danger(context),
-                  ),
-                ],
-              ),
+              if (!_isGlobalScope)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: countryRegion.boundary,
+                      strokeWidth: 2.8,
+                      color: AppColors.primary(context),
+                    ),
+                  ],
+                ),
               MarkerLayer(
                 markers: [
                   ...issues.map((issue) {
@@ -566,7 +880,11 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
             bottom: AppSpace.md,
             child: InkWell(
               onTap: () {
-                _mapController.move(const LatLng(7.3486, 81.8475), 14.2);
+                if (_isGlobalScope) {
+                  _mapController.move(const LatLng(20.0, 0.0), 1.8);
+                } else {
+                  _mapController.move(userCoords, countryRegion.defaultZoom);
+                }
               },
               borderRadius: AppRadius.mdBorder,
               child: Container(
@@ -582,14 +900,16 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.my_location_rounded,
+                    Icon(
+                      _isGlobalScope
+                          ? Icons.public_rounded
+                          : Icons.my_location_rounded,
                       size: 18,
                       color: Colors.white,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Smart Hub',
+                      _isGlobalScope ? 'Global View' : userCity,
                       style: AppTypography.caption.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
@@ -609,6 +929,8 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
     BuildContext context,
     List<CommunityIssue> issues,
     CommunityIssueService service,
+    String userCity,
+    String countryName,
   ) {
     return Container(
       decoration: BoxDecoration(
@@ -631,7 +953,9 @@ class _CommunityIssuesScreenState extends State<CommunityIssuesScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SectionHeader(
-                  title: 'Local Community Reports (${issues.length})',
+                  title: _isGlobalScope
+                      ? 'Worldwide Civic Reports (${issues.length})'
+                      : '$userCity, $countryName Reports (${issues.length})',
                   subtitle:
                       'Filter by status or export a Certified AI Insurance Claim PDF',
                   actionLabel: 'Insurance PDF',

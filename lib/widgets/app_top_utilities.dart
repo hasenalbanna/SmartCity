@@ -31,9 +31,12 @@ class AppTopUtilities extends StatelessWidget {
 
     return Padding(
       padding: padding,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerRight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
           _buildUtilityButton(
             tooltip: 'Realtime Chat',
             icon: Icons.chat_bubble_outline_rounded,
@@ -129,7 +132,8 @@ class AppTopUtilities extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildUtilityButton({

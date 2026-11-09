@@ -8,7 +8,6 @@ import '../services/localization_service.dart';
 import '../services/notification_service.dart';
 import '../services/profile_service.dart';
 import '../services/smart_bus_service.dart';
-import '../services/theme_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
@@ -30,19 +29,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedWard = 'Ward 04 — Addappalam';
   double _transitPassBalanceLkr = 1450.0;
-  bool _monsoonSmsAlerts = true;
-  bool _councilTicketUpdates = true;
-  bool _offlineMapCache = true;
-
-  static const List<String> _wards = [
-    'Ward 01 — Colombo & Global Hub',
-    'Ward 02 — Hospital Road',
-    'Ward 03 — Town Central',
-    'Ward 04 — Addappalam',
-    'Ward 05 — Coastal Belt',
-  ];
 
   void _showEditProfileDialog(BuildContext context, ProfileService profile) {
     final nameCtrl = TextEditingController(
@@ -88,7 +75,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               profile.updateProfile(
                 displayName: nameCtrl.text.trim(),
                 bio: bioCtrl.text.trim(),
-                location: _selectedWard,
+                location: profile.location.isNotEmpty
+                    ? profile.location
+                    : 'Smart City Citizen',
               );
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -157,7 +146,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final profile = context.watch<ProfileService>();
     final localization = context.watch<LocalizationService>();
     final currency = context.watch<CurrencyService>();
-    final themeService = context.watch<ThemeService>();
     final issueService = context.watch<CommunityIssueService>();
     final busService = context.watch<SmartBusService>();
     final notificationService = context.watch<NotificationService>();
@@ -318,9 +306,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 icon: Icons.verified_user_outlined,
                               ),
                               StatusChip(
-                                label: _selectedWard,
+                                label: '${auth.userCity}, ${auth.userCountry}',
                                 kind: StatusChipKind.neutral,
-                                icon: Icons.location_city_rounded,
+                                icon: Icons.location_on_outlined,
                               ),
                             ],
                           ),
@@ -730,11 +718,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           const SizedBox(height: AppSpace.xl),
 
-          // 7. Preferences, Ward Selection, Language & Appearance
+          // 7. Settings & Preferences
           SectionHeader(
-            title: 'Preferences & Notifications',
-            subtitle: 'Ward assignment, language, currency, and alert channels',
-            actionLabel: 'All Settings',
+            title: 'Settings & Control Center',
+            subtitle: 'Language, currency, ward alerts, and appearance',
+            actionLabel: 'Open Settings',
             onAction: () {
               Navigator.push(
                 context,
@@ -744,199 +732,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: AppSpace.md),
           AppCard(
-            padding: EdgeInsets.zero,
-            child: Column(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+            padding: const EdgeInsets.all(AppSpace.md),
+            child: Row(
               children: [
-                ListTile(
-                  leading: Icon(
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted(context),
+                    borderRadius: AppRadius.mdBorder,
+                    border: Border.all(color: AppColors.outline(context)),
+                  ),
+                  child: Icon(
                     Icons.tune_rounded,
                     color: AppColors.primary(context),
-                  ),
-                  title: Text(
-                    'Smart City Settings & Control Center',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    '11 Languages (${localization.currentLanguage.toUpperCase()}) • Multi-Currency (${currency.currentCurrency}) • Falcon AI Voice Calibration',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.primary(context),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                ListTile(
-                  leading: Icon(
-                    Icons.map_outlined,
-                    color: AppColors.primary(context),
-                  ),
-                  title: Text(
-                    'Home Municipal Ward',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Prioritizes alerts and drainage warnings in your area',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  trailing: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedWard,
-                      borderRadius: AppRadius.mdBorder,
-                      items: _wards
-                          .map(
-                            (w) => DropdownMenuItem(value: w, child: Text(w)),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) setState(() => _selectedWard = val);
-                      },
-                    ),
+                    size: 22,
                   ),
                 ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                ListTile(
-                  leading: Icon(
-                    Icons.language_rounded,
-                    color: AppColors.primary(context),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Smart City Settings & Preferences',
+                        style: AppTypography.bodyStrong.copyWith(
+                          color: AppColors.textPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${localization.currentLanguageName} • ${currency.currentCurrency} • Alert channels & Dark mode',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.caption.copyWith(
+                          color: AppColors.textSecondary(context),
+                        ),
+                      ),
+                    ],
                   ),
-                  title: Text(
-                    'App Language / භාෂාව / மொழி',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    '${localization.currentLanguageName} • Tap for 11-language grid',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  trailing: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: localization.currentLanguage,
-                      borderRadius: AppRadius.mdBorder,
-                      items: LocalizationService.supportedLanguages.entries
-                          .map(
-                            (e) => DropdownMenuItem(
-                              value: e.key,
-                              child: Text(e.value),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (code) {
-                        if (code != null) {
-                          localization.setLanguage(code);
-                        }
-                      },
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
-                  },
                 ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                SwitchListTile(
-                  secondary: Icon(
-                    AppColors.isDark(context)
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    color: AppColors.primary(context),
-                  ),
-                  title: Text(
-                    'Dark Mode',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'High-contrast dark theme for night reporting',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  value: AppColors.isDark(context),
-                  onChanged: (_) => themeService.toggleTheme(),
-                ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                SwitchListTile(
-                  secondary: Icon(
-                    Icons.thunderstorm_outlined,
-                    color: AppColors.warning(context),
-                  ),
-                  title: Text(
-                    'Monsoon & Coastal Flood Alerts',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Receive instant DisasterShield AI warnings for $_selectedWard',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  value: _monsoonSmsAlerts,
-                  onChanged: (v) => setState(() => _monsoonSmsAlerts = v),
-                ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                SwitchListTile(
-                  secondary: Icon(
-                    Icons.confirmation_number_outlined,
-                    color: AppColors.success(context),
-                  ),
-                  title: Text(
-                    'Council Work Order Status Updates',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Notify when municipal engineers resolve your tickets',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  value: _councilTicketUpdates,
-                  onChanged: (v) => setState(() => _councilTicketUpdates = v),
-                ),
-                Divider(height: 1, color: AppColors.outline(context)),
-                SwitchListTile(
-                  secondary: Icon(
-                    Icons.offline_pin_outlined,
-                    color: AppColors.primary(context),
-                  ),
-                  title: Text(
-                    'Offline Global Map & Report Queue',
-                    style: AppTypography.bodyStrong.copyWith(
-                      color: AppColors.textPrimary(context),
-                    ),
-                  ),
-                  subtitle: Text(
-                    'Cache OpenStreetMap tiles and queue reports during outages',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary(context),
-                    ),
-                  ),
-                  value: _offlineMapCache,
-                  onChanged: (v) => setState(() => _offlineMapCache = v),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary(context),
                 ),
               ],
             ),

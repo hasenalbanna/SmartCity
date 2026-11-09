@@ -141,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                           style: AppTypography.title.copyWith(color: fg),
                         ),
                         Text(
-                          'Smart City Global • ${subService.currentPlanName}',
+                          '${auth.userCity}, ${auth.userCountry} • ${subService.currentPlanName}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.caption.copyWith(color: muted),
@@ -713,11 +713,15 @@ class HomeScreen extends StatelessWidget {
     final muted = AppColors.textSecondary(context);
     return AppCard(
       onTap: () => MainNavigationScreen.switchToTab(context, 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.md,
+        vertical: AppSpace.sm,
+      ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: AppColors.surfaceMuted(context),
               shape: BoxShape.circle,
@@ -725,18 +729,19 @@ class HomeScreen extends StatelessWidget {
             ),
             child: Icon(
               Icons.location_on_outlined,
-              size: 20,
+              size: 18,
               color: fg,
             ),
           ),
-          const SizedBox(width: AppSpace.md),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Text(
                         'LATEST REPORT • ${issue.category.toUpperCase()}',
                         maxLines: 1,
@@ -747,9 +752,10 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppSpace.xs),
+                    const SizedBox(width: 4),
                     Text(
-                      _formatDate(issue.createdAt),
+                      '• ${_formatDate(issue.createdAt)}',
+                      maxLines: 1,
                       style: AppTypography.caption.copyWith(color: muted),
                     ),
                   ],
@@ -764,7 +770,7 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
+          const SizedBox(width: AppSpace.xs),
           StatusChip.fromIssueStatus(issue.status),
         ],
       ),

@@ -4,7 +4,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import '../data/global_regions_data.dart';
 import '../models/community_issue.dart';
+import '../services/auth_service.dart';
 import '../services/community_issue_service.dart';
 import '../services/geocoding_service.dart';
 import '../theme/app_colors.dart';
@@ -77,20 +79,12 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
     ),
   ];
 
-  static const List<LatLng> _nintavurBoundary = [
-    LatLng(7.3720, 81.8250),
-    LatLng(7.3720, 81.8650),
-    LatLng(7.3220, 81.8650),
-    LatLng(7.3220, 81.8250),
-    LatLng(7.3720, 81.8250),
-  ];
-
   final MapController _mapController = MapController();
   LatLng _selectedLocation = const LatLng(7.3486, 81.8494);
   final TextEditingController _searchRoadController = TextEditingController();
-  String _addressText =
-      'Colombo / Global Smart City Hub';
+  String _addressText = 'Smart City Hub';
   bool _isLocating = false;
+  bool _initializedRegion = false;
 
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _contactController = TextEditingController();
@@ -103,6 +97,19 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   void initState() {
     super.initState();
     _reportModeIndex = widget.initialModeIndex;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initializedRegion) {
+      final auth = context.read<AuthService>();
+      final userCoords =
+          GlobalRegions.resolveLocation(auth.userCountry, auth.userCity);
+      _selectedLocation = userCoords;
+      _addressText = '${auth.userCity}, ${auth.userCountry}';
+      _initializedRegion = true;
+    }
   }
 
   @override
@@ -195,6 +202,24 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
       _isSubmitting = true;
     });
 
+    final auth = context.read<AuthService>();
+    final isWithinBorder = GlobalRegions.isWithinCountryBorder(
+      auth.userCountry,
+      _selectedLocation,
+    );
+    if (!isWithinBorder) {
+      setState(() => _isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Cannot submit: Location is outside ${auth.userCountry} border.',
+          ),
+          backgroundColor: AppColors.danger(context),
+        ),
+      );
+      return;
+    }
+
     final category = _categories[_selectedCategoryIndex];
     final issueService = context.read<CommunityIssueService>();
     final desc = _descriptionController.text.trim();
@@ -211,6 +236,8 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
           : desc,
       address: _addressText,
       location: _selectedLocation,
+      country: auth.userCountry,
+      city: auth.userCity,
       contactNumber: contact,
       imagePath: _pickedImagePath,
       hasAudio: _hasAudio,
@@ -505,18 +532,49 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
   }
 
   Widget _buildLocationStep(BuildContext context) {
+    final auth = context.watch<AuthService>();
+    final country = GlobalRegions.findCountry(auth.userCountry);
+    final isInsideBorder = country.containsCoordinates(_selectedLocation);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Location',
-          style: AppTypography.display.copyWith(
-            color: AppColors.textPrimary(context),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Location',
+              style: AppTypography.display.copyWith(
+                color: AppColors.textPrimary(context),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceMuted(context),
+                borderRadius: AppRadius.pillBorder,
+                border: Border.all(color: AppColors.outline(context)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(country.flag, style: AppTypography.caption),
+                  const SizedBox(width: 4),
+                  Text(
+                    country.name,
+                    style: AppTypography.caption.copyWith(
+                      color: AppColors.textPrimary(context),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: AppSpace.xs),
         Text(
-          'Mark the exact problem spot on the live map.',
+          'Mark the exact hazard spot on the live map. Reports must be within ${country.name}\'s border.',
           style: AppTypography.body.copyWith(
             color: AppColors.textSecondary(context),
           ),
@@ -528,8 +586,8 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
               child: TextField(
                 controller: _searchRoadController,
                 onSubmitted: (_) => _searchRoad(),
-                decoration: const InputDecoration(
-                  hintText: 'Search city, street, or landmark worldwide',
+                decoration: InputDecoration(
+                  hintText: 'Search within ${country.name}',
                 ),
               ),
             ),
@@ -561,12 +619,12 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                   mapController: _mapController,
                   options: MapOptions(
                     initialCenter: _selectedLocation,
-                    initialZoom: 14.0,
+                    initialZoom: 13.5,
                     onTap: (_, latLng) {
                       setState(() {
                         _selectedLocation = latLng;
                         _addressText =
-                            'Nintavur (${latLng.latitude.toStringAsFixed(4)}, ${latLng.longitude.toStringAsFixed(4)})';
+                            '${auth.userCity} (${latLng.latitude.toStringAsFixed(4)}, ${latLng.longitude.toStringAsFixed(4)})';
                       });
                     },
                   ),
@@ -579,9 +637,9 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                     PolylineLayer(
                       polylines: [
                         Polyline(
-                          points: _nintavurBoundary,
+                          points: country.boundary,
                           strokeWidth: 3.0,
-                          color: AppColors.danger(context),
+                          color: AppColors.primary(context),
                         ),
                       ],
                     ),
@@ -594,20 +652,28 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
                           child: Icon(
                             Icons.location_on,
                             size: 38,
-                            color: AppColors.danger(context),
+                            color: isInsideBorder
+                                ? AppColors.danger(context)
+                                : AppColors.textSecondary(context),
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const Positioned(
+                Positioned(
                   top: AppSpace.md,
                   left: AppSpace.md,
                   child: StatusChip(
-                    label: 'Tap map to pin',
-                    kind: StatusChipKind.info,
-                    icon: Icons.touch_app_outlined,
+                    label: isInsideBorder
+                        ? 'Within ${country.name} border'
+                        : 'Outside country border',
+                    kind: isInsideBorder
+                        ? StatusChipKind.resolved
+                        : StatusChipKind.pending,
+                    icon: isInsideBorder
+                        ? Icons.check_circle_outline
+                        : Icons.warning_amber_rounded,
                   ),
                 ),
               ],
@@ -615,6 +681,51 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
           ),
         ),
         const SizedBox(height: AppSpace.sm),
+        Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md,
+            vertical: AppSpace.sm,
+          ),
+          decoration: BoxDecoration(
+            color: isInsideBorder
+                ? AppColors.surfaceMuted(context)
+                : AppColors.dangerBg(context),
+            borderRadius: AppRadius.smBorder,
+            border: Border.all(
+              color: isInsideBorder
+                  ? AppColors.success(context)
+                  : AppColors.danger(context),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isInsideBorder
+                    ? Icons.check_circle_rounded
+                    : Icons.error_outline_rounded,
+                size: 16,
+                color: isInsideBorder
+                    ? AppColors.success(context)
+                    : AppColors.danger(context),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Text(
+                  isInsideBorder
+                      ? '✓ Location is within ${country.flag} ${country.name} border. Ready to proceed.'
+                      : '⚠️ Outside ${country.name} border! Citizens can only report issues within their country border.',
+                  style: AppTypography.caption.copyWith(
+                    color: isInsideBorder
+                        ? AppColors.success(context)
+                        : AppColors.danger(context),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpace.xs),
         Text(
           _addressText,
           style: AppTypography.caption.copyWith(
@@ -751,7 +862,24 @@ class _ReportIssueWizardScreenState extends State<ReportIssueWizardScreen> {
               isLoading: _isSubmitting,
               fullWidth: true,
               onPressed: () {
-                if (_currentStep < 2) {
+                if (_currentStep == 0) {
+                  setState(() => _currentStep++);
+                } else if (_currentStep == 1) {
+                  final auth = context.read<AuthService>();
+                  final country = GlobalRegions.findCountry(auth.userCountry);
+                  final isInside =
+                      country.containsCoordinates(_selectedLocation);
+                  if (!isInside) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Cannot proceed: Location must be inside ${country.name}\'s border.',
+                        ),
+                        backgroundColor: AppColors.danger(context),
+                      ),
+                    );
+                    return;
+                  }
                   setState(() => _currentStep++);
                 } else {
                   _submitReport();

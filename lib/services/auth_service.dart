@@ -8,8 +8,16 @@ class User {
   final String id;
   final String username;
   final DateTime createdAt;
+  final String country;
+  final String city;
 
-  User({required this.id, required this.username, required this.createdAt});
+  User({
+    required this.id,
+    required this.username,
+    required this.createdAt,
+    this.country = 'Sri Lanka',
+    this.city = 'Nintavur',
+  });
 }
 
 class AuthService extends ChangeNotifier {
@@ -33,6 +41,24 @@ class AuthService extends ChangeNotifier {
   User? get currentUser => _currentUser;
   bool get isLoggedIn => _currentUser != null;
   String? get lastError => _lastError;
+  String get userCountry => _currentUser?.country ?? 'Sri Lanka';
+  String get userCity => _currentUser?.city ?? 'Nintavur';
+
+  Future<void> updateRegion(String country, String city) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('local_user_country', country);
+    await prefs.setString('local_user_city', city);
+    if (_currentUser != null) {
+      _currentUser = User(
+        id: _currentUser!.id,
+        username: _currentUser!.username,
+        createdAt: _currentUser!.createdAt,
+        country: country,
+        city: city,
+      );
+      notifyListeners();
+    }
+  }
 
   Future<void> _loadUserFromPrefs() async {
     if (_initialized) return;
@@ -40,11 +66,15 @@ class AuthService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final savedId = prefs.getString('local_user_id');
       final savedName = prefs.getString('local_username');
+      final savedCountry = prefs.getString('local_user_country') ?? 'Sri Lanka';
+      final savedCity = prefs.getString('local_user_city') ?? 'Nintavur';
       if (savedId != null && savedName != null) {
         _currentUser = User(
           id: savedId,
           username: savedName,
           createdAt: DateTime.now(),
+          country: savedCountry,
+          city: savedCity,
         );
         notifyListeners();
       }
@@ -98,7 +128,12 @@ class AuthService extends ChangeNotifier {
   }
 
   // Register new user locally with salted password hash
-  Future<bool> register(String username, String password) async {
+  Future<bool> register(
+    String username,
+    String password, {
+    String country = 'Sri Lanka',
+    String city = 'Nintavur',
+  }) async {
     _lastError = null;
     final normalizedUsername = username.trim().toLowerCase();
 
@@ -136,11 +171,15 @@ class AuthService extends ChangeNotifier {
 
       await prefs.setString('local_user_id', uid);
       await prefs.setString('local_username', normalizedUsername);
+      await prefs.setString('local_user_country', country);
+      await prefs.setString('local_user_city', city);
 
       _currentUser = User(
         id: uid,
         username: normalizedUsername,
         createdAt: DateTime.now(),
+        country: country,
+        city: city,
       );
 
       _failedLoginAttempts = 0;
@@ -154,7 +193,12 @@ class AuthService extends ChangeNotifier {
   }
 
   // Login existing user with password verification & brute force defense
-  Future<bool> login(String username, String password) async {
+  Future<bool> login(
+    String username,
+    String password, {
+    String? country,
+    String? city,
+  }) async {
     _lastError = null;
     final normalizedUsername = username.trim().toLowerCase();
 
@@ -212,10 +256,17 @@ class AuthService extends ChangeNotifier {
       await prefs.setString('local_user_id', uid);
       await prefs.setString('local_username', normalizedUsername);
 
+      final savedCountry = country ?? prefs.getString('local_user_country') ?? 'Sri Lanka';
+      final savedCity = city ?? prefs.getString('local_user_city') ?? 'Nintavur';
+      if (country != null) await prefs.setString('local_user_country', country);
+      if (city != null) await prefs.setString('local_user_city', city);
+
       _currentUser = User(
         id: uid,
         username: normalizedUsername,
         createdAt: DateTime.now(),
+        country: savedCountry,
+        city: savedCity,
       );
 
       notifyListeners();

@@ -106,7 +106,11 @@ class LitaAiService {
   }
   
   Future<void> _initSpeech() async {
-    _speechEnabled = await _speechToText.initialize();
+    try {
+      _speechEnabled = await _speechToText.initialize();
+    } catch (_) {
+      _speechEnabled = false;
+    }
   }
   
   Future<void> startListening(Function(String) onResult, {Function(String)? onFinalResult}) async {
