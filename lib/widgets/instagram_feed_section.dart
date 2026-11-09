@@ -208,24 +208,30 @@ class _TravelGridTile extends StatelessWidget {
 
   const _TravelGridTile({required this.post});
 
-  Widget _buildPostImage(String url) {
-    if (url.startsWith('data:image')) {
-      try {
-        final commaIdx = url.indexOf(',');
-        final bytes = base64Decode(url.substring(commaIdx + 1));
-        return Image.memory(bytes, fit: BoxFit.cover);
-      } catch (_) {}
+  Widget _buildPostImage(String? url) {
+    final img = url ?? '';
+    if (img.isEmpty) {
+      return Image.asset('assets/cover.png', fit: BoxFit.cover);
     }
-    if (url.startsWith('assets/')) {
+    if (img.startsWith('data:image')) {
+      try {
+        final commaIdx = img.indexOf(',');
+        final bytes = base64Decode(img.substring(commaIdx + 1));
+        return Image.memory(bytes, fit: BoxFit.cover);
+      } catch (_) {
+        return Image.asset('assets/cover.png', fit: BoxFit.cover);
+      }
+    }
+    if (img.startsWith('assets/')) {
       return Image.asset(
-        url,
+        img,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) =>
             Image.asset('assets/cover.png', fit: BoxFit.cover),
       );
     }
     return Image.network(
-      url,
+      img,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) =>
           Image.asset('assets/cover.png', fit: BoxFit.cover),
@@ -448,17 +454,21 @@ class InstagramPostCard extends StatelessWidget {
     return '${diff.inDays}d ago';
   }
 
-  Widget _buildPostPhoto(BuildContext context, String url) {
-    if (url.startsWith('data:image')) {
+  Widget _buildPostPhoto(BuildContext context, String? url) {
+    final img = url ?? '';
+    if (img.isEmpty) {
+      return Image.asset('assets/cover.png', fit: BoxFit.cover);
+    }
+    if (img.startsWith('data:image')) {
       try {
-        final commaIdx = url.indexOf(',');
-        final bytes = base64Decode(url.substring(commaIdx + 1));
+        final commaIdx = img.indexOf(',');
+        final bytes = base64Decode(img.substring(commaIdx + 1));
         return Image.memory(bytes, fit: BoxFit.cover);
       } catch (_) {}
     }
-    if (url.startsWith('assets/')) {
+    if (img.startsWith('assets/')) {
       return Image.asset(
-        url,
+        img,
         fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Image.asset(
           'assets/cover.png',
@@ -467,7 +477,7 @@ class InstagramPostCard extends StatelessWidget {
       );
     }
     return Image.network(
-      url,
+      img,
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => Image.asset(
         'assets/cover.png',

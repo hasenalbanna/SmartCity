@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 /// Unified premium typography scale (Plus Jakarta Sans + system fallbacks, minimum 12px).
@@ -105,11 +104,7 @@ class AppTypography {
       labelSmall: caption.copyWith(fontSize: 12, color: secondary),
     );
 
-    try {
-      return GoogleFonts.plusJakartaSansTextTheme(base);
-    } catch (_) {
-      return base;
-    }
+    return base;
   }
 }
 
